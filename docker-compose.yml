@@ -1,0 +1,40 @@
+#===- docker-compose.yml --------------------------------------------------===//
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+#===-----------------------------------------------------------------------===//
+#
+# Provides easy access to a docker-based development environment for LLVM. It
+# mounts the current directory in `/llvm/`, and has all the packages needed to
+# build and run the project.
+#
+# Run with:
+# ```
+# $ LLVM_UID=$(id -u) LLVM_GID=$(id -g) docker-compose run --rm llvm-dev
+# ```
+#
+# See: /utils/dev/Dockerfile
+#
+#===-----------------------------------------------------------------------===//
+
+version: "3"
+services:
+  llvm-dev:
+    image: llvm-dev:latest
+    build: ./utils/dev/
+
+    # Since this will be writing to the local filesystem, it's probably good not
+    # to run as root. Instead, let the user decide who to run as.
+    user: "${LLVM_UID}:${LLVM_GID}"
+
+    # Mount this repository
+    # Start in the mounted directory
+    volumes:
+      - ".:/llvm/"
+    working_dir: /llvm/
+
+    # Interactivity
+    stdin_open: true
+    tty: true
