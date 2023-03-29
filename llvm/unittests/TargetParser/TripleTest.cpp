@@ -876,6 +876,12 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_EQ(Triple::UnknownOS, T.getOS());
   EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
 
+  T = Triple("lc_3.2");
+  EXPECT_EQ(Triple::lc_3_2, T.getArch());
+  EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
+  EXPECT_EQ(Triple::UnknownOS, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
   T = Triple("huh");
   EXPECT_EQ(Triple::UnknownArch, T.getArch());
 }
@@ -1242,6 +1248,12 @@ TEST(TripleTest, BitWidthPredicates) {
   EXPECT_FALSE(T.isArch16Bit());
   EXPECT_TRUE(T.isArch32Bit());
   EXPECT_FALSE(T.isArch64Bit());
+
+  T.setArch(Triple::lc_3_2);
+  EXPECT_FALSE(T.isArch16Bit());
+  EXPECT_TRUE(T.isArch32Bit());
+  EXPECT_FALSE(T.isArch64Bit());
+  EXPECT_TRUE(T.isLC32());
 }
 
 TEST(TripleTest, BitWidthArchVariants) {
@@ -1440,6 +1452,10 @@ TEST(TripleTest, BitWidthArchVariants) {
   T.setArch(Triple::xtensa);
   EXPECT_EQ(Triple::xtensa, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::UnknownArch, T.get64BitArchVariant().getArch());
+
+  T.setArch(Triple::lc_3_2);
+  EXPECT_EQ(Triple::lc_3_2, T.get32BitArchVariant().getArch());
+  EXPECT_EQ(Triple::UnknownArch, T.get64BitArchVariant().getArch());
 }
 
 TEST(TripleTest, EndianArchVariants) {
@@ -1593,6 +1609,11 @@ TEST(TripleTest, EndianArchVariants) {
   EXPECT_TRUE(T.isLittleEndian());
   EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
   EXPECT_EQ(Triple::dxil, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::lc_3_2);
+  EXPECT_TRUE(T.isLittleEndian());
+  EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::lc_3_2, T.getLittleEndianArchVariant().getArch());
 }
 
 TEST(TripleTest, getOSVersion) {
@@ -1863,6 +1884,8 @@ TEST(TripleTest, FileFormat) {
 
   EXPECT_EQ(Triple::DXContainer,
             Triple("dxil-unknown-shadermodel").getObjectFormat());
+
+  EXPECT_EQ(Triple::ELF, Triple("lc_3.2").getObjectFormat());
 
   Triple T = Triple("");
   T.setObjectFormat(Triple::ELF);

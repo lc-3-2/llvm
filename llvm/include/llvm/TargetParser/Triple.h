@@ -106,6 +106,7 @@ public:
     renderscript32, // 32-bit RenderScript
     renderscript64, // 64-bit RenderScript
     ve,             // NEC SX-Aurora Vector Engine
+    lc_3_2,         // LC-3.2
     LastArchType = ve
   };
   enum SubArchType {
@@ -933,6 +934,11 @@ public:
   // Tests whether the target is CSKY
   bool isCSKY() const {
     return getArch() == Triple::csky;
+  }
+
+  // Tests whether the target is LC-3.2
+  bool isLC32() const {
+    return this->getArch() == Triple::lc_3_2;
   }
 
   /// Tests whether the target is the Apple "arm64e" AArch64 subarch.
