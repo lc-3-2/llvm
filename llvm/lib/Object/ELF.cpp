@@ -180,6 +180,12 @@ StringRef llvm::object::getELFRelocationTypeName(uint32_t Machine,
       break;
     }
     break;
+  case ELF::EM_LC_3_2:
+    switch (Type) {
+#include "llvm/BinaryFormat/ELFRelocs/LC32.def"
+    default:
+      break;
+    }
   default:
     break;
   }
