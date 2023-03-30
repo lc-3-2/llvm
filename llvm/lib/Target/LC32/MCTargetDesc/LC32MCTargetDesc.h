@@ -6,7 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// This module provides access to the MC-layer for the LC-3.2. It registers all
+// the components with the target registry, and this header provides definitions
+// for registers and instructions.
 //
+// See: llvm/lib/Target/Lanai/MCTargetDesc/LanaiMCTargetDesc.*
+// See: llvm/lib/Target/MSP430/MCTargetDesc/MSP430MCTargetDesc.*
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,14 +34,14 @@ class MCStreamer;
 class MCTargetStreamer;
 } // namespace llvm
 
-// #define GET_REGINFO_ENUM
-// #include "LC32GenRegisterInfo.inc"
+#define GET_REGINFO_ENUM
+#include "LC32GenRegisterInfo.inc"
 
-// #define GET_INSTRINFO_ENUM
-// #define GET_INSTRINFO_MC_HELPER_DECLS
-// #include "LC32GenInstrInfo.inc"
+#define GET_INSTRINFO_ENUM
+#define GET_INSTRINFO_MC_HELPER_DECLS
+#include "LC32GenInstrInfo.inc"
 
-// #define GET_SUBTARGETINFO_ENUM
-// #include "LC32GenSubtargetInfo.inc"
+#define GET_SUBTARGETINFO_ENUM
+#include "LC32GenSubtargetInfo.inc"
 
 #endif // LLVM_LIB_TARGET_LC32_MCTARGETDESC_LC32MCTARGETDESC_H
