@@ -30,3 +30,4 @@ add_llvm_target(LC32CodeGen
 
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)
+add_subdirectory(Disassembler)

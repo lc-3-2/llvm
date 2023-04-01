@@ -1,5 +1,7 @@
 add_llvm_component_library(LLVMLC32Desc
   LC32MCTargetDesc.cpp
+  LC32MCAsmInfo.cpp
+  LC32InstPrinter.cpp
 
   LINK_COMPONENTS
   MC
