@@ -11,6 +11,7 @@
 #include "llvm/MC/TargetRegistry.h"
 #include <optional>
 using namespace llvm;
+#define DEBUG_TYPE "LC32TargetMachine"
 
 static Reloc::Model getEffectiveRelocModel(std::optional<Reloc::Model> RM) {
   // Default relocation model

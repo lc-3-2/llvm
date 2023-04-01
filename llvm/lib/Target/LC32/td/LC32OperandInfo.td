@@ -11,6 +11,11 @@
 // during code generation. Most of the definitions come in pairs - the operand
 // itself and the operand class to use while parsing assembly files.
 //
+// Some properties are useful for custom encoding and decoding of instructions.
+// Specifically:
+// * PrintMethod   for InstPrinter
+// * DecoderMethod for Disassembler
+//
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
 //
 //===----------------------------------------------------------------------===//
@@ -25,4 +30,6 @@ def Imm5OperandClass : AsmOperandClass {
 def Imm5 : Operand<i32>, ImmLeaf<i32, [{ return isInt<5>(Imm); }]> {
   let OperandType = "OPERAND_IMMEDIATE";
   let ParserMatchClass = Imm5OperandClass;
+  let PrintMethod = "printShiftedSignedImmOperand<5,0>";
+  let DecoderMethod = "DecodeShiftedSignedImm<5,0>";
 }

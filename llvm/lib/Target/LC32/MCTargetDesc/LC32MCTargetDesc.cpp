@@ -7,12 +7,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "LC32MCTargetDesc.h"
+#include "LC32MCAsmInfo.h"
+#include "LC32InstPrinter.h"
 #include "TargetInfo/LC32TargetInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/TargetRegistry.h"
 using namespace llvm;
+#define DEBUG_TYPE "LC32MCTargetDesc"
 
 #define GET_REGINFO_MC_DESC
 #include "LC32GenRegisterInfo.inc"
@@ -36,6 +39,18 @@ static MCRegisterInfo *createLC32MCRegisterInfo(const Triple & /*TT*/) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitLC32MCRegisterInfo(X, LC32::LR);
   return X;
+}
+
+static MCInstPrinter *createLC32InstPrinter(const Triple &T,
+                                              unsigned SyntaxVariant,
+                                              const MCAsmInfo &MAI,
+                                              const MCInstrInfo &MII,
+                                              const MCRegisterInfo &MRI) {
+  // We only have one syntax variant
+  // Don't return the printer if we get anything else
+  if (SyntaxVariant == 0)
+    return new LC32InstPrinter(MAI, MII, MRI);
+  return nullptr;
 }
 
 static MCSubtargetInfo *createLC32MCSubtargetInfo(const Triple &TT,
@@ -65,8 +80,10 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32TargetMC() {
   // Notice that we use the generic createMCStreamer method since we don't need
   // anything custom for writing ELF files.
   Target &T = getTheLC32Target();
+  RegisterMCAsmInfo<LC32MCAsmInfo> X(T);
   TargetRegistry::RegisterMCRegInfo(T, createLC32MCRegisterInfo);
   TargetRegistry::RegisterMCInstrInfo(T, createLC32MCInstrInfo);
   TargetRegistry::RegisterMCSubtargetInfo(T, createLC32MCSubtargetInfo);
+  TargetRegistry::RegisterMCInstPrinter(T, createLC32InstPrinter);
   TargetRegistry::RegisterELFStreamer(T, createMCStreamer);
 }
