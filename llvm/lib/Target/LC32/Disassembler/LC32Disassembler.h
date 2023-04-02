@@ -6,7 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// This module takes a byte array as input and outputs an MCInst corresponding
+// to them. The main interface is the `getInterface` method. Most of the work is
+// handled by TableGen.
 //
+// See: LC32GenDisassemblerTables.inc
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,7 +21,7 @@
 
 // Usually, the contents of this file are in an anonymous namespace. I'll put
 // them in a namespace for the LC-3.2
-namespace llvm::lc32 {
+namespace llvm::LC32 {
 
 class LC32Disassembler : public MCDisassembler {
 public:
@@ -31,6 +35,6 @@ public:
                               raw_ostream &CStream) const override;
 };
 
-} // namespace llvm::lc32
+} // namespace llvm::LC32
 
 #endif // LLVM_LIB_TARGET_LC32_DISASSEMBLER_LC32DISASSEMBLER_H
