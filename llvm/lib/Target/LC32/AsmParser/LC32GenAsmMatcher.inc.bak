@@ -1,0 +1,713 @@
+/*===- TableGen'erated file -------------------------------------*- C++ -*-===*\
+|*                                                                            *|
+|* Assembly Matcher Source Fragment                                           *|
+|*                                                                            *|
+|* Automatically generated file, do not edit!                                 *|
+|*                                                                            *|
+\*===----------------------------------------------------------------------===*/
+
+
+#ifdef GET_ASSEMBLER_HEADER
+#undef GET_ASSEMBLER_HEADER
+  // This should be included into the middle of the declaration of
+  // your subclasses implementation of MCTargetAsmParser.
+  FeatureBitset ComputeAvailableFeatures(const FeatureBitset &FB) const;
+  void convertToMCInst(unsigned Kind, MCInst &Inst, unsigned Opcode,
+                       const OperandVector &Operands);
+  void convertToMapAndConstraints(unsigned Kind,
+                           const OperandVector &Operands) override;
+  unsigned MatchInstructionImpl(const OperandVector &Operands,
+                                MCInst &Inst,
+                                uint64_t &ErrorInfo,
+                                FeatureBitset &MissingFeatures,
+                                bool matchingInlineAsm,
+                                unsigned VariantID = 0);
+  unsigned MatchInstructionImpl(const OperandVector &Operands,
+                                MCInst &Inst,
+                                uint64_t &ErrorInfo,
+                                bool matchingInlineAsm,
+                                unsigned VariantID = 0) {
+    FeatureBitset MissingFeatures;
+    return MatchInstructionImpl(Operands, Inst, ErrorInfo, MissingFeatures,
+                                matchingInlineAsm, VariantID);
+  }
+
+#endif // GET_ASSEMBLER_HEADER_INFO
+
+
+#ifdef GET_OPERAND_DIAGNOSTIC_TYPES
+#undef GET_OPERAND_DIAGNOSTIC_TYPES
+
+#endif // GET_OPERAND_DIAGNOSTIC_TYPES
+
+
+#ifdef GET_REGISTER_MATCHER
+#undef GET_REGISTER_MATCHER
+
+// Bits for subtarget features that participate in instruction matching.
+enum SubtargetFeatureBits : uint8_t {
+};
+
+static unsigned MatchRegisterName(StringRef Name) {
+  switch (Name.size()) {
+  default: break;
+  case 2:	 // 9 strings to match.
+    switch (Name[0]) {
+    default: break;
+    case 'C':	 // 1 string to match.
+      if (Name[1] != 'C')
+        break;
+      return 2;	 // "CC"
+    case 'R':	 // 8 strings to match.
+      switch (Name[1]) {
+      default: break;
+      case '0':	 // 1 string to match.
+        return 7;	 // "R0"
+      case '1':	 // 1 string to match.
+        return 8;	 // "R1"
+      case '2':	 // 1 string to match.
+        return 9;	 // "R2"
+      case '3':	 // 1 string to match.
+        return 1;	 // "R3"
+      case '4':	 // 1 string to match.
+        return 4;	 // "R4"
+      case '5':	 // 1 string to match.
+        return 3;	 // "R5"
+      case '6':	 // 1 string to match.
+        return 6;	 // "R6"
+      case '7':	 // 1 string to match.
+        return 5;	 // "R7"
+      }
+      break;
+    }
+    break;
+  }
+  return 0;
+}
+
+static unsigned MatchRegisterAltName(StringRef Name) {
+  switch (Name.size()) {
+  default: break;
+  case 2:	 // 5 strings to match.
+    switch (Name[0]) {
+    default: break;
+    case 'A':	 // 1 string to match.
+      if (Name[1] != 'T')
+        break;
+      return 1;	 // "AT"
+    case 'F':	 // 1 string to match.
+      if (Name[1] != 'P')
+        break;
+      return 3;	 // "FP"
+    case 'G':	 // 1 string to match.
+      if (Name[1] != 'P')
+        break;
+      return 4;	 // "GP"
+    case 'L':	 // 1 string to match.
+      if (Name[1] != 'R')
+        break;
+      return 5;	 // "LR"
+    case 'S':	 // 1 string to match.
+      if (Name[1] != 'P')
+        break;
+      return 6;	 // "SP"
+    }
+    break;
+  case 3:	 // 1 string to match.
+    if (memcmp(Name.data()+0, "PSR", 3) != 0)
+      break;
+    return 2;	 // "PSR"
+  }
+  return 0;
+}
+
+#endif // GET_REGISTER_MATCHER
+
+
+#ifdef GET_SUBTARGET_FEATURE_NAME
+#undef GET_SUBTARGET_FEATURE_NAME
+
+// User-level names for subtarget features that participate in
+// instruction matching.
+static const char *getSubtargetFeatureName(uint64_t Val) {
+  return "(unknown)";
+}
+
+#endif // GET_SUBTARGET_FEATURE_NAME
+
+
+#ifdef GET_MATCHER_IMPLEMENTATION
+#undef GET_MATCHER_IMPLEMENTATION
+
+static const uint8_t TiedAsmOperandTable[][3] = { /* empty  */ {0, 0, 0} };
+
+namespace {
+enum OperatorConversionKind {
+  CVT_Done,
+  CVT_Reg,
+  CVT_Tied,
+  CVT_95_Reg,
+  CVT_95_addImm5Operands,
+  CVT_imm_95__MINUS_1,
+  CVT_NUM_CONVERTERS
+};
+
+enum InstructionConversionKind {
+  Convert__Reg1_0__Reg1_1__Reg1_2,
+  Convert__Reg1_0__Reg1_1__Imm51_2,
+  Convert__Reg1_0__Reg1_1__imm_95__MINUS_1,
+  CVT_NUM_SIGNATURES
+};
+
+} // end anonymous namespace
+
+static const uint8_t ConversionTable[CVT_NUM_SIGNATURES][7] = {
+  // Convert__Reg1_0__Reg1_1__Reg1_2
+  { CVT_95_Reg, 1, CVT_95_Reg, 2, CVT_95_Reg, 3, CVT_Done },
+  // Convert__Reg1_0__Reg1_1__Imm51_2
+  { CVT_95_Reg, 1, CVT_95_Reg, 2, CVT_95_addImm5Operands, 3, CVT_Done },
+  // Convert__Reg1_0__Reg1_1__imm_95__MINUS_1
+  { CVT_95_Reg, 1, CVT_95_Reg, 2, CVT_imm_95__MINUS_1, 0, CVT_Done },
+};
+
+void LC32AsmParser::
+convertToMCInst(unsigned Kind, MCInst &Inst, unsigned Opcode,
+                const OperandVector &Operands) {
+  assert(Kind < CVT_NUM_SIGNATURES && "Invalid signature!");
+  const uint8_t *Converter = ConversionTable[Kind];
+  unsigned OpIdx;
+  Inst.setOpcode(Opcode);
+  for (const uint8_t *p = Converter; *p; p += 2) {
+    OpIdx = *(p + 1);
+    switch (*p) {
+    default: llvm_unreachable("invalid conversion entry!");
+    case CVT_Reg:
+      static_cast<LC32Operand &>(*Operands[OpIdx]).addRegOperands(Inst, 1);
+      break;
+    case CVT_Tied: {
+      assert(OpIdx < (size_t)(std::end(TiedAsmOperandTable) -
+                              std::begin(TiedAsmOperandTable)) &&
+             "Tied operand not found");
+      unsigned TiedResOpnd = TiedAsmOperandTable[OpIdx][0];
+      if (TiedResOpnd != (uint8_t)-1)
+        Inst.addOperand(Inst.getOperand(TiedResOpnd));
+      break;
+    }
+    case CVT_95_Reg:
+      static_cast<LC32Operand &>(*Operands[OpIdx]).addRegOperands(Inst, 1);
+      break;
+    case CVT_95_addImm5Operands:
+      static_cast<LC32Operand &>(*Operands[OpIdx]).addImm5Operands(Inst, 1);
+      break;
+    case CVT_imm_95__MINUS_1:
+      Inst.addOperand(MCOperand::createImm(-1));
+      break;
+    }
+  }
+}
+
+void LC32AsmParser::
+convertToMapAndConstraints(unsigned Kind,
+                           const OperandVector &Operands) {
+  assert(Kind < CVT_NUM_SIGNATURES && "Invalid signature!");
+  unsigned NumMCOperands = 0;
+  const uint8_t *Converter = ConversionTable[Kind];
+  for (const uint8_t *p = Converter; *p; p += 2) {
+    switch (*p) {
+    default: llvm_unreachable("invalid conversion entry!");
+    case CVT_Reg:
+      Operands[*(p + 1)]->setMCOperandNum(NumMCOperands);
+      Operands[*(p + 1)]->setConstraint("r");
+      ++NumMCOperands;
+      break;
+    case CVT_Tied:
+      ++NumMCOperands;
+      break;
+    case CVT_95_Reg:
+      Operands[*(p + 1)]->setMCOperandNum(NumMCOperands);
+      Operands[*(p + 1)]->setConstraint("r");
+      NumMCOperands += 1;
+      break;
+    case CVT_95_addImm5Operands:
+      Operands[*(p + 1)]->setMCOperandNum(NumMCOperands);
+      Operands[*(p + 1)]->setConstraint("m");
+      NumMCOperands += 1;
+      break;
+    case CVT_imm_95__MINUS_1:
+      Operands[*(p + 1)]->setMCOperandNum(NumMCOperands);
+      Operands[*(p + 1)]->setConstraint("");
+      ++NumMCOperands;
+      break;
+    }
+  }
+}
+
+namespace {
+
+/// MatchClassKind - The kinds of classes which participate in
+/// instruction matching.
+enum MatchClassKind {
+  InvalidMatchClass = 0,
+  OptionalMatchClass = 1,
+  MCK_LAST_TOKEN = OptionalMatchClass,
+  MCK_GPR, // register class 'GPR'
+  MCK_LAST_REGISTER = MCK_GPR,
+  MCK_Imm5, // user defined class 'Imm5OperandClass'
+  MCK_Imm, // user defined class 'ImmAsmOperand'
+  NumMatchClassKinds
+};
+
+} // end anonymous namespace
+
+static unsigned getDiagKindFromRegisterClass(MatchClassKind RegisterClass) {
+  return MCTargetAsmParser::Match_InvalidOperand;
+}
+
+static MatchClassKind matchTokenString(StringRef Name) {
+  return InvalidMatchClass;
+}
+
+/// isSubclass - Compute whether \p A is a subclass of \p B.
+static bool isSubclass(MatchClassKind A, MatchClassKind B) {
+  if (A == B)
+    return true;
+
+  return false;
+}
+
+static unsigned validateOperandClass(MCParsedAsmOperand &GOp, MatchClassKind Kind) {
+  LC32Operand &Operand = (LC32Operand &)GOp;
+  if (Kind == InvalidMatchClass)
+    return MCTargetAsmParser::Match_InvalidOperand;
+
+  if (Operand.isToken() && Kind <= MCK_LAST_TOKEN)
+    return isSubclass(matchTokenString(Operand.getToken()), Kind) ?
+             MCTargetAsmParser::Match_Success :
+             MCTargetAsmParser::Match_InvalidOperand;
+
+  switch (Kind) {
+  default: break;
+  // 'Imm5' class
+  case MCK_Imm5: {
+    DiagnosticPredicate DP(Operand.isImm5());
+    if (DP.isMatch())
+      return MCTargetAsmParser::Match_Success;
+    break;
+    }
+  // 'Imm' class
+  case MCK_Imm: {
+    DiagnosticPredicate DP(Operand.isImm());
+    if (DP.isMatch())
+      return MCTargetAsmParser::Match_Success;
+    break;
+    }
+  } // end switch (Kind)
+
+  if (Operand.isReg()) {
+    MatchClassKind OpKind;
+    switch (Operand.getReg()) {
+    default: OpKind = InvalidMatchClass; break;
+    case LC32::R0: OpKind = MCK_GPR; break;
+    case LC32::R1: OpKind = MCK_GPR; break;
+    case LC32::R2: OpKind = MCK_GPR; break;
+    case LC32::AT: OpKind = MCK_GPR; break;
+    case LC32::GP: OpKind = MCK_GPR; break;
+    case LC32::FP: OpKind = MCK_GPR; break;
+    case LC32::SP: OpKind = MCK_GPR; break;
+    case LC32::LR: OpKind = MCK_GPR; break;
+    }
+    return isSubclass(OpKind, Kind) ? (unsigned)MCTargetAsmParser::Match_Success :
+                                      getDiagKindFromRegisterClass(Kind);
+  }
+
+  if (Kind > MCK_LAST_TOKEN && Kind <= MCK_LAST_REGISTER)
+    return getDiagKindFromRegisterClass(Kind);
+
+  return MCTargetAsmParser::Match_InvalidOperand;
+}
+
+#ifndef NDEBUG
+const char *getMatchClassName(MatchClassKind Kind) {
+  switch (Kind) {
+  case InvalidMatchClass: return "InvalidMatchClass";
+  case OptionalMatchClass: return "OptionalMatchClass";
+  case MCK_GPR: return "MCK_GPR";
+  case MCK_Imm5: return "MCK_Imm5";
+  case MCK_Imm: return "MCK_Imm";
+  case NumMatchClassKinds: return "NumMatchClassKinds";
+  }
+  llvm_unreachable("unhandled MatchClassKind!");
+}
+
+#endif // NDEBUG
+FeatureBitset LC32AsmParser::
+ComputeAvailableFeatures(const FeatureBitset &FB) const {
+  FeatureBitset Features;
+  return Features;
+}
+
+static bool checkAsmTiedOperandConstraints(const LC32AsmParser&AsmParser,
+                               unsigned Kind,
+                               const OperandVector &Operands,
+                               uint64_t &ErrorInfo) {
+  assert(Kind < CVT_NUM_SIGNATURES && "Invalid signature!");
+  const uint8_t *Converter = ConversionTable[Kind];
+  for (const uint8_t *p = Converter; *p; p += 2) {
+    switch (*p) {
+    case CVT_Tied: {
+      unsigned OpIdx = *(p + 1);
+      assert(OpIdx < (size_t)(std::end(TiedAsmOperandTable) -
+                              std::begin(TiedAsmOperandTable)) &&
+             "Tied operand not found");
+      unsigned OpndNum1 = TiedAsmOperandTable[OpIdx][1];
+      unsigned OpndNum2 = TiedAsmOperandTable[OpIdx][2];
+      if (OpndNum1 != OpndNum2) {
+        auto &SrcOp1 = Operands[OpndNum1];
+        auto &SrcOp2 = Operands[OpndNum2];
+        if (!AsmParser.areEqualRegs(*SrcOp1, *SrcOp2)) {
+          ErrorInfo = OpndNum2;
+          return false;
+        }
+      }
+      break;
+    }
+    default:
+      break;
+    }
+  }
+  return true;
+}
+
+static const char MnemonicTable[] =
+    "\003add\003and\003not\003xor";
+
+// Feature bitsets.
+enum : uint8_t {
+  AMFBS_None,
+};
+
+static constexpr FeatureBitset FeatureBitsets[] = {
+  {}, // AMFBS_None
+};
+
+namespace {
+  struct MatchEntry {
+    uint8_t Mnemonic;
+    uint16_t Opcode;
+    uint8_t ConvertFn;
+    uint8_t RequiredFeaturesIdx;
+    uint8_t Classes[3];
+    StringRef getMnemonic() const {
+      return StringRef(MnemonicTable + Mnemonic + 1,
+                       MnemonicTable[Mnemonic]);
+    }
+  };
+
+  // Predicate for searching for an opcode.
+  struct LessOpcode {
+    bool operator()(const MatchEntry &LHS, StringRef RHS) {
+      return LHS.getMnemonic() < RHS;
+    }
+    bool operator()(StringRef LHS, const MatchEntry &RHS) {
+      return LHS < RHS.getMnemonic();
+    }
+    bool operator()(const MatchEntry &LHS, const MatchEntry &RHS) {
+      return LHS.getMnemonic() < RHS.getMnemonic();
+    }
+  };
+} // end anonymous namespace
+
+static const MatchEntry MatchTable0[] = {
+  { 0 /* ADD */, LC32::ADDr, Convert__Reg1_0__Reg1_1__Reg1_2, AMFBS_None, { MCK_GPR, MCK_GPR, MCK_GPR }, },
+  { 0 /* ADD */, LC32::ADDi, Convert__Reg1_0__Reg1_1__Imm51_2, AMFBS_None, { MCK_GPR, MCK_GPR, MCK_Imm5 }, },
+  { 4 /* AND */, LC32::ANDr, Convert__Reg1_0__Reg1_1__Reg1_2, AMFBS_None, { MCK_GPR, MCK_GPR, MCK_GPR }, },
+  { 4 /* AND */, LC32::ANDi, Convert__Reg1_0__Reg1_1__Imm51_2, AMFBS_None, { MCK_GPR, MCK_GPR, MCK_Imm5 }, },
+  { 8 /* NOT */, LC32::XORi, Convert__Reg1_0__Reg1_1__imm_95__MINUS_1, AMFBS_None, { MCK_GPR, MCK_GPR }, },
+  { 12 /* XOR */, LC32::XORr, Convert__Reg1_0__Reg1_1__Reg1_2, AMFBS_None, { MCK_GPR, MCK_GPR, MCK_GPR }, },
+  { 12 /* XOR */, LC32::XORi, Convert__Reg1_0__Reg1_1__Imm51_2, AMFBS_None, { MCK_GPR, MCK_GPR, MCK_Imm5 }, },
+};
+
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
+
+unsigned LC32AsmParser::
+MatchInstructionImpl(const OperandVector &Operands,
+                     MCInst &Inst,
+                     uint64_t &ErrorInfo,
+                     FeatureBitset &MissingFeatures,
+                     bool matchingInlineAsm, unsigned VariantID) {
+  // Eliminate obvious mismatches.
+  if (Operands.size() > 4) {
+    ErrorInfo = 4;
+    return Match_InvalidOperand;
+  }
+
+  // Get the current feature set.
+  const FeatureBitset &AvailableFeatures = getAvailableFeatures();
+
+  // Get the instruction mnemonic, which is the first token.
+  StringRef Mnemonic = ((LC32Operand &)*Operands[0]).getToken();
+
+  // Some state to try to produce better error messages.
+  bool HadMatchOtherThanFeatures = false;
+  bool HadMatchOtherThanPredicate = false;
+  unsigned RetCode = Match_InvalidOperand;
+  MissingFeatures.set();
+  // Set ErrorInfo to the operand that mismatches if it is
+  // wrong for all instances of the instruction.
+  ErrorInfo = ~0ULL;
+  // Find the appropriate table for this asm variant.
+  const MatchEntry *Start, *End;
+  switch (VariantID) {
+  default: llvm_unreachable("invalid variant!");
+  case 0: Start = std::begin(MatchTable0); End = std::end(MatchTable0); break;
+  }
+  // Search the table.
+  auto MnemonicRange = std::equal_range(Start, End, Mnemonic, LessOpcode());
+
+  DEBUG_WITH_TYPE("asm-matcher", dbgs() << "AsmMatcher: found " <<
+  std::distance(MnemonicRange.first, MnemonicRange.second) <<
+  " encodings with mnemonic '" << Mnemonic << "'\n");
+
+  // Return a more specific error code if no mnemonics match.
+  if (MnemonicRange.first == MnemonicRange.second)
+    return Match_MnemonicFail;
+
+  for (const MatchEntry *it = MnemonicRange.first, *ie = MnemonicRange.second;
+       it != ie; ++it) {
+    const FeatureBitset &RequiredFeatures = FeatureBitsets[it->RequiredFeaturesIdx];
+    bool HasRequiredFeatures =
+      (AvailableFeatures & RequiredFeatures) == RequiredFeatures;
+    DEBUG_WITH_TYPE("asm-matcher", dbgs() << "Trying to match opcode "
+                                          << MII.getName(it->Opcode) << "\n");
+    // equal_range guarantees that instruction mnemonic matches.
+    assert(Mnemonic == it->getMnemonic());
+    bool OperandsValid = true;
+    for (unsigned FormalIdx = 0, ActualIdx = 1; FormalIdx != 3; ++FormalIdx) {
+      auto Formal = static_cast<MatchClassKind>(it->Classes[FormalIdx]);
+      DEBUG_WITH_TYPE("asm-matcher",
+                      dbgs() << "  Matching formal operand class " << getMatchClassName(Formal)
+                             << " against actual operand at index " << ActualIdx);
+      if (ActualIdx < Operands.size())
+        DEBUG_WITH_TYPE("asm-matcher", dbgs() << " (";
+                        Operands[ActualIdx]->print(dbgs()); dbgs() << "): ");
+      else
+        DEBUG_WITH_TYPE("asm-matcher", dbgs() << ": ");
+      if (ActualIdx >= Operands.size()) {
+        DEBUG_WITH_TYPE("asm-matcher", dbgs() << "actual operand index out of range\n");
+        if (Formal == InvalidMatchClass) {
+          break;
+        }
+        if (isSubclass(Formal, OptionalMatchClass)) {
+          continue;
+        }
+        OperandsValid = false;
+        ErrorInfo = ActualIdx;
+        break;
+      }
+      MCParsedAsmOperand &Actual = *Operands[ActualIdx];
+      unsigned Diag = validateOperandClass(Actual, Formal);
+      if (Diag == Match_Success) {
+        DEBUG_WITH_TYPE("asm-matcher",
+                        dbgs() << "match success using generic matcher\n");
+        ++ActualIdx;
+        continue;
+      }
+      // If the generic handler indicates an invalid operand
+      // failure, check for a special case.
+      if (Diag != Match_Success) {
+        unsigned TargetDiag = validateTargetOperandClass(Actual, Formal);
+        if (TargetDiag == Match_Success) {
+          DEBUG_WITH_TYPE("asm-matcher",
+                          dbgs() << "match success using target matcher\n");
+          ++ActualIdx;
+          continue;
+        }
+        // If the target matcher returned a specific error code use
+        // that, else use the one from the generic matcher.
+        if (TargetDiag != Match_InvalidOperand && HasRequiredFeatures)
+          Diag = TargetDiag;
+      }
+      // If current formal operand wasn't matched and it is optional
+      // then try to match next formal operand
+      if (Diag == Match_InvalidOperand && isSubclass(Formal, OptionalMatchClass)) {
+        DEBUG_WITH_TYPE("asm-matcher", dbgs() << "ignoring optional operand\n");
+        continue;
+      }
+      // If this operand is broken for all of the instances of this
+      // mnemonic, keep track of it so we can report loc info.
+      // If we already had a match that only failed due to a
+      // target predicate, that diagnostic is preferred.
+      if (!HadMatchOtherThanPredicate &&
+          (it == MnemonicRange.first || ErrorInfo <= ActualIdx)) {
+        if (HasRequiredFeatures && (ErrorInfo != ActualIdx || Diag != Match_InvalidOperand))
+          RetCode = Diag;
+        ErrorInfo = ActualIdx;
+      }
+      // Otherwise, just reject this instance of the mnemonic.
+      OperandsValid = false;
+      break;
+    }
+
+    if (!OperandsValid) {
+      DEBUG_WITH_TYPE("asm-matcher", dbgs() << "Opcode result: multiple "
+                                               "operand mismatches, ignoring "
+                                               "this opcode\n");
+      continue;
+    }
+    if (!HasRequiredFeatures) {
+      HadMatchOtherThanFeatures = true;
+      FeatureBitset NewMissingFeatures = RequiredFeatures & ~AvailableFeatures;
+      DEBUG_WITH_TYPE("asm-matcher", dbgs() << "Missing target features:";
+                      for (unsigned I = 0, E = NewMissingFeatures.size(); I != E; ++I)
+                        if (NewMissingFeatures[I])
+                          dbgs() << ' ' << I;
+                      dbgs() << "\n");
+      if (NewMissingFeatures.count() <=
+          MissingFeatures.count())
+        MissingFeatures = NewMissingFeatures;
+      continue;
+    }
+
+    Inst.clear();
+
+    Inst.setOpcode(it->Opcode);
+    // We have a potential match but have not rendered the operands.
+    // Check the target predicate to handle any context sensitive
+    // constraints.
+    // For example, Ties that are referenced multiple times must be
+    // checked here to ensure the input is the same for each match
+    // constraints. If we leave it any later the ties will have been
+    // canonicalized
+    unsigned MatchResult;
+    if ((MatchResult = checkEarlyTargetMatchPredicate(Inst, Operands)) != Match_Success) {
+      Inst.clear();
+      DEBUG_WITH_TYPE(
+          "asm-matcher",
+          dbgs() << "Early target match predicate failed with diag code "
+                 << MatchResult << "\n");
+      RetCode = MatchResult;
+      HadMatchOtherThanPredicate = true;
+      continue;
+    }
+
+    if (matchingInlineAsm) {
+      convertToMapAndConstraints(it->ConvertFn, Operands);
+      if (!checkAsmTiedOperandConstraints(*this, it->ConvertFn, Operands, ErrorInfo))
+        return Match_InvalidTiedOperand;
+
+      return Match_Success;
+    }
+
+    // We have selected a definite instruction, convert the parsed
+    // operands into the appropriate MCInst.
+    convertToMCInst(it->ConvertFn, Inst, it->Opcode, Operands);
+
+    // We have a potential match. Check the target predicate to
+    // handle any context sensitive constraints.
+    if ((MatchResult = checkTargetMatchPredicate(Inst)) != Match_Success) {
+      DEBUG_WITH_TYPE("asm-matcher",
+                      dbgs() << "Target match predicate failed with diag code "
+                             << MatchResult << "\n");
+      Inst.clear();
+      RetCode = MatchResult;
+      HadMatchOtherThanPredicate = true;
+      continue;
+    }
+
+    if (!checkAsmTiedOperandConstraints(*this, it->ConvertFn, Operands, ErrorInfo))
+      return Match_InvalidTiedOperand;
+
+    DEBUG_WITH_TYPE(
+        "asm-matcher",
+        dbgs() << "Opcode result: complete match, selecting this opcode\n");
+    return Match_Success;
+  }
+
+  // Okay, we had no match.  Try to return a useful error code.
+  if (HadMatchOtherThanPredicate || !HadMatchOtherThanFeatures)
+    return RetCode;
+
+  ErrorInfo = 0;
+  return Match_MissingFeature;
+}
+
+#endif // GET_MATCHER_IMPLEMENTATION
+
+
+#ifdef GET_MNEMONIC_SPELL_CHECKER
+#undef GET_MNEMONIC_SPELL_CHECKER
+
+static std::string LC32MnemonicSpellCheck(StringRef S, const FeatureBitset &FBS, unsigned VariantID) {
+  const unsigned MaxEditDist = 2;
+  std::vector<StringRef> Candidates;
+  StringRef Prev = "";
+
+  // Find the appropriate table for this asm variant.
+  const MatchEntry *Start, *End;
+  switch (VariantID) {
+  default: llvm_unreachable("invalid variant!");
+  case 0: Start = std::begin(MatchTable0); End = std::end(MatchTable0); break;
+  }
+
+  for (auto I = Start; I < End; I++) {
+    // Ignore unsupported instructions.
+    const FeatureBitset &RequiredFeatures = FeatureBitsets[I->RequiredFeaturesIdx];
+    if ((FBS & RequiredFeatures) != RequiredFeatures)
+      continue;
+
+    StringRef T = I->getMnemonic();
+    // Avoid recomputing the edit distance for the same string.
+    if (T.equals(Prev))
+      continue;
+
+    Prev = T;
+    unsigned Dist = S.edit_distance(T, false, MaxEditDist);
+    if (Dist <= MaxEditDist)
+      Candidates.push_back(T);
+  }
+
+  if (Candidates.empty())
+    return "";
+
+  std::string Res = ", did you mean: ";
+  unsigned i = 0;
+  for (; i < Candidates.size() - 1; i++)
+    Res += Candidates[i].str() + ", ";
+  return Res + Candidates[i].str() + "?";
+}
+
+#endif // GET_MNEMONIC_SPELL_CHECKER
+
+
+#ifdef GET_MNEMONIC_CHECKER
+#undef GET_MNEMONIC_CHECKER
+
+static bool LC32CheckMnemonic(StringRef Mnemonic,
+                                const FeatureBitset &AvailableFeatures,
+                                unsigned VariantID) {
+  // Find the appropriate table for this asm variant.
+  const MatchEntry *Start, *End;
+  switch (VariantID) {
+  default: llvm_unreachable("invalid variant!");
+  case 0: Start = std::begin(MatchTable0); End = std::end(MatchTable0); break;
+  }
+
+  // Search the table.
+  auto MnemonicRange = std::equal_range(Start, End, Mnemonic, LessOpcode());
+
+  if (MnemonicRange.first == MnemonicRange.second)
+    return false;
+
+  for (const MatchEntry *it = MnemonicRange.first, *ie = MnemonicRange.second;
+       it != ie; ++it) {
+    const FeatureBitset &RequiredFeatures =
+      FeatureBitsets[it->RequiredFeaturesIdx];
+    if ((AvailableFeatures & RequiredFeatures) == RequiredFeatures)
+      return true;
+  }
+  return false;
+}
+
+#endif // GET_MNEMONIC_CHECKER
+

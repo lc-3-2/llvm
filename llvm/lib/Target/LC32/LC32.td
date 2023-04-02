@@ -16,7 +16,11 @@ include "td/LC32RegisterInfo.td"
 include "td/LC32InstrInfo.td"
 include "td/LC32Schedule.td"
 
+include "td/LC32AsmParser.td"
+
 def LC32 : Target {
   // Defined in: td/LC32InstrInfo.td
   let InstructionSet = LC32InstrInfo;
+  // Defined in: td/LC32AsmParser.td
+  let AssemblyParsers = [LC32AsmParser];
 }
