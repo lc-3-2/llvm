@@ -1,21 +1,32 @@
-//===- LC32AsmParser.h - Assembly Operands for LC-3.2 ---------------------===//
+//===- LC32Operand.h - Assembly Operands for LC-3.2 -----------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
+// This file defines an abstract superclass for all the MCParsedAsmOperands used
+// by the LC-3.2. Usually, this is defined as a single class in the
+// AsmParser.cpp file, using enums and unions to discriminate between the types.
+//
+// This file also defines the type of a function that parses to operands. These
+// should be registered in the OPERAND_PARSERS array in LC32AsmParserImpl.cpp.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIB_TARGET_LC32_ASMPARSER_LC32OPERAND_H
 #define LLVM_LIB_TARGET_LC32_ASMPARSER_LC32OPERAND_H
 
-#define DEBUG_TYPE "LC32AsmParser"
-
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/MC/MCParser/MCTargetAsmParser.h"
+#include "llvm/Support/ErrorHandling.h"
+#define DEBUG_TYPE "LC32AsmParser"
 
 // Usually, the contents of this file are in an anonymous namespace. I'll put
 // them in a namespace for the LC-3.2
-namespace llvm::LC32 {
+namespace llvm::lc32 {
 
 class LC32Operand : public MCParsedAsmOperand {
 public:
@@ -66,7 +77,16 @@ private:
   SMLoc end;
 };
 
-} // namespace llvm::LC32
+class LC32AsmParser;
+/**
+ * \param [in]  t reference to the calling LC32AsmParser
+ * \param [out] op the parsed operand
+ * \return result of the parse
+ */
+typedef OperandMatchResultTy operand_parser_t(LC32AsmParser &t,
+                                              std::unique_ptr<LC32Operand> &op);
+
+} // namespace llvm::lc32
 
 #undef DEBUG_TYPE
 

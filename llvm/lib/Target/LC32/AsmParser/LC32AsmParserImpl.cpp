@@ -9,6 +9,8 @@
 #include "LC32AsmParser.h"
 #include "LC32Operand.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
+#include "operand/LC32OperandReg.h"
+#include "operand/LC32OperandToken.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
@@ -16,8 +18,9 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
+#include <optional>
 using namespace llvm;
-using namespace llvm::LC32;
+using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32AsmParser"
 
 // Provides: ComputeAvailableFeatures
@@ -27,10 +30,11 @@ using namespace llvm::LC32;
 #define GET_MNEMONIC_SPELL_CHECKER
 #include "LC32GenAsmMatcher.inc"
 
-void LC32Operand::anchor() {}
+const std::vector<std::function<operand_parser_t>> OPERAND_PARSERS = {
+    OPERAND_PARSER_REG,
+};
 
-MCAsmParser &LC32AsmParser::getParser() const { return this->Parser; }
-MCAsmLexer &LC32AsmParser::getLexer() const { return this->Parser.getLexer(); }
+void LC32Operand::anchor() {}
 
 LC32AsmParser::LC32AsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
                              const MCInstrInfo &MII,
@@ -41,6 +45,9 @@ LC32AsmParser::LC32AsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
   this->setAvailableFeatures(
       this->ComputeAvailableFeatures(STI.getFeatureBits()));
 }
+
+MCAsmParser &LC32AsmParser::getParser() const { return this->Parser; }
+MCAsmLexer &LC32AsmParser::getLexer() const { return this->Parser.getLexer(); }
 
 OperandMatchResultTy LC32AsmParser::tryParseRegister(MCRegister &Reg,
                                                      SMLoc &StartLoc,
@@ -67,6 +74,7 @@ OperandMatchResultTy LC32AsmParser::tryParseRegister(MCRegister &Reg,
   Reg = regno;
   StartLoc = name_tok.getLoc();
   EndLoc = name_tok.getEndLoc();
+  this->getLexer().Lex();
   return MatchOperand_Success;
 }
 
@@ -85,14 +93,63 @@ bool LC32AsmParser::parseRegister(MCRegister &Reg, SMLoc &StartLoc,
   llvm_unreachable("Invalid OperandMatchResultTy");
 }
 
-bool LC32AsmParser::ParseDirective(AsmToken DirectiveID) {
-  return true;
-}
+bool LC32AsmParser::ParseDirective(AsmToken DirectiveID) { return true; }
 
 bool LC32AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                      SMLoc NameLoc, OperandVector &Operands) {
-  // TODO: Implement
-  return this->Error(NameLoc, "Unimplemented");
+  // Mnemonics ignore case, so convert to lower
+  std::string mnemonic = Name.lower();
+
+  // Check that the mnemonic is correct
+  if (!LC32CheckMnemonic(mnemonic, this->getAvailableFeatures(), 0)) {
+    return this->Error(
+        NameLoc,
+        "invalid mnemonic" +
+            LC32MnemonicSpellCheck(mnemonic, this->getAvailableFeatures(), 0));
+  }
+  // Otherwise, add
+  Operands.push_back(std::make_unique<LC32OperandToken>(mnemonic, NameLoc));
+
+  // Parse all the operands
+  bool first_operand = true;
+  while (!this->getLexer().is(AsmToken::EndOfStatement)) {
+    // If this is not the first operand, expect and consume a comma
+    if (!first_operand) {
+      if (!this->getLexer().is(AsmToken::Comma)) {
+        return this->Error(this->getLexer().getLoc(), "expected comma");
+      }
+      this->getLexer().Lex();
+    }
+
+    // Try to parse using all the parsers
+    bool success = false;
+    for (auto parser : OPERAND_PARSERS) {
+      std::unique_ptr<LC32Operand> op;
+      auto r = parser(*this, op);
+      // If the parse didn't work, either die or try the next one
+      if (r == MatchOperand_ParseFail) {
+        success = false;
+        break;
+      } else if (r == MatchOperand_NoMatch) {
+        continue;
+      }
+      // Otherwise, add
+      // Also go to the next operand
+      Operands.push_back(std::move(op));
+      success = true;
+      break;
+    }
+
+    // Check for success and die if not
+    if (!success)
+      return this->Error(this->getLexer().getLoc(), "could not parse operand");
+
+    // Move on
+    // Remember to set whether this is the first operand
+    first_operand = false;
+  }
+
+  return false;
 }
 
 bool LC32AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
