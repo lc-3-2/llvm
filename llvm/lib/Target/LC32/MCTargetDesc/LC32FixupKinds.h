@@ -19,7 +19,7 @@
 #include "llvm/MC/MCFixup.h"
 
 // I'll put this in a namespace for the LC-3.2
-namespace llvm::LC32 {
+namespace llvm::lc32 {
 
 enum Fixups {
 

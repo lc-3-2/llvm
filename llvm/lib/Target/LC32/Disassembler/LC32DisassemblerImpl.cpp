@@ -13,7 +13,7 @@
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
-using namespace llvm::LC32;
+using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32Disassembler"
 
 // So we don't have to keep typing the long name

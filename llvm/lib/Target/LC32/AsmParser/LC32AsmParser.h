@@ -17,20 +17,14 @@
 
 // Usually, the contents of this file are in an anonymous namespace. I'll put
 // them in a namespace for the LC-3.2
-namespace llvm::LC32 {
+namespace llvm::lc32 {
 
 class LC32AsmParser : public MCTargetAsmParser {
 public:
   LC32AsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
                 const MCInstrInfo &MII, const MCTargetOptions &Options);
 
-private:
-  // The parser very useful for this class, so keep it
-  MCAsmParser &Parser;
-  // These variables are also used by some methods, so keep them around
-  const MCSubtargetInfo &STI;
-
-  // Useful methods
+  // Useful methods, both for us and for other classes that parse operands
   MCAsmParser &getParser() const;
   MCAsmLexer &getLexer() const;
 
@@ -38,6 +32,15 @@ private:
   // Needed to make class concrete
   OperandMatchResultTy tryParseRegister(MCRegister &Reg, SMLoc &StartLoc,
                                         SMLoc &EndLoc) override;
+
+private:
+  // The parser very useful for this class, so keep it
+  MCAsmParser &Parser;
+  // These variables are also used by some methods, so keep them around
+  const MCSubtargetInfo &STI;
+
+  // Register parsing
+  // Needed to make class concrete
   bool parseRegister(MCRegister &Reg, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
   // Instruction parsing and matching
@@ -55,6 +58,6 @@ private:
 #include "LC32GenAsmMatcher.inc"
 };
 
-} // namespace llvm::LC32
+} // namespace llvm::lc32
 
 #endif // LLVM_LIB_TARGET_LC32_ASMPARSER_LC32ASMPARSER_H

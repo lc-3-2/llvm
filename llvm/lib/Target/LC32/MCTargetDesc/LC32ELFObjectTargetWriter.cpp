@@ -9,7 +9,7 @@
 #include "LC32ELFObjectTargetWriter.h"
 #include "LC32FixupKinds.h"
 using namespace llvm;
-using namespace llvm::LC32;
+using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32ELFObjectTargetWriter"
 
 LC32ELFObjectTargetWriter::LC32ELFObjectTargetWriter(uint8_t OSABI)

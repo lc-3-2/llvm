@@ -16,7 +16,7 @@
 #include "TargetInfo/LC32TargetInfo.h"
 #include "llvm/MC/TargetRegistry.h"
 using namespace llvm;
-using namespace llvm::LC32;
+using namespace llvm::lc32;
 #define DEBUG_TYPE "Disassembler"
 
 static MCDisassembler *createLC32Disassembler(const Target &T,
