@@ -14,18 +14,17 @@ using namespace llvm;
 using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32AsmParser"
 
-LC32OperandRegister::LC32OperandRegister(unsigned Number, SMLoc StartLoc,
-                                         SMLoc EndLoc)
+LC32OperandReg::LC32OperandReg(unsigned Number, SMLoc StartLoc, SMLoc EndLoc)
     : LC32Operand(StartLoc, EndLoc), Number(Number) {}
 
-void LC32OperandRegister::print(raw_ostream &OS) const {
-  OS << "LC32OperandRegister " << this->Number;
+void LC32OperandReg::print(raw_ostream &OS) const {
+  OS << "LC32OperandReg " << this->Number;
 }
 
-bool LC32OperandRegister::isReg() const { return true; }
-unsigned LC32OperandRegister::getReg() const { return this->Number; }
+bool LC32OperandReg::isReg() const { return true; }
+unsigned LC32OperandReg::getReg() const { return this->Number; }
 
-void LC32OperandRegister::addRegOperands(MCInst &Inst, unsigned N) {
+void LC32OperandReg::addRegOperands(MCInst &Inst, unsigned N) {
   assert(N == 1 && "Invalid number of operands!");
   Inst.addOperand(MCOperand::createReg(this->Number));
 }
@@ -40,7 +39,7 @@ llvm::lc32::OPERAND_PARSER_REG(LC32AsmParser &t,
   auto ret = t.tryParseRegister(n, stt, end);
   // Try to construct
   if (ret == MatchOperand_Success) {
-    op = std::make_unique<LC32OperandRegister>(n, stt, end);
+    op = std::make_unique<LC32OperandReg>(n, stt, end);
   }
   // Return
   return ret;

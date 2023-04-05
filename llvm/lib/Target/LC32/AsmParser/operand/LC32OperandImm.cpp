@@ -1,0 +1,69 @@
+//===- LC32OperandImm.cpp - Immediate Operand for LC-3.2 ------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+
+#include "operand/LC32OperandImm.h"
+#include "LC32AsmParser.h"
+#include "llvm/MC/MCParser/MCAsmLexer.h"
+#include "llvm/Support/raw_ostream.h"
+using namespace llvm;
+using namespace llvm::lc32;
+#define DEBUG_TYPE "LC32AsmParser"
+
+LC32OperandImm::LC32OperandImm(int64_t Value, SMLoc StartLoc, SMLoc EndLoc)
+    : LC32Operand(StartLoc, EndLoc), Value(Value) {}
+
+void LC32OperandImm::print(raw_ostream &OS) const {
+  OS << "LC32OperandImm " << this->Value;
+}
+
+bool LC32OperandImm::isImm() const { return true; }
+bool LC32OperandImm::isImm5() const { return isInt<5>(this->Value); }
+
+void LC32OperandImm::addImm5Operands(MCInst &Inst, unsigned N) {
+  assert(N == 1 && "Invalid number of operands!");
+  Inst.addOperand(MCOperand::createImm(this->Value));
+}
+
+OperandMatchResultTy
+llvm::lc32::OPERAND_PARSER_IMM(LC32AsmParser &t,
+                               std::unique_ptr<LC32Operand> &op) {
+
+  // Remember the starting location
+  SMLoc stt = t.getLexer().getLoc();
+
+  // If the next token is a hash, we're committed
+  bool committed = false;
+  if (t.getLexer().is(AsmToken::Hash)) {
+    committed = true;
+    t.getLexer().Lex();
+  }
+
+  // Parse the sign
+  // If there is a sign, it commits us too
+  int64_t sign = 1;
+  if (t.getLexer().is(AsmToken::Minus)) {
+    sign = -1;
+    committed = true;
+    t.getLexer().Lex();
+  }
+
+  // Parse integers
+  if (t.getLexer().is(AsmToken::Integer)) {
+    // Parse the value
+    // Remember to track the end location
+    int64_t val = sign * t.getLexer().getTok().getIntVal();
+    SMLoc end = t.getLexer().getTok().getEndLoc();
+    t.getLexer().Lex();
+    // Create and return
+    op = std::make_unique<LC32OperandImm>(val, stt, end);
+    return MatchOperand_Success;
+  }
+
+  // We failed, so die
+  return committed ? MatchOperand_ParseFail : MatchOperand_NoMatch;
+}
