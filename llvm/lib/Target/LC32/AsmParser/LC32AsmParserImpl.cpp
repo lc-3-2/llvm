@@ -9,6 +9,7 @@
 #include "LC32AsmParser.h"
 #include "LC32Operand.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
+#include "operand/LC32OperandImm.h"
 #include "operand/LC32OperandReg.h"
 #include "operand/LC32OperandToken.h"
 #include "llvm/MC/MCInst.h"
@@ -18,6 +19,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
+#include <memory>
 #include <optional>
 using namespace llvm;
 using namespace llvm::lc32;
@@ -32,6 +34,7 @@ using namespace llvm::lc32;
 
 const std::vector<std::function<operand_parser_t>> OPERAND_PARSERS = {
     OPERAND_PARSER_REG,
+    OPERAND_PARSER_IMM,
 };
 
 void LC32Operand::anchor() {}
@@ -181,8 +184,9 @@ bool LC32AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       return this->Error(IDLoc, "bad operand value");
     if (ErrorInfo >= Operands.size())
       return this->Error(IDLoc, "too many operands");
-    return this->Error(((const LC32Operand &)Operands[ErrorInfo]).getStartLoc(),
-                       "bad operand value");
+    return this->Error(
+        static_cast<LC32Operand &>(*Operands[ErrorInfo]).getStartLoc(),
+        "bad operand value");
 
   // If all else fails, return a generic failure
   default:

@@ -22,9 +22,9 @@
 // them in a namespace for the LC-3.2
 namespace llvm::lc32 {
 
-class LC32OperandRegister : public LC32Operand {
+class LC32OperandReg : public LC32Operand {
 public:
-  LC32OperandRegister(unsigned Number, SMLoc StartLoc, SMLoc EndLoc);
+  LC32OperandReg(unsigned Number, SMLoc StartLoc, SMLoc EndLoc);
   void print(raw_ostream &OS) const override;
 
   bool isReg() const override;
