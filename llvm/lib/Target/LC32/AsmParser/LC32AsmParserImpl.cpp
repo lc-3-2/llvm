@@ -72,7 +72,7 @@ OperandMatchResultTy LC32AsmParser::tryParseRegister(MCRegister &Reg,
 
   // If we still don't have a register, die
   if (regno == LC32::NoRegister)
-    return MatchOperand_ParseFail;
+    return MatchOperand_NoMatch;
   // Otherwise, set the location and succeed
   Reg = regno;
   StartLoc = name_tok.getLoc();
@@ -91,7 +91,7 @@ bool LC32AsmParser::parseRegister(MCRegister &Reg, SMLoc &StartLoc,
   case MatchOperand_ParseFail:
     return this->Error(this->getLexer().getLoc(), "invalid register name");
   case MatchOperand_NoMatch:
-    return this->Error(this->getLexer().getLoc(), "expected a name");
+    return this->Error(this->getLexer().getLoc(), "expected a register name");
   }
   llvm_unreachable("Invalid OperandMatchResultTy");
 }
