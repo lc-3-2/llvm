@@ -53,6 +53,8 @@ llvm::lc32::OPERAND_PARSER_IMM(LC32AsmParser &t,
   }
 
   // Parse integers
+  // Special case for hex integers
+  // They're parsed as identifiers, so we have to parse them ourselves
   if (t.getLexer().is(AsmToken::Integer)) {
     // Parse the value
     // Remember to track the end location
@@ -62,6 +64,43 @@ llvm::lc32::OPERAND_PARSER_IMM(LC32AsmParser &t,
     // Create and return
     op = std::make_unique<LC32OperandImm>(val, stt, end);
     return MatchOperand_Success;
+
+  } else if (t.getLexer().is(AsmToken::Identifier)) {
+    // Check that it starts with an x
+    StringRef id = t.getLexer().getTok().getIdentifier();
+    if (id.startswith("x") || id.startswith("X")) {
+      // It should have at least one digit after it
+      if (id.size() < 2)
+        return MatchOperand_ParseFail;
+      // Parse the rest of the digits
+      int64_t val = 0;
+      for (size_t i = 1; i < id.size(); i++) {
+        // If too long, die
+        if (i > 8)
+          return MatchOperand_ParseFail;
+        // Convert the current character
+        char c = id[i];
+        int64_t c_val;
+        if ('0' <= c && c <= '9')
+          c_val = c - '0';
+        else if ('A' <= c && c <= 'F')
+          c_val = c - 'A' + 10;
+        else if ('a' <= c && c <= 'f')
+          c_val = c - 'a' + 10;
+        else
+          return MatchOperand_ParseFail;
+        // Add to the value
+        val <<= 4;
+        val += c_val;
+      }
+      // Handle sign
+      val *= sign;
+      // Same as with normal integers
+      SMLoc end = t.getLexer().getTok().getEndLoc();
+      t.getLexer().Lex();
+      op = std::make_unique<LC32OperandImm>(val, stt, end);
+      return MatchOperand_Success;
+    }
   }
 
   // We failed, so die
