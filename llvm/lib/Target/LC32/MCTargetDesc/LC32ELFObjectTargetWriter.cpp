@@ -28,7 +28,3 @@ unsigned LC32ELFObjectTargetWriter::getRelocType(MCContext &Ctx,
   // If there's no corresponding relocation, die
   llvm_unreachable("No relocation for fixup");
 }
-
-std::unique_ptr<MCObjectTargetWriter> createLC32ELFObjectWriter(uint8_t OSABI) {
-  return std::make_unique<LC32ELFObjectTargetWriter>(OSABI);
-}
