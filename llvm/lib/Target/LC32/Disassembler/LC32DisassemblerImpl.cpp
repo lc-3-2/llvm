@@ -22,6 +22,12 @@ typedef MCDisassembler::DecodeStatus DecodeStatus;
 LC32Disassembler::LC32Disassembler(const MCSubtargetInfo &STI, MCContext &Ctx)
     : MCDisassembler(STI, Ctx) {}
 
+uint64_t LC32Disassembler::suggestBytesToSkip(ArrayRef<uint8_t> Bytes,
+                                              uint64_t Address) const {
+  // Instructions are two byte aligned
+  return 2;
+}
+
 static DecodeStatus DecodeGPRRegisterClass(MCInst &MI, uint64_t RegNo,
                                            uint64_t Address,
                                            const MCDisassembler *Decoder) {
@@ -51,6 +57,9 @@ DecodeStatus LC32Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                               ArrayRef<uint8_t> Bytes,
                                               uint64_t Address,
                                               raw_ostream &CStream) const {
+  // Size is an out parameter
+  Size = 0;
+
   // Smallest instruction is two bytes
   // Can't do less than that
   if (Bytes.size() < 2)
@@ -58,6 +67,7 @@ DecodeStatus LC32Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
   // Normal instruction
   // Read the next two bytes and decode with TableGen
+  Size = 2;
   uint16_t instr = support::endian::read16le(Bytes.data());
   return decodeInstruction(DecoderTable16, MI, instr, Address, this, this->STI);
 }

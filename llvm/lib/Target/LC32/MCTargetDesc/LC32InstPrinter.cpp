@@ -11,6 +11,8 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/MathExtras.h"
+#include <cassert>
 using namespace llvm;
 #define DEBUG_TYPE "LC32MCInstPrinter"
 
@@ -70,14 +72,15 @@ void LC32InstPrinter::printShiftedSignedImmOperand(const MCInst *MI,
                                                    const char *Modifier) {
   // Get the operand
   const MCOperand &op = MI->getOperand(OpNo);
-
+  // Check operand has the right form
+  // Check operand has the right form
+  // Get around commas breaking assert
+  {
+    assert(op.isImm() && "Not an immediate");
+    bool is_correct = isShiftedInt<N, S>(op.getImm());
+    assert(is_correct && "Bad value for immediate");
+  }
   // Handle immediate shifting
   // Prefix them with a #
-  if (op.isImm()) {
-    O << '#' << (op.getImm() >> S);
-    return;
-  }
-
-  // Otherwise, just use the normal method
-  this->printOperand(MI, OpNo, O, Modifier);
+  O << '#' << (op.getImm() >> S);
 }

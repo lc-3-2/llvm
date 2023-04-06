@@ -27,9 +27,13 @@ class LC32Disassembler : public MCDisassembler {
 public:
   LC32Disassembler(const MCSubtargetInfo &STI, MCContext &Ctx);
 
+  // Instructions are two byte aligned
+  uint64_t suggestBytesToSkip(ArrayRef<uint8_t> Bytes,
+                              uint64_t Address) const override;
+
   // Decode a single instruction from bytes
-  // This function calls into TableGen, but that assumes the size is known. This
-  // instruction determines the size before calling.
+  // This function calls into TableGen, but that assumes the size is known.
+  // This instruction determines the size before calling.
   DecodeStatus getInstruction(MCInst &MI, uint64_t &Size,
                               ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &CStream) const override;

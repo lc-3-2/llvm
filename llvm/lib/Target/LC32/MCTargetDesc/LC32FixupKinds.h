@@ -21,6 +21,7 @@
 // I'll put this in a namespace for the LC-3.2
 namespace llvm::lc32 {
 
+// Must match LC32AsmBackend.cpp
 enum Fixups {
 
   // Word fixup
