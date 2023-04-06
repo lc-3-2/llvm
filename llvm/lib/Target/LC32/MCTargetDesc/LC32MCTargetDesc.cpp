@@ -7,9 +7,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "LC32MCTargetDesc.h"
-#include "LC32MCAsmInfo.h"
+#include "LC32AsmBackend.h"
 #include "LC32InstPrinter.h"
+#include "LC32MCAsmInfo.h"
 #include "TargetInfo/LC32TargetInfo.h"
+#include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -42,10 +44,10 @@ static MCRegisterInfo *createLC32MCRegisterInfo(const Triple & /*TT*/) {
 }
 
 static MCInstPrinter *createLC32InstPrinter(const Triple &T,
-                                              unsigned SyntaxVariant,
-                                              const MCAsmInfo &MAI,
-                                              const MCInstrInfo &MII,
-                                              const MCRegisterInfo &MRI) {
+                                            unsigned SyntaxVariant,
+                                            const MCAsmInfo &MAI,
+                                            const MCInstrInfo &MII,
+                                            const MCRegisterInfo &MRI) {
   // We only have one syntax variant
   // Don't return the printer if we get anything else
   if (SyntaxVariant == 0)
@@ -61,6 +63,13 @@ static MCSubtargetInfo *createLC32MCSubtargetInfo(const Triple &TT,
   //
   // See: llvm/lib/MC/MCSubtargetInfo.cpp
   return createLC32MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
+}
+
+static MCAsmBackend *createLC32AsmBackend(const Target &T,
+                                          const MCSubtargetInfo &STI,
+                                          const MCRegisterInfo &MRI,
+                                          const MCTargetOptions &Options) {
+  return new LC32AsmBackend(STI, ELF::ELFOSABI_STANDALONE);
 }
 
 static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
@@ -85,5 +94,6 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32TargetMC() {
   TargetRegistry::RegisterMCInstrInfo(T, createLC32MCInstrInfo);
   TargetRegistry::RegisterMCSubtargetInfo(T, createLC32MCSubtargetInfo);
   TargetRegistry::RegisterMCInstPrinter(T, createLC32InstPrinter);
+  TargetRegistry::RegisterMCAsmBackend(T, createLC32AsmBackend);
   TargetRegistry::RegisterELFStreamer(T, createMCStreamer);
 }

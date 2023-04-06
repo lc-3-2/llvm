@@ -25,9 +25,6 @@ public:
                         const MCFixup &Fixup, bool IsPCRel) const override;
 };
 
-// Called by `LC32MCAsmBackend`
-std::unique_ptr<MCObjectTargetWriter> createLC32ELFObjectWriter(uint8_t OSABI);
-
 } // namespace llvm
 
 #endif // LLVM_LIB_TARGET_LC32_MCTARGETDESC_LC32ELFOBJECTTARGETWRITER_H
