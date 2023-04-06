@@ -14,6 +14,7 @@
 // Some properties are useful for custom encoding and decoding of instructions.
 // Specifically:
 // * PrintMethod   for InstPrinter
+// * EncoderMehtod for MCCodeEmitter
 // * DecoderMethod for Disassembler
 //
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
@@ -27,9 +28,10 @@ def Imm5OperandClass : AsmOperandClass {
   let Name = "Imm5";
 }
 
-def Imm5 : Operand<i32>, ImmLeaf<i32, [{ return isInt<5>(Imm); }]> {
+def Imm5 : Operand<i32>, ImmLeaf<i32, [{ return isShiftedInt<5,0>(Imm); }]> {
   let OperandType = "OPERAND_IMMEDIATE";
   let ParserMatchClass = Imm5OperandClass;
   let PrintMethod = "printShiftedSignedImmOperand<5,0>";
+  let EncoderMethod = "getShiftedSignedImmOpValue<5,0>";
   let DecoderMethod = "DecodeShiftedSignedImm<5,0>";
 }

@@ -55,12 +55,12 @@ public:
 
   // Query methods
   // Needed by TableGen, and specified in the TableGen files. Also, these can't
-  // be made into a template because it's a member function.
+  // be made into a template because it's virtual.
   virtual bool isImm5() const { return false; }
 
   // Render methods
   // Needed by TableGen, and specified in the TableGen files. Also, these can't
-  // be made into a template because it's a member function.
+  // be made into a template because it's virtual.
   virtual void addRegOperands(MCInst &Inst, unsigned N) {
     llvm_unreachable("Bad type");
   }

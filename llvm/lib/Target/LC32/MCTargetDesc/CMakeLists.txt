@@ -4,6 +4,7 @@ add_llvm_component_library(LLVMLC32Desc
   LC32InstPrinter.cpp
   LC32AsmBackend.cpp
   LC32ELFObjectTargetWriter.cpp
+  LC32MCCodeEmitter.cpp
 
   LINK_COMPONENTS
   MC

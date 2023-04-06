@@ -10,6 +10,7 @@
 #include "LC32AsmBackend.h"
 #include "LC32InstPrinter.h"
 #include "LC32MCAsmInfo.h"
+#include "LC32MCCodeEmitter.h"
 #include "TargetInfo/LC32TargetInfo.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -72,6 +73,11 @@ static MCAsmBackend *createLC32AsmBackend(const Target &T,
   return new LC32AsmBackend(STI, ELF::ELFOSABI_STANDALONE);
 }
 
+static MCCodeEmitter *createLC32MCCodeEmitter(const MCInstrInfo &MCII,
+                                              MCContext &Ctx) {
+  return new LC32MCCodeEmitter(Ctx, MCII);
+}
+
 static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
                                     std::unique_ptr<MCAsmBackend> &&MAB,
                                     std::unique_ptr<MCObjectWriter> &&OW,
@@ -95,5 +101,6 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32TargetMC() {
   TargetRegistry::RegisterMCSubtargetInfo(T, createLC32MCSubtargetInfo);
   TargetRegistry::RegisterMCInstPrinter(T, createLC32InstPrinter);
   TargetRegistry::RegisterMCAsmBackend(T, createLC32AsmBackend);
+  TargetRegistry::RegisterMCCodeEmitter(T, createLC32MCCodeEmitter);
   TargetRegistry::RegisterELFStreamer(T, createMCStreamer);
 }
