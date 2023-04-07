@@ -11,9 +11,6 @@
 // the semantics for instruction selection. This is usually the most complicated
 // part of the tablegen, so here it's broken up into multiple files.
 //
-// It's worth commenting on the CodeSize attribute. It seems to be the cost of
-// using an instruction. I set it to the number of cycles it takes to execute.
-//
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
 //
 //===----------------------------------------------------------------------===//
