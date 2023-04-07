@@ -28,14 +28,15 @@ LC32MCAsmInfo::LC32MCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
   this->UseDotAlignForAlignment = true;
 
   // Directive aliases
-  this->ZeroDirective = "\t.BLKB\t";
+  this->ZeroDirective = "\t.blkb\t";
   this->ZeroDirectiveSupportsNonZeroValue = false;
-  this->AsciiDirective = "\t.STRING\t";
-  this->AscizDirective = "\t.STRINGZ\t";
-  this->Data8bitsDirective = "\t.FILLB\t";
-  this->Data16bitsDirective = "\t.FILLH\t";
-  this->Data32bitsDirective = "\t.FILLW\t";
-  this->Data64bitsDirective = "\t.FILLQ\t";
+  this->AsciiDirective = "\t.string\t";
+  this->AscizDirective = "\t.stringz\t";
+  this->GlobalDirective = "\t.global\t";
+  this->Data8bitsDirective = "\t.fillb\t";
+  this->Data16bitsDirective = "\t.fillh\t";
+  this->Data32bitsDirective = "\t.fillw\t";
+  this->Data64bitsDirective = "\t.fillq\t";
 
   // Emit debug information
   this->SupportsDebugInformation = true;

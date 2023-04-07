@@ -12,6 +12,7 @@
 #include "operand/LC32OperandImm.h"
 #include "operand/LC32OperandReg.h"
 #include "operand/LC32OperandToken.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
@@ -47,6 +48,19 @@ LC32AsmParser::LC32AsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
   // We don't have any, but TableGen (and other modules) still query it
   this->setAvailableFeatures(
       this->ComputeAvailableFeatures(STI.getFeatureBits()));
+
+  // Add directive aliases
+  // These all get converted to lowercase. Also, we destroy the .string
+  // directive, and we don't handle .blkx as an alias.
+  // See: MC/MCParser/AsmParser.cpp
+  this->getParser().addAliasForDirective(".external", ".extern");
+  this->getParser().addAliasForDirective(".fillb", ".byte");
+  this->getParser().addAliasForDirective(".fillh", ".short");
+  this->getParser().addAliasForDirective(".fillw", ".int");
+  this->getParser().addAliasForDirective(".fillq", ".quad");
+  this->getParser().addAliasForDirective(".blk", ".fill");
+  this->getParser().addAliasForDirective(".string", ".ascii");
+  this->getParser().addAliasForDirective(".stringz", ".asciz");
 }
 
 MCAsmParser &LC32AsmParser::getParser() const { return this->Parser; }
@@ -96,7 +110,41 @@ bool LC32AsmParser::parseRegister(MCRegister &Reg, SMLoc &StartLoc,
   llvm_unreachable("Invalid OperandMatchResultTy");
 }
 
-bool LC32AsmParser::ParseDirective(AsmToken DirectiveID) { return true; }
+bool LC32AsmParser::ParseDirective(AsmToken DirectiveID) {
+  // Normalize with lowercase
+  std::string directive_name = DirectiveID.getIdentifier().lower();
+
+  // Custom handling for .blkx directives
+  // Most of the code is taken from the original parser
+  // See: MC/MCParser/AsmParser.cpp
+  if (directive_name == ".blkb" || directive_name == ".blkh" ||
+      directive_name == ".blkw" || directive_name == ".blkq") {
+
+    // Compute the multiplier
+    size_t scale = StringSwitch<size_t>(directive_name)
+                       .CaseLower(".blkb", 1)
+                       .CaseLower(".blkh", 2)
+                       .CaseLower(".blkw", 4)
+                       .CaseLower(".blkq", 8)
+                       .Default(0);
+    assert(scale != 0 && "Not all cases handled");
+
+    // Parse the expression
+    // Remember the location
+    SMLoc count_loc = this->getLexer().getLoc();
+    const MCExpr *count;
+    if (this->getParser().checkForValidSection() ||
+        this->getParser().parseExpression(count)) {
+      return true;
+    }
+
+    // Write out
+    this->getStreamer().emitFill(*count, scale, 0x00, count_loc);
+    return false;
+  }
+
+  return true;
+}
 
 bool LC32AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                      SMLoc NameLoc, OperandVector &Operands) {
