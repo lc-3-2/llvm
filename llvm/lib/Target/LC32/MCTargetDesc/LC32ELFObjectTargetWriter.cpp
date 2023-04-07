@@ -20,11 +20,13 @@ unsigned LC32ELFObjectTargetWriter::getRelocType(MCContext &Ctx,
                                                  const MCFixup &Fixup,
                                                  bool IsPCRel) const {
   // For each fixup, emit the relocation it corresponds to
-  switch (Fixup.getTargetKind()) {
-    case FIXUP_32:
-      assert(!IsPCRel && "Bad fixup kind for PC-relative");
-      return ELF::R_LC_3_2_32;
-  }
   // If there's no corresponding relocation, die
-  llvm_unreachable("No relocation for fixup");
+  switch (Fixup.getKind()) {
+  case FK_NONE:
+    return ELF::R_LC_3_2_NONE;
+  case FK_Data_4:
+    return ELF::R_LC_3_2_32;
+  default:
+    llvm_unreachable("No relocation for fixup");
+  }
 }

@@ -59,16 +59,15 @@ LC32AsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
   // Table for all the fixup information
   // Needed since we have to return a reference
   // Must match LC32FixupKinds.h
-  const static MCFixupKindInfo Infos[NumTargetFixupKinds] = {
-      {"FIXUP_32", 0, 32, 0},
-  };
+  const static MCFixupKindInfo Infos[NumTargetFixupKinds] = {};
 
   // If it's an LLVM-defined fixup, handle it
   if (Kind < FirstTargetFixupKind)
     return MCAsmBackend::getFixupKindInfo(Kind);
 
   // Otherwise, return our information
-  assert(Kind - FirstTargetFixupKind < NumTargetFixupKinds && "Unknown target kind");
+  assert(Kind - FirstTargetFixupKind < NumTargetFixupKinds &&
+         "Unknown target kind");
   return Infos[Kind - FirstTargetFixupKind];
 }
 
@@ -102,9 +101,6 @@ uint64_t LC32AsmBackend::adjustFixupValue(MCFixupKind Kind, uint64_t Value,
   // Remember, this code has to work for LLVM-defined fixups too
   // Thus, have a default case where we just return Value
   switch (Kind) {
-  case FIXUP_32:
-    assert(Value <= 0x100000000 && "Value too large for 32-bit fixup");
-    return Value;
   default:
     return Value;
   }

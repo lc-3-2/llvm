@@ -24,16 +24,12 @@ namespace llvm::lc32 {
 // Must match LC32AsmBackend.cpp
 enum Fixups {
 
-  // Word fixup
-  // Corresponds to R_LC_3_2_32
-  FIXUP_32 = FirstTargetFixupKind,
-
   // Mark the end of the array
   // Also compute the count
-  LastTargetFixupKind,
+  LastTargetFixupKind = FirstTargetFixupKind,
   NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind
 };
 
-} // llvm::LC32
+} // llvm::lc32
 
 #endif // LLVM_LIB_TARGET_LC32_MCTARGETDESC_LC32FIXUPKINDS_H
