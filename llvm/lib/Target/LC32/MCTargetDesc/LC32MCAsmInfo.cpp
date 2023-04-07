@@ -10,8 +10,6 @@
 using namespace llvm;
 #define DEBUG_TYPE "LC32MCAsmInfo"
 
-void LC32MCAsmInfo::anchor() {}
-
 LC32MCAsmInfo::LC32MCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
 
   // Pseudo instructions reach a length of 12 bytes
@@ -40,4 +38,26 @@ LC32MCAsmInfo::LC32MCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
 
   // Emit debug information
   this->SupportsDebugInformation = true;
+}
+
+bool LC32MCAsmInfo::isValidUnquotedName(StringRef Name) const {
+  bool ret = true;
+  // Check register names
+  ret &= Name.upper() != "R0";
+  ret &= Name.upper() != "R1";
+  ret &= Name.upper() != "R2";
+  ret &= Name.upper() != "R3";
+  ret &= Name.upper() != "R4";
+  ret &= Name.upper() != "R5";
+  ret &= Name.upper() != "R6";
+  ret &= Name.upper() != "R7";
+  ret &= Name.upper() != "GP";
+  ret &= Name.upper() != "FP";
+  ret &= Name.upper() != "SP";
+  ret &= Name.upper() != "LR";
+  // Check hex immediates
+  ret &= !Name.startswith("x");
+  ret &= !Name.startswith("X");
+  // Return
+  return ret;
 }

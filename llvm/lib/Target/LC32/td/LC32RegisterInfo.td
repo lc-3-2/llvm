@@ -30,6 +30,8 @@ class LC32Register<
   let DwarfNumbers = [num];
 }
 
+// If these register names change, make sure to update the code in
+// MCTargetDesc/LC32MCAsmInfo.cpp
 def R0 : LC32Register<"R0", 0>;
 def R1 : LC32Register<"R1", 1>;
 def R2 : LC32Register<"R2", 2>;
