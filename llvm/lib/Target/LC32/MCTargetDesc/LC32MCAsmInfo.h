@@ -8,7 +8,7 @@
 //
 // This module provides information for reading and writing assembly files. It
 // has a lot of configuration options to specify what exactly the assembly
-// should look like. Those options are initialized by the constructor.
+// should look like. Those options are mostly initialized by the constructor.
 //
 // See: llvm/MC/MCAsmInfo.h
 //
@@ -25,8 +25,7 @@ class Triple;
 class LC32MCAsmInfo : public MCAsmInfoELF {
 public:
   LC32MCAsmInfo(const Triple &TT, const MCTargetOptions &Options);
-private:
-  void anchor() override;
+  bool isValidUnquotedName(StringRef Name) const override;
 };
 
 } // namespace llvm
