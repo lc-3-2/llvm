@@ -22,7 +22,7 @@ multiclass ALU<string name, bits<4> opcode, SDNode node> {
     OutOperandList = (outs GPR:$dr),
 
     Size = 2,
-    CodeSize = 1,
+    CodeSize = 3,
 
     mayLoad = false,
     mayStore = false,
