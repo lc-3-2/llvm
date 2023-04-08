@@ -9,10 +9,8 @@
 // This module creates and registers an `LLVMTargetMachine` for the LC-3.2. It
 // provides high-level architectural details needed for machine code generation.
 // It also provides an interface to query MC-layer details, and provides a way
-// to access subtargets.
-//
-// Importantly, the class's constructor calls `LLVMTargetMachine::initAsmInfo()`
-// to get all the MC-layer objects.
+// to access subtargets. It also registers all the passes required for code
+// generation.
 //
 //===----------------------------------------------------------------------===//
 
@@ -32,6 +30,12 @@ public:
                     std::optional<Reloc::Model> RM,
                     std::optional<CodeModel::Model> CM, CodeGenOpt::Level OL,
                     bool JIT);
+
+  TargetLoweringObjectFile *getObjFileLowering() const override;
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+
+private:
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
 };
 } // namespace llvm
 
