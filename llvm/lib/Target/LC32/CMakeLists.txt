@@ -18,6 +18,7 @@ add_llvm_target(LC32CodeGen
   LC32TargetMachine.cpp
 
   LINK_COMPONENTS
+  Core
   CodeGen
   Target
   Support

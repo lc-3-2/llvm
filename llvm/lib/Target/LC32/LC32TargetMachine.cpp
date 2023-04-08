@@ -8,6 +8,8 @@
 
 #include "LC32TargetMachine.h"
 #include "TargetInfo/LC32TargetInfo.h"
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/MC/TargetRegistry.h"
 #include <optional>
 using namespace llvm;
@@ -40,14 +42,46 @@ LC32TargetMachine::LC32TargetMachine(const Target &T, const Triple &TT,
                                      CodeGenOpt::Level OL, bool JIT)
     : LLVMTargetMachine(T, computeDataLayout(TT, CPU, Options), TT, CPU, FS,
                         Options, getEffectiveRelocModel(RM),
-                        getEffectiveCodeModel(CM, CodeModel::Small), OL) {
+                        getEffectiveCodeModel(CM, CodeModel::Small), OL),
+      TLOF(std::make_unique<TargetLoweringObjectFileELF>()) {
   // Initialize the MC layer
   // Componenents are retrieved automatically through the target registry
   this->initAsmInfo();
+}
+
+TargetLoweringObjectFile *LC32TargetMachine::getObjFileLowering() const {
+  return this->TLOF.get();
 }
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32Target() {
   // Auto-discovered method
   // Associate the LC-3.2 target handle with its `TargetMachine`
   RegisterTargetMachine<LC32TargetMachine> X(getTheLC32Target());
+}
+
+namespace {
+
+// This is where we add the passes for the code generator. The only required
+// function here is to add the instruction selector.
+class LC32PassConfig : public TargetPassConfig {
+public:
+  LC32PassConfig(LC32TargetMachine &TM, PassManagerBase &PM)
+      : TargetPassConfig(TM, PM) {}
+
+  LC32TargetMachine &getLC32TargetMachine() const {
+    return this->getTM<LC32TargetMachine>();
+  }
+
+  bool addInstSelector() override;
+};
+
+} // namespace
+
+TargetPassConfig *LC32TargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new LC32PassConfig(*this, PM);
+}
+
+bool LC32PassConfig::addInstSelector() {
+  // TODO: Add once LC32ISelDagToDag is implemented
+  return false;
 }

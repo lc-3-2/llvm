@@ -14,6 +14,7 @@ include "llvm/Target/Target.td"
 
 include "td/LC32RegisterInfo.td"
 include "td/LC32InstrInfo.td"
+include "td/LC32CallingConv.td"
 include "td/LC32Schedule.td"
 
 include "td/LC32AsmParser.td"
