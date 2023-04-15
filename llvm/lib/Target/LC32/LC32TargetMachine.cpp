@@ -43,7 +43,8 @@ LC32TargetMachine::LC32TargetMachine(const Target &T, const Triple &TT,
     : LLVMTargetMachine(T, computeDataLayout(TT, CPU, Options), TT, CPU, FS,
                         Options, getEffectiveRelocModel(RM),
                         getEffectiveCodeModel(CM, CodeModel::Small), OL),
-      TLOF(std::make_unique<TargetLoweringObjectFileELF>()) {
+      TLOF(std::make_unique<TargetLoweringObjectFileELF>()),
+      Subtarget(TT, std::string(CPU), std::string(FS), *this) {
   // Initialize the MC layer
   // Componenents are retrieved automatically through the target registry
   this->initAsmInfo();
@@ -51,6 +52,11 @@ LC32TargetMachine::LC32TargetMachine(const Target &T, const Triple &TT,
 
 TargetLoweringObjectFile *LC32TargetMachine::getObjFileLowering() const {
   return this->TLOF.get();
+}
+
+const LC32Subtarget *
+LC32TargetMachine::getSubtargetImpl(const Function &F) const {
+  return &Subtarget;
 }
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32Target() {

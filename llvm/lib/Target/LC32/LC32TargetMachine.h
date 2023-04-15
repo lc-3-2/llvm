@@ -17,6 +17,7 @@
 #ifndef LLVM_LIB_TARGET_LC32_LC32TARGETMACHINE_H
 #define LLVM_LIB_TARGET_LC32_LC32TARGETMACHINE_H
 
+#include "LC32Subtarget.h"
 #include "llvm/Target/TargetMachine.h"
 #include <optional>
 
@@ -32,10 +33,12 @@ public:
                     bool JIT);
 
   TargetLoweringObjectFile *getObjFileLowering() const override;
+  const LC32Subtarget *getSubtargetImpl(const Function &F) const override;
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
 private:
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
+  LC32Subtarget Subtarget;
 };
 } // namespace llvm
 
