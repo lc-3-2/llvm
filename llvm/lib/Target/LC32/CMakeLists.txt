@@ -16,10 +16,13 @@ add_public_tablegen_target(LC32CommonTableGen)
 
 add_llvm_target(LC32CodeGen
   LC32TargetMachine.cpp
+  LC32AsmPrinter.cpp
 
   LINK_COMPONENTS
   Core
+  AsmPrinter
   CodeGen
+  MC
   Target
   Support
   LC32Info
