@@ -18,4 +18,12 @@ using namespace llvm;
 
 LC32Subtarget::LC32Subtarget(const Triple &TT, const std::string &CPU,
                              const std::string &FS, const TargetMachine &TM)
-    : LC32GenSubtargetInfo(TT, CPU, CPU, FS) {}
+    : LC32GenSubtargetInfo(TT, CPU, CPU, FS), TLInfo(TM, *this) {}
+
+const LC32TargetLowering *LC32Subtarget::getTargetLowering() const {
+  return &this->TLInfo;
+}
+
+const LC32FrameLowering *LC32Subtarget::getFrameLowering() const {
+  return &this->FrameLowering;
+}
