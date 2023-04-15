@@ -6,7 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// This module exists to parse assembly files to MCInsts. Most of the heavy
+// lifting is done by TableGen, but we're still responsible for parsing
+// individual operands and labeling them with types. That information is used by
+// the matcher to select the appropriate instruction.
 //
+// See: LC32GenAsmMatcher.inc
 //
 //===----------------------------------------------------------------------===//
 
