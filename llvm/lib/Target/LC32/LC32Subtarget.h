@@ -15,6 +15,8 @@
 #ifndef LLVM_LIB_TARGET_LC32_LC32SUBTARGET_H
 #define LLVM_LIB_TARGET_LC32_LC32SUBTARGET_H
 
+#include "LC32FrameLowering.h"
+#include "LC32ISelLowering.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 
 #define GET_SUBTARGETINFO_HEADER
@@ -27,6 +29,13 @@ public:
   LC32Subtarget(const Triple &TT, const std::string &CPU, const std::string &FS,
                 const TargetMachine &TM);
   void ParseSubtargetFeatures(StringRef CPU, StringRef TuneCPU, StringRef FS);
+
+  const LC32TargetLowering *getTargetLowering() const override;
+  const LC32FrameLowering *getFrameLowering() const override;
+
+private:
+  LC32TargetLowering TLInfo;
+  LC32FrameLowering FrameLowering;
 };
 
 } // namespace llvm
