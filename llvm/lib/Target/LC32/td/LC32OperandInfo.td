@@ -35,3 +35,15 @@ def Imm5 : Operand<i32>, ImmLeaf<i32, [{ return isShiftedInt<5,0>(Imm); }]> {
   let EncoderMethod = "getShiftedSignedImmOpValue<5,0>";
   let DecoderMethod = "DecodeShiftedSignedImm<5,0>";
 }
+
+//---
+// Used by: TRAP
+
+def TrapVect8OperandClass : AsmOperandClass {
+  let Name = "TrapVect8";
+}
+
+def TrapVect8 : Operand<i8> {
+  let OperandType = "OPERAND_IMMEDIATE";
+  let ParserMatchClass = TrapVect8OperandClass;
+}
