@@ -23,6 +23,14 @@ class LC32TargetLowering : public TargetLowering {
 public:
   explicit LC32TargetLowering(const TargetMachine &TM,
                               const LC32Subtarget &STI);
+
+private:
+  // Calling Convention
+  SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
+                               bool isVarArg,
+                               const SmallVectorImpl<ISD::InputArg> &Ins,
+                               const SDLoc &dl, SelectionDAG &DAG,
+                               SmallVectorImpl<SDValue> &InVals) const override;
 };
 
 } // namespace llvm

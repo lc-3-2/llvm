@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LC32TargetMachine.h"
+#include "LC32ISelDAGToDAG.h"
 #include "TargetInfo/LC32TargetInfo.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
@@ -73,11 +74,6 @@ class LC32PassConfig : public TargetPassConfig {
 public:
   LC32PassConfig(LC32TargetMachine &TM, PassManagerBase &PM)
       : TargetPassConfig(TM, PM) {}
-
-  LC32TargetMachine &getLC32TargetMachine() const {
-    return this->getTM<LC32TargetMachine>();
-  }
-
   bool addInstSelector() override;
 };
 
@@ -88,6 +84,7 @@ TargetPassConfig *LC32TargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 bool LC32PassConfig::addInstSelector() {
-  // TODO: Add once LC32ISelDagToDag is implemented
+  this->addPass(
+      createLC32ISelDag(this->getTM<LC32TargetMachine>(), this->getOptLevel()));
   return false;
 }

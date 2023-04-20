@@ -17,6 +17,7 @@ add_public_tablegen_target(LC32CommonTableGen)
 add_llvm_target(LC32CodeGen
   LC32TargetMachine.cpp
   LC32Subtarget.cpp
+  LC32ISelDAGToDAG.cpp
   LC32ISelLowering.cpp
   LC32FrameLowering.cpp
   LC32InstrInfo.cpp
