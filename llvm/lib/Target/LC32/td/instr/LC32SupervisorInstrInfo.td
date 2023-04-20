@@ -6,7 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the Supervisor instructions: TRAP and RTI.
+// This file declares the Supervisor instructions: TRAP and RTI. Note that TRAP
+// can change the condition codes via the service routine.
 //
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
 //
@@ -16,6 +17,7 @@ def TRAP : Instruction {
   let Namespace = "LC32";
   let AsmString = "TRAP\t$trapvect8";
 
+  let Defs = [CC];
   let OutOperandList = (outs);
   let InOperandList = (ins TrapVect8:$trapvect8);
   let Size = 2;

@@ -18,6 +18,7 @@
 include "td/LC32OperandInfo.td"
 
 include "td/instr/LC32ALUInstrInfo.td"
+include "td/instr/LC32SHFInstrInfo.td"
 include "td/instr/LC32SupervisorInstrInfo.td"
 
 def LC32InstrInfo : InstrInfo;

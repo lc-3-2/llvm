@@ -29,9 +29,11 @@ public:
 
   bool isImm() const override;
   bool isImm5() const override;
+  bool isAmount3() const override;
   bool isTrapVect8() const override;
 
   void addImm5Operands(MCInst &Inst, unsigned N) override;
+  void addAmount3Operands(MCInst &Inst, unsigned N) override;
   void addTrapVect8Operands(MCInst &Inst, unsigned N) override;
 
 private:

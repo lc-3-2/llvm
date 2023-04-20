@@ -28,12 +28,24 @@ def Imm5OperandClass : AsmOperandClass {
   let Name = "Imm5";
 }
 
-def Imm5 : Operand<i32>, ImmLeaf<i32, [{ return isShiftedInt<5,0>(Imm); }]> {
+def Imm5 : Operand<i32>, ImmLeaf<i32, [{ return isInt<5>(Imm); }]> {
   let OperandType = "OPERAND_IMMEDIATE";
   let ParserMatchClass = Imm5OperandClass;
   let PrintMethod = "printShiftedSignedImmOperand<5,0>";
   let EncoderMethod = "getShiftedSignedImmOpValue<5,0>";
   let DecoderMethod = "DecodeShiftedSignedImm<5,0>";
+}
+
+//---
+// Used by: SHF
+
+def Amount3OperandClass : AsmOperandClass {
+  let Name = "Amount3";
+}
+
+def Amount3 : Operand<i32>, ImmLeaf<i32, [{ return isUInt<3>(Imm); }]> {
+  let OperandType = "OPERAND_IMMEDIATE";
+  let ParserMatchClass = Amount3OperandClass;
 }
 
 //---
