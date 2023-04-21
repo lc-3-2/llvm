@@ -10,7 +10,11 @@
 // everything to 32-bit integers, then assigns them to the stack. This goes for
 // both arguments and return values.
 //
+// For the return values, we only do the first one. Essentially, this amounts to
+// only assigning to the stack if the stack is currently empty.
+//
 // Usually: LC32CallingConv.td
+// See: LC32ISelLowering.cpp
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,5 +27,5 @@ def LC32CallingConv : CallingConv<[
 // Return values
 def LC32RetCallingConv : CallingConv<[
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
-  CCAssignToStack<4, 4>
+  CCIf<"State.getNextStackOffset() == 0", CCAssignToStack<4, 4>>,
 ]>;

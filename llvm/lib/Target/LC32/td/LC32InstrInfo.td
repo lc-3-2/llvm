@@ -11,6 +11,9 @@
 // the semantics for instruction selection. This is usually the most complicated
 // part of the tablegen, so here it's broken up into multiple files.
 //
+// SelectionDAG nodes need to be kept in sync with the declarations in
+// LC32ISelLowering.h.
+//
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
 //
 //===----------------------------------------------------------------------===//
@@ -19,6 +22,7 @@ include "td/LC32OperandInfo.td"
 
 include "td/instr/LC32ALUInstrInfo.td"
 include "td/instr/LC32SHFInstrInfo.td"
+include "td/instr/LC32SubroutineInstrInfo.td"
 include "td/instr/LC32SupervisorInstrInfo.td"
 
 def LC32InstrInfo : InstrInfo;
