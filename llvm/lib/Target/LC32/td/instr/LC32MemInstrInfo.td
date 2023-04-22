@@ -183,11 +183,21 @@ def : Pattern<(store GPR:$sr, GPR:$baser), [(STW GPR:$sr, GPR:$baser, 0)]>;
 // Custom function to turn frame indicies into target frame indicies
 def SelectFrameIndex : ComplexPattern<i32, 1, "SelectFrameIndex", [frameindex]>;
 
+// Loads and stores with frame indices. We can optimize these, so we select
+// here. The frame index is eliminated later.
 def : Pattern<
   (load SelectFrameIndex:$fi),
   [(LDW SelectFrameIndex:$fi, 0)]
 >;
 def : Pattern<
+  (load (add SelectFrameIndex:$fi, WOffset6:$woffset6)),
+  [(LDW SelectFrameIndex:$fi, WOffset6:$woffset6)]
+>;
+def : Pattern<
   (store GPR:$sr, SelectFrameIndex:$fi),
   [(STW GPR:$sr, SelectFrameIndex:$fi, 0)]
+>;
+def : Pattern<
+  (store GPR:$sr, (add SelectFrameIndex:$fi, WOffset6:$woffset6)),
+  [(STW GPR:$sr, SelectFrameIndex:$fi, WOffset6:$woffset6)]
 >;

@@ -9,6 +9,7 @@
 #include "LC32RegisterInfo.h"
 #include "LC32Subtarget.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32RegisterInfo"
@@ -42,7 +43,53 @@ Register LC32RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                            int SPAdj, unsigned FIOperandNum,
                                            RegScavenger *RS) const {
-  // TODO
-  MI->getOperand(FIOperandNum).ChangeToRegister(LC32::FP, false);
-  return false;
+
+  // Populate variables
+  MachineBasicBlock &MBB = *MI->getParent();
+  MachineFunction &MF = *MBB.getParent();
+  DebugLoc dl = MI->getDebugLoc();
+  const LC32InstrInfo &TII =
+      *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
+  int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
+  int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
+
+  // Handle loads and stores
+  if (MI->getOpcode() == LC32::LDW || MI->getOpcode() == LC32::STW) {
+
+    // Get the offset from the instruction and incorporate
+    Offset += MI->getOperand(FIOperandNum + 1).getImm();
+
+    // Check whether we can materialize the offset inside the operation
+    if (isShiftedInt<6, 2>(Offset)) {
+      MI->getOperand(FIOperandNum).ChangeToRegister(LC32::FP, false);
+      MI->getOperand(FIOperandNum + 1).ChangeToImmediate(Offset, false);
+      return false;
+    }
+
+    // Otherwise, use AT as the index register
+    // TODO: Use a more intelligent method. Right now this just does repeated
+    // addition.
+    assert((Offset < -128 || Offset > 124) && "Bad check for bounds");
+    {
+      // Do the additions
+      ssize_t to_go = Offset;
+      bool first = true;
+      while (to_go < -256 || to_go > 252) {
+        ssize_t to_off = to_go > 0 ? 16 : 16;
+        MachineInstr *n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDi))
+                              .addReg(LC32::AT)
+                              .addReg(first ? LC32::FP : LC32::AT)
+                              .addImm(to_off);
+        n->getOperand(3).setIsDead();
+        to_go += to_off;
+        first = false;
+      }
+      // Take the final step
+      MI->getOperand(FIOperandNum).ChangeToRegister(LC32::FP, false);
+      MI->getOperand(FIOperandNum + 1).ChangeToImmediate(to_go, false);
+      return false;
+    }
+  }
+
+  llvm_unreachable("Bad instruction with frame index");
 }
