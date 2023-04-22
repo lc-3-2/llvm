@@ -108,10 +108,6 @@ LC32TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   // If we got here, it means we aren't demoting to sret
   // Therefore, just lower onto the return value slot
 
-  // Operands for the return node
-  // The first is the chain operand
-  SmallVector<SDValue, 4> RetOps(1, Chain);
-
   if (RVLocs.size() == 1) {
     assert(Outs.size() == 1 && "More RVLocs than Outs");
     assert(OutVals.size() == 1 && "More RVLocs than OutVals");
@@ -131,14 +127,11 @@ LC32TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
         Chain, dl, OutVals[0], DAG.getFrameIndex(FI, MVT::i32),
         MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
         Align(4));
-    RetOps.push_back(OutVals[0]);
 
   } else {
     assert(RVLocs.empty() && "Should have demoted to sret");
   }
 
-  // Update the chain for the return
-  RetOps[0] = Chain;
-
+  SmallVector<SDValue, 4> RetOps(1, Chain);
   return DAG.getNode(LC32ISD::RET, dl, MVT::Other, RetOps);
 }

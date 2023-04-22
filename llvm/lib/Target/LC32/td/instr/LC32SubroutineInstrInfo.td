@@ -15,7 +15,7 @@
 
 def JMP : Instruction {
   let Namespace = "LC32";
-  let AsmString = "JMP $baser";
+  let AsmString = "JMP\t$baser";
 
   let OutOperandList = (outs);
   let InOperandList = (ins GPR:$baser);
@@ -45,3 +45,4 @@ def RET : InstAlias<"RET", (JMP LR)>;
 //---
 
 def Ret : SDNode<"LC32ISD::RET", SDTNone, [SDNPHasChain, SDNPVariadic]>;
+def : Pattern<(Ret), [(JMP LR)]>;

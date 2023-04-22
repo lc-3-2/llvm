@@ -58,6 +58,9 @@ public:
   // be made into a template because it's virtual.
   virtual bool isImm5() const { return false; }
   virtual bool isAmount3() const { return false; }
+  virtual bool isBOffset6() const { return false; }
+  virtual bool isHOffset6() const { return false; }
+  virtual bool isWOffset6() const { return false; }
   virtual bool isTrapVect8() const { return false; }
 
   // Render methods
@@ -70,6 +73,15 @@ public:
     llvm_unreachable("Bad type");
   }
   virtual void addAmount3Operands(MCInst &Inst, unsigned N) {
+    llvm_unreachable("Bad type");
+  }
+  virtual void addBOffset6Operands(MCInst &Inst, unsigned N) {
+    llvm_unreachable("Bad type");
+  }
+  virtual void addHOffset6Operands(MCInst &Inst, unsigned N) {
+    llvm_unreachable("Bad type");
+  }
+  virtual void addWOffset6Operands(MCInst &Inst, unsigned N) {
     llvm_unreachable("Bad type");
   }
   virtual void addTrapVect8Operands(MCInst &Inst, unsigned N) {

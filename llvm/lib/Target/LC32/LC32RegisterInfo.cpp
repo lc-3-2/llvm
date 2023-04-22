@@ -20,10 +20,8 @@ LC32RegisterInfo::LC32RegisterInfo() : LC32GenRegisterInfo(LC32::LR) {}
 
 const MCPhysReg *
 LC32RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  // We don't have to save "reserved" registers
-  // This also includes the assembler temporary
-  static const MCPhysReg CALLEE_SAVED_REGS[] = {LC32::R0, LC32::R1, LC32::R2,
-                                                0};
+  // All registers get saved in the prologue, so we don't have to deal with this
+  static const MCPhysReg CALLEE_SAVED_REGS[] = {0};
   return CALLEE_SAVED_REGS;
 }
 

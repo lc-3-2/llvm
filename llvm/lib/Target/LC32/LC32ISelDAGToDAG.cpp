@@ -24,10 +24,16 @@ public:
   LC32DAGToDAGISel(LC32TargetMachine &TM, CodeGenOpt::Level OptLevel)
       : SelectionDAGISel(this->ID, TM, OptLevel) {}
 
+  StringRef getPassName() const override { return PASS_NAME; }
+
 private:
+// Provides: SelectCode
+// Required: SelectFrameIndex
 #include "LC32GenDAGISel.inc"
 
   void Select(SDNode *N) override;
+
+  bool SelectFrameIndex(SDValue In, SDValue &Out);
 };
 
 } // namespace
@@ -41,4 +47,10 @@ FunctionPass *llvm::createLC32ISelDag(LC32TargetMachine &TM,
   return new LC32DAGToDAGISel(TM, OptLevel);
 }
 
-void LC32DAGToDAGISel::Select(SDNode *N) { llvm_unreachable("UNIMPLEMENTED"); }
+void LC32DAGToDAGISel::Select(SDNode *N) { this->SelectCode(N); }
+
+bool LC32DAGToDAGISel::SelectFrameIndex(SDValue In, SDValue &Out) {
+  Out = this->CurDAG->getTargetFrameIndex(
+      cast<FrameIndexSDNode>(In)->getIndex(), MVT::i32);
+  return true;
+}

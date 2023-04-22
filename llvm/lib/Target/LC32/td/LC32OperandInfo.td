@@ -49,6 +49,42 @@ def Amount3 : Operand<i32>, ImmLeaf<i32, [{ return isUInt<3>(Imm); }]> {
 }
 
 //---
+// Used by: LD*, ST*
+
+def BOffset6OperandClass : AsmOperandClass {
+  let Name = "BOffset6";
+}
+def BOffset6 : Operand<i32>, ImmLeaf<i32, [{ return isShiftedInt<6,0>(Imm); }]> {
+  let OperandType = "OPERAND_IMMEDIATE";
+  let ParserMatchClass = BOffset6OperandClass;
+  let PrintMethod = "printShiftedSignedImmOperand<6,0>";
+  let EncoderMethod = "getShiftedSignedImmOpValue<6,0>";
+  let DecoderMethod = "DecodeShiftedSignedImm<6,0>";
+}
+
+def HOffset6OperandClass : AsmOperandClass {
+  let Name = "HOffset6";
+}
+def HOffset6 : Operand<i32>, ImmLeaf<i32, [{ return isShiftedInt<6,1>(Imm); }]> {
+  let OperandType = "OPERAND_IMMEDIATE";
+  let ParserMatchClass = HOffset6OperandClass;
+  let PrintMethod = "printShiftedSignedImmOperand<6,1>";
+  let EncoderMethod = "getShiftedSignedImmOpValue<6,1>";
+  let DecoderMethod = "DecodeShiftedSignedImm<6,1>";
+}
+
+def WOffset6OperandClass : AsmOperandClass {
+  let Name = "WOffset6";
+}
+def WOffset6 : Operand<i32>, ImmLeaf<i32, [{ return isShiftedInt<6,2>(Imm); }]> {
+  let OperandType = "OPERAND_IMMEDIATE";
+  let ParserMatchClass = WOffset6OperandClass;
+  let PrintMethod = "printShiftedSignedImmOperand<6,2>";
+  let EncoderMethod = "getShiftedSignedImmOpValue<6,2>";
+  let DecoderMethod = "DecodeShiftedSignedImm<6,2>";
+}
+
+//---
 // Used by: TRAP
 
 def TrapVect8OperandClass : AsmOperandClass {
