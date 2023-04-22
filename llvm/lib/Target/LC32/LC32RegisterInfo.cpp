@@ -42,5 +42,7 @@ Register LC32RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                            int SPAdj, unsigned FIOperandNum,
                                            RegScavenger *RS) const {
-  llvm_unreachable("UNIMPLEMENTED");
+  // TODO
+  MI->getOperand(FIOperandNum).ChangeToRegister(LC32::FP, false);
+  return false;
 }

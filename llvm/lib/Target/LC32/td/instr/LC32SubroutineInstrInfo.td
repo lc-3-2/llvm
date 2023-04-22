@@ -44,5 +44,27 @@ def RET : InstAlias<"RET", (JMP LR)>;
 
 //---
 
-def Ret : SDNode<"LC32ISD::RET", SDTNone, [SDNPHasChain, SDNPVariadic]>;
-def : Pattern<(Ret), [(JMP LR)]>;
+// SelectionDAG node for returns
+// See: C_RET
+def N_RET : SDNode<"LC32ISD::RET", SDTNone, [SDNPHasChain]>;
+
+def C_RET : Instruction, PseudoInstExpansion<(JMP LR)> {
+  // Pseudo-instruction for returns. This needs to be done since otherwise the
+  // compiler doesn't know where returns happen.
+
+  let Namespace = "LC32";
+  let isPseudo = true;
+  let isCodeGenOnly = true;
+
+  let OutOperandList = (outs);
+  let InOperandList = (ins);
+
+  let Pattern = [(N_RET)];
+
+  let isReturn = true;
+  let isBarrier = true;
+  let isTerminator = true;
+  let mayLoad = false;
+  let mayStore = false;
+  let hasSideEffects = true;
+}
