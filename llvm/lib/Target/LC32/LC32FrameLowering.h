@@ -20,7 +20,7 @@ namespace llvm {
 
 class LC32FrameLowering : public TargetFrameLowering {
 public:
-  explicit LC32FrameLowering();
+  LC32FrameLowering();
 
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;

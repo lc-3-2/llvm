@@ -34,8 +34,7 @@ enum {
 
 class LC32TargetLowering : public TargetLowering {
 public:
-  explicit LC32TargetLowering(const TargetMachine &TM,
-                              const LC32Subtarget &STI);
+  LC32TargetLowering(const TargetMachine &TM, const LC32Subtarget &STI);
 
   const char *getTargetNodeName(unsigned Opcode) const override;
 

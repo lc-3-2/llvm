@@ -21,8 +21,7 @@ namespace {
 
 class LC32AsmPrinter : public AsmPrinter {
 public:
-  explicit LC32AsmPrinter(TargetMachine &TM,
-                          std::unique_ptr<MCStreamer> Streamer);
+  LC32AsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer);
 };
 
 } // namespace
