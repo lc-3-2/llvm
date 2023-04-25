@@ -21,7 +21,7 @@ LC32RegisterInfo::LC32RegisterInfo() : LC32GenRegisterInfo(LC32::LR) {}
 
 const MCPhysReg *
 LC32RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  // All registers get saved in the prologue, so we don't have to deal with this
+  // We use caller save
   static const MCPhysReg CALLEE_SAVED_REGS[] = {0};
   return CALLEE_SAVED_REGS;
 }
@@ -53,42 +53,55 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
   int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
 
+  // Use this to set condition codes as dead, which they should be
+  MachineInstr *n = nullptr;
+
   // Handle loads and stores
-  if (MI->getOpcode() == LC32::LDW || MI->getOpcode() == LC32::STW) {
+  if (MI->getOpcode() == LC32::LDB || MI->getOpcode() == LC32::STB ||
+      MI->getOpcode() == LC32::LDH || MI->getOpcode() == LC32::STH ||
+      MI->getOpcode() == LC32::LDW || MI->getOpcode() == LC32::STW) {
+    assert(FIOperandNum == 1 && "Bad frame index operand index");
 
-    // Get the offset from the instruction and incorporate
-    Offset += MI->getOperand(FIOperandNum + 1).getImm();
+    // Add the operand to the offset
+    Offset += MI->getOperand(2).getImm();
 
-    // Check whether we can materialize the offset inside the operation
-    if (isShiftedInt<6, 2>(Offset)) {
-      MI->getOperand(FIOperandNum).ChangeToRegister(LC32::FP, false);
-      MI->getOperand(FIOperandNum + 1).ChangeToImmediate(Offset, false);
+    // Check if the offset is in range
+    bool in_range = false;
+    if (MI->getOpcode() == LC32::LDB || MI->getOpcode() == LC32::STB)
+      in_range = isShiftedInt<6, 0>(Offset);
+    else if (MI->getOpcode() == LC32::LDH || MI->getOpcode() == LC32::STH)
+      in_range = isShiftedInt<6, 1>(Offset);
+    else if (MI->getOpcode() == LC32::LDW || MI->getOpcode() == LC32::STW)
+      in_range = isShiftedInt<6, 2>(Offset);
+
+    // If the offset is in range, then we're good to just use the FP
+    if (in_range) {
+      MI->getOperand(1).ChangeToRegister(LC32::FP, false);
+      MI->getOperand(2).ChangeToImmediate(Offset);
       return false;
     }
 
-    // Otherwise, use AT as the index register
-    // TODO: Use a more intelligent method. Right now this just does repeated
-    // addition.
-    assert((Offset < -128 || Offset > 124) && "Bad check for bounds");
-    {
-      // Do the additions
-      ssize_t to_go = Offset;
-      bool first = true;
-      while (to_go < -256 || to_go > 252) {
-        ssize_t to_off = to_go > 0 ? 16 : 16;
-        MachineInstr *n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDi))
-                              .addReg(LC32::AT)
-                              .addReg(first ? LC32::FP : LC32::AT)
-                              .addImm(to_off);
-        n->getOperand(3).setIsDead();
-        to_go += to_off;
-        first = false;
-      }
-      // Take the final step
-      MI->getOperand(FIOperandNum).ChangeToRegister(LC32::FP, false);
-      MI->getOperand(FIOperandNum + 1).ChangeToImmediate(to_go, false);
+    llvm_unreachable("TODO");
+  }
+
+  // Handle C_LEA_FRAMEINDEX
+  // This erases it, so we don't have to lower it later
+  if (MI->getOpcode() == LC32::C_LEA_FRAMEINDEX) {
+    assert(FIOperandNum == 1 && "Bad frame index operand index");
+
+    // If the offset is small enough, we can just ADD
+    if (isInt<5>(Offset)) {
+      n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDi))
+          .addReg(MI->getOperand(0).getReg(),
+                  getKillRegState(MI->getOperand(0).isKill()))
+          .addReg(LC32::FP)
+          .addImm(Offset);
+      n->getOperand(3).setIsDead();
+      MBB.erase(MI);
       return false;
     }
+
+    llvm_unreachable("TODO");
   }
 
   llvm_unreachable("Bad instruction with frame index");

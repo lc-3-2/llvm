@@ -20,12 +20,12 @@
 
 // Arguments
 def LC32CallingConv : CallingConv<[
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  CCIfType<[i1, i4, i8, i16], CCPromoteToType<i32>>,
   CCAssignToStack<4, 4>
 ]>;
 
 // Return values
 def LC32RetCallingConv : CallingConv<[
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
-  CCIf<"State.getNextStackOffset() == 0", CCAssignToStack<4, 4>>,
+  CCIfType<[i1, i4, i8, i16], CCPromoteToType<i32>>,
+  CCIfType<[i32], CCIf<"State.getNextStackOffset() == 0", CCAssignToStack<4, 4>>>,
 ]>;

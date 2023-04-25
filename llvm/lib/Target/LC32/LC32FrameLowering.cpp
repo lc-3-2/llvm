@@ -15,7 +15,7 @@ using namespace llvm;
 #define DEBUG_TYPE "LC32FrameLowering"
 
 LC32FrameLowering::LC32FrameLowering()
-    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(4), -16,
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(4), 0,
                           Align(4)) {}
 
 void LC32FrameLowering::emitPrologue(MachineFunction &MF,
@@ -37,59 +37,58 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
 
   // Save LR and FP
   BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
-      .addReg(LC32::LR)
+      .addReg(LC32::LR, RegState::Kill)
       .addReg(LC32::SP)
       .addImm(-8);
   BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
-      .addReg(LC32::FP)
+      .addReg(LC32::FP, RegState::Kill)
       .addReg(LC32::SP)
       .addImm(-12);
 
-  // Add to SP
+  // Compute FP
   n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-      .addReg(LC32::FP)
-      .addReg(LC32::SP)
-      .addImm(-16);
+          .addReg(LC32::FP, RegState::Define)
+          .addReg(LC32::SP)
+          .addImm(-16);
   n->getOperand(3).setIsDead();
 
-  // Save temporary registers
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
-      .addReg(LC32::R0)
-      .addReg(LC32::FP)
-      .addImm(-16);
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
-      .addReg(LC32::R1)
-      .addReg(LC32::FP)
-      .addImm(-12);
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
-      .addReg(LC32::R2)
-      .addReg(LC32::FP)
-      .addImm(-8);
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
-      .addReg(LC32::AT)
-      .addReg(LC32::FP)
-      .addImm(-4);
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
-      .addReg(LC32::GP)
-      .addReg(LC32::FP)
-      .addImm(0);
-
   // Build the stack pointer
-  // TODO: Use a more intelligent method. Right now this just does repeated
-  // addition.
-  {
-    size_t to_go = MFI.getStackSize() + 16;
-    bool first = true;
-    while (to_go > 0) {
-      size_t to_off = to_go % 16 == 0 ? -16 : -(to_go % 16);
-      n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-          .addReg(LC32::SP)
-          .addReg(first ? LC32::FP : LC32::SP)
-          .addImm(to_off);
-      n->getOperand(3).setIsDead();
-      to_go += to_off;
-      first = false;
+  if (MFI.getStackSize() == 0) {
+    // Case where we have no local variables
+    n = BuildMI(MBB, MBBI, dl, TII.get(LC32::C_MOVE_REG))
+            .addReg(LC32::SP)
+            .addReg(LC32::FP);
+    n->getOperand(2).setIsDead();
+
+  } else {
+    // We have local variables, so we need to offset the stack
+    int64_t to_go = -MFI.getStackSize();
+    assert(to_go < 0);
+
+    // If we only have a small amount, do repeated adds
+    // Threshold was chosen to be the size of LOADIMMH
+    if (to_go >= -64) {
+      // Keep track of if this is the first iteration
+      bool first = true;
+      // Do the adds
+      while (to_go < 0) {
+        int64_t to_add = std::max(-16l, to_go);
+        n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
+                .addReg(LC32::SP)
+                .addReg(first ? LC32::FP : LC32::SP)
+                .addImm(to_add);
+        n->getOperand(3).setIsDead();
+        // Next iteration
+        assert(to_go - to_add > to_go);
+        to_go -= to_add;
+        first = false;
+      }
+      // Done
+      assert(to_go == 0);
+      return;
     }
+
+    llvm_unreachable("TODO");
   }
 }
 
@@ -105,55 +104,23 @@ void LC32FrameLowering::emitEpilogue(MachineFunction &MF,
   // Use this to set condition codes as dead, which they should be
   MachineInstr *n = nullptr;
 
-  // Restore temporary registers
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW))
-      .addReg(LC32::R0)
-      .addReg(LC32::FP)
-      .addImm(-16);
-  n->getOperand(3).setIsDead();
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW))
-      .addReg(LC32::R1)
-      .addReg(LC32::FP)
-      .addImm(-12);
-  n->getOperand(3).setIsDead();
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW))
-      .addReg(LC32::R2)
-      .addReg(LC32::FP)
-      .addImm(-8);
-  n->getOperand(3).setIsDead();
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW))
-      .addReg(LC32::AT)
-      .addReg(LC32::FP)
-      .addImm(-4);
-  n->getOperand(3).setIsDead();
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW))
-      .addReg(LC32::GP)
-      .addReg(LC32::FP)
-      .addImm(0);
-  n->getOperand(3).setIsDead();
-
   // Restore SP
   n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-      .addReg(LC32::SP)
-      .addReg(LC32::FP)
-      .addImm(0);
-  n->getOperand(3).setIsDead();
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-      .addReg(LC32::SP)
-      .addReg(LC32::SP)
-      .addImm(12);
+          .addReg(LC32::SP)
+          .addReg(LC32::FP, RegState::Kill)
+          .addImm(12);
   n->getOperand(3).setIsDead();
 
   // Restore LR and FP
   n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW))
-      .addReg(LC32::LR)
-      .addReg(LC32::SP)
-      .addImm(-4);
+          .addReg(LC32::LR, RegState::Define)
+          .addReg(LC32::SP)
+          .addImm(-4);
   n->getOperand(3).setIsDead();
   n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW))
-      .addReg(LC32::FP)
-      .addReg(LC32::SP)
-      .addImm(-8);
+          .addReg(LC32::FP, RegState::Define)
+          .addReg(LC32::SP)
+          .addImm(-8);
   n->getOperand(3).setIsDead();
 }
 

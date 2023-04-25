@@ -8,6 +8,7 @@
 
 #include "LC32ISelLowering.h"
 #include "LC32Subtarget.h"
+#include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 using namespace llvm;
@@ -21,6 +22,13 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   this->TRI = STI.getRegisterInfo();
   this->addRegisterClass(MVT::i32, &LC32::GPRRegClass);
   this->computeRegisterProperties(this->TRI);
+
+  // Setup VLA
+  this->setStackPointerRegisterToSaveRestore(LC32::SP);
+
+  // Setup booleans
+  this->setBooleanContents(ZeroOrOneBooleanContent);
+  this->setBooleanVectorContents(ZeroOrOneBooleanContent);
 }
 
 const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
