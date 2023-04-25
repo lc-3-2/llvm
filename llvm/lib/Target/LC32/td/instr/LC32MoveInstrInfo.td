@@ -15,26 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-def C_MOVE_REG : Instruction, PseudoInstExpansion<(ADDi GPR:$dr, GPR:$sr, 0)> {
-  let Namespace = "LC32";
-  let isPseudo = true;
-  let isCodeGenOnly = true;
-
-  let Defs = [CC];
-  let OutOperandList = (outs GPR:$dr);
-  let InOperandList = (ins GPR:$sr);
-
-  let Pattern = [(set GPR:$dr, GPR:$sr)];
-
-  let isMoveReg = true;
-  let isAsCheapAsAMove = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
-}
-
-//---
-
 def C_MOVE_ZERO : Instruction, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr, 0)> {
   let Namespace = "LC32";
   let isPseudo = true;

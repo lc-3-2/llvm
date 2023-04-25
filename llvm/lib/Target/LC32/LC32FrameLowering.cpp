@@ -55,10 +55,11 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   // Build the stack pointer
   if (MFI.getStackSize() == 0) {
     // Case where we have no local variables
-    n = BuildMI(MBB, MBBI, dl, TII.get(LC32::C_MOVE_REG))
+    n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
             .addReg(LC32::SP, RegState::Define)
-            .addReg(LC32::FP);
-    n->getOperand(2).setIsDead();
+            .addReg(LC32::FP)
+            .addImm(0);
+    n->getOperand(3).setIsDead();
 
   } else {
     // We have local variables, so we need to offset the stack

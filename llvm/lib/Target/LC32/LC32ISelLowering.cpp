@@ -29,6 +29,12 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   // Setup booleans
   this->setBooleanContents(ZeroOrOneBooleanContent);
   this->setBooleanVectorContents(ZeroOrOneBooleanContent);
+
+  // Sign extension doesn't have custom instructions
+  this->setOperationAction(ISD::SIGN_EXTEND,       MVT::i8,  Expand);
+  this->setOperationAction(ISD::SIGN_EXTEND,       MVT::i16, Expand);
+  this->setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8,  Expand);
+  this->setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
 }
 
 const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
