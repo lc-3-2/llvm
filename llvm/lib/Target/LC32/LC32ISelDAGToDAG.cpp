@@ -13,39 +13,16 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32ISelDAGToDag"
-#define PASS_NAME "LC-3.2 DAG->DAG Instruction Selection"
-
-namespace {
-
-class LC32DAGToDAGISel : public SelectionDAGISel {
-public:
-  static char ID;
-  LC32DAGToDAGISel() = delete;
-  LC32DAGToDAGISel(LC32TargetMachine &TM, CodeGenOpt::Level OptLevel)
-      : SelectionDAGISel(this->ID, TM, OptLevel) {}
-
-  StringRef getPassName() const override { return PASS_NAME; }
-
-private:
-// Provides: SelectCode
-// Requires: SelectFrameIndex
-#include "LC32GenDAGISel.inc"
-
-  void Select(SDNode *N) override;
-
-  bool SelectFrameIndex(SDValue In, SDValue &Out);
-};
-
-} // namespace
 
 char LC32DAGToDAGISel::ID;
 
-INITIALIZE_PASS(LC32DAGToDAGISel, DEBUG_TYPE, PASS_NAME, false, false)
+INITIALIZE_PASS(LC32DAGToDAGISel, DEBUG_TYPE,
+                "LC-3.2 DAG->DAG Instruction Selection", false, false)
 
-FunctionPass *llvm::createLC32ISelDag(LC32TargetMachine &TM,
-                                      CodeGenOpt::Level OptLevel) {
-  return new LC32DAGToDAGISel(TM, OptLevel);
-}
+// Provides: SelectCode
+// Requires: SelectFrameIndex
+#define GET_DAGISEL_BODY LC32DAGToDAGISel
+#include "LC32GenDAGISel.inc"
 
 void LC32DAGToDAGISel::Select(SDNode *N) { this->SelectCode(N); }
 

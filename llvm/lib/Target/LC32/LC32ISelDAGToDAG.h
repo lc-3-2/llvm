@@ -8,11 +8,6 @@
 //
 // This pass does instruction selection on the DAG. It's pattern matching. Quite
 // a lot of this is handled by TableGen.
-//
-// Also, all of the implementation is in the C++ file. We only expose a way to
-// create the pass. This is because the header information has a lot of
-// implementation code.
-//
 // See: LC32GenDAGISel.inc
 //
 //===----------------------------------------------------------------------===//
@@ -21,13 +16,29 @@
 #define LLVM_LIB_TARGET_LC32_LC32ISELDAGTODAG_H
 
 #include "LC32TargetMachine.h"
-#include "llvm/Pass.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
 
 namespace llvm {
 
-// Interface to create the pass
-FunctionPass *createLC32ISelDag(LC32TargetMachine &TM,
-                                CodeGenOpt::Level OptLevel);
+class LC32DAGToDAGISel : public SelectionDAGISel {
+public:
+  static char ID;
+  LC32DAGToDAGISel() = delete;
+  LC32DAGToDAGISel(LC32TargetMachine &TM, CodeGenOpt::Level OptLevel)
+      : SelectionDAGISel(this->ID, TM, OptLevel) {}
+
+  StringRef getPassName() const override {
+    return "LC-3.2 DAG->DAG Instruction Selection";
+  }
+
+private:
+#define GET_DAGISEL_DECL
+#include "LC32GenDAGISel.inc"
+
+  void Select(SDNode *N) override;
+
+  bool SelectFrameIndex(SDValue In, SDValue &Out);
+};
 
 // Required for INITIALIZE_PASS
 void initializeLC32DAGToDAGISelPass(PassRegistry &);

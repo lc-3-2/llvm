@@ -84,7 +84,7 @@ TargetPassConfig *LC32TargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 bool LC32PassConfig::addInstSelector() {
-  this->addPass(
-      createLC32ISelDag(this->getTM<LC32TargetMachine>(), this->getOptLevel()));
+  this->addPass(new LC32DAGToDAGISel(this->getTM<LC32TargetMachine>(),
+                                     this->getOptLevel()));
   return false;
 }

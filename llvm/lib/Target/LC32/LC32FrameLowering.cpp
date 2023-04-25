@@ -48,7 +48,7 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   // Compute FP
   n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
           .addReg(LC32::FP, RegState::Define)
-          .addReg(LC32::SP)
+          .addReg(LC32::SP, RegState::Kill)
           .addImm(-16);
   n->getOperand(3).setIsDead();
 
@@ -56,7 +56,7 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   if (MFI.getStackSize() == 0) {
     // Case where we have no local variables
     n = BuildMI(MBB, MBBI, dl, TII.get(LC32::C_MOVE_REG))
-            .addReg(LC32::SP)
+            .addReg(LC32::SP, RegState::Define)
             .addReg(LC32::FP);
     n->getOperand(2).setIsDead();
 
@@ -74,8 +74,8 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
       while (to_go < 0) {
         int64_t to_add = std::max(-16l, to_go);
         n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-                .addReg(LC32::SP)
-                .addReg(first ? LC32::FP : LC32::SP)
+                .addReg(LC32::SP, RegState::Define)
+                .addReg(first ? LC32::FP : LC32::SP, first ? 0 : RegState::Kill)
                 .addImm(to_add);
         n->getOperand(3).setIsDead();
         // Next iteration
@@ -106,7 +106,7 @@ void LC32FrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Restore SP
   n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-          .addReg(LC32::SP)
+          .addReg(LC32::SP, RegState::Define)
           .addReg(LC32::FP, RegState::Kill)
           .addImm(12);
   n->getOperand(3).setIsDead();
