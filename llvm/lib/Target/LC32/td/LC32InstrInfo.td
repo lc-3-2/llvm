@@ -32,4 +32,6 @@ include "td/instr/LC32MemInstrInfo.td"
 include "td/instr/LC32SubroutineInstrInfo.td"
 include "td/instr/LC32SupervisorInstrInfo.td"
 
+include "td/instr/LC32MoveInstrInfo.td"
+
 def LC32InstrInfo : InstrInfo;
