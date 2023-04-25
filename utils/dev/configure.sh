@@ -18,7 +18,7 @@
 # on build time.
 #
 # See:
-# https://github.com/lowRISC/riscv-llvm/blob/master/docs/01-intro-and-building-llvm.mkd 
+# https://github.com/lowRISC/riscv-llvm/blob/master/docs/01-intro-and-building-llvm.mkd
 #
 #===-----------------------------------------------------------------------===//
 
