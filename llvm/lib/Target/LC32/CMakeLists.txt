@@ -9,6 +9,7 @@ tablegen(LLVM LC32GenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM LC32GenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM LC32GenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM LC32GenMCCodeEmitter.inc -gen-emitter)
+tablegen(LLVM LC32GenMCPseudoLowering.inc -gen-pseudo-lowering)
 tablegen(LLVM LC32GenCallingConv.inc -gen-callingconv)
 tablegen(LLVM LC32GenDAGISel.inc -gen-dag-isel)
 

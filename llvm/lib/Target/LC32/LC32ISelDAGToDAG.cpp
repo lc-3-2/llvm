@@ -28,7 +28,7 @@ public:
 
 private:
 // Provides: SelectCode
-// Required: SelectFrameIndex
+// Requires: SelectFrameIndex
 #include "LC32GenDAGISel.inc"
 
   void Select(SDNode *N) override;
@@ -50,6 +50,8 @@ FunctionPass *llvm::createLC32ISelDag(LC32TargetMachine &TM,
 void LC32DAGToDAGISel::Select(SDNode *N) { this->SelectCode(N); }
 
 bool LC32DAGToDAGISel::SelectFrameIndex(SDValue In, SDValue &Out) {
+  // Note that the precondition is verified in TableGen
+  // We can assume the input is a FrameIndex
   Out = this->CurDAG->getTargetFrameIndex(
       cast<FrameIndexSDNode>(In)->getIndex(), MVT::i32);
   return true;
