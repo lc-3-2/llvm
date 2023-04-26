@@ -47,8 +47,7 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
       .addImm(-12);
 
   // Compute FP
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-          .addReg(LC32::FP, RegState::Define)
+  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi), LC32::FP)
           .addReg(LC32::SP, RegState::Kill)
           .addImm(-16);
   n->getOperand(3).setIsDead();
@@ -56,8 +55,7 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   // Build the stack pointer
   if (MFI.getStackSize() == 0) {
     // Case where we have no local variables
-    n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-            .addReg(LC32::SP, RegState::Define)
+    n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi), LC32::SP)
             .addReg(LC32::FP)
             .addImm(0);
     n->getOperand(3).setIsDead();
@@ -79,8 +77,7 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
       // Do the adds
       while (to_go < 0) {
         int64_t to_add = std::max(-16l, to_go);
-        n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-                .addReg(LC32::SP, RegState::Define)
+        n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi), LC32::SP)
                 .addReg(first ? LC32::FP : LC32::SP, first ? 0 : RegState::Kill)
                 .addImm(to_add);
         n->getOperand(3).setIsDead();
@@ -98,12 +95,10 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
     auto instr_to_use =
         isInt<16>(to_go) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
     // Put the offset into AT and ADD from there
-    n = BuildMI(MBB, MBBI, dl, TII.get(instr_to_use))
-            .addReg(LC32::AT, RegState::Define)
+    n = BuildMI(MBB, MBBI, dl, TII.get(instr_to_use), LC32::AT)
             .addImm(to_go);
     n->getOperand(2).setIsDead();
-    n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDr))
-            .addReg(LC32::SP, RegState::Define)
+    n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDr), LC32::SP)
             .addReg(LC32::FP)
             .addReg(LC32::AT, RegState::Kill);
     n->getOperand(3).setIsDead();
@@ -124,20 +119,17 @@ void LC32FrameLowering::emitEpilogue(MachineFunction &MF,
   MachineInstr *n = nullptr;
 
   // Restore SP
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-          .addReg(LC32::SP, RegState::Define)
+  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi), LC32::SP)
           .addReg(LC32::FP, RegState::Kill)
           .addImm(12);
   n->getOperand(3).setIsDead();
 
   // Restore LR and FP
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW))
-          .addReg(LC32::LR, RegState::Define)
+  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::LR)
           .addReg(LC32::SP)
           .addImm(-4);
   n->getOperand(3).setIsDead();
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW))
-          .addReg(LC32::FP, RegState::Define)
+  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::FP)
           .addReg(LC32::SP)
           .addImm(-8);
   n->getOperand(3).setIsDead();

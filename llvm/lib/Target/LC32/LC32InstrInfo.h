@@ -29,6 +29,18 @@ public:
   explicit LC32InstrInfo(LC32Subtarget &STI);
   const LC32RegisterInfo &getRegisterInfo() const;
 
+  void storeRegToStackSlot(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator MI, Register SrcReg,
+                           bool isKill, int FrameIndex,
+                           const TargetRegisterClass *RC,
+                           const TargetRegisterInfo *TRI,
+                           Register VReg) const override;
+  void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MI, Register DestReg,
+                            int FrameIndex, const TargetRegisterClass *RC,
+                            const TargetRegisterInfo *TRI,
+                            Register VReg) const override;
+
 private:
   // Modules need the register information to work with this class. Therefore,
   // we provide access to it.

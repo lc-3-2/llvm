@@ -8,6 +8,7 @@
 
 #include "LC32InstrInfo.h"
 #include "LC32Subtarget.h"
+#include "MCTargetDesc/LC32MCTargetDesc.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32InstrInfo"
 
@@ -18,4 +19,53 @@ LC32InstrInfo::LC32InstrInfo(LC32Subtarget &STI) {}
 
 const LC32RegisterInfo &LC32InstrInfo::getRegisterInfo() const {
   return this->RegisterInfo;
+}
+
+void LC32InstrInfo::storeRegToStackSlot(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, Register SrcReg,
+    bool isKill, int FrameIndex, const TargetRegisterClass *RC,
+    const TargetRegisterInfo *TRI, Register VReg) const {
+  // See: LanaiInstrInfo.cpp
+
+  // Check that the register class is what we expect
+  assert(LC32::GPRRegClass.hasSubClassEq(RC) && "Bad register class to store");
+
+  // Get the debug location
+  DebugLoc dl;
+  if (MI != MBB.end())
+    dl = MI->getDebugLoc();
+
+  // Do the store
+  // Remember, frame indices are lowered in LC32RegisterInfo.cpp
+  BuildMI(MBB, MI, dl, this->get(LC32::STW))
+          .addReg(SrcReg, getKillRegState(isKill))
+          .addFrameIndex(FrameIndex)
+          .addImm(0);
+}
+
+void LC32InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator MI,
+                                         Register DestReg, int FrameIndex,
+                                         const TargetRegisterClass *RC,
+                                         const TargetRegisterInfo *TRI,
+                                         Register VReg) const {
+  // See: LanaiInstrInfo.cpp
+
+  // Check that the register class is what we expect
+  assert(LC32::GPRRegClass.hasSubClassEq(RC) && "Bad register class to store");
+
+  // Get the debug location
+  DebugLoc dl;
+  if (MI != MBB.end())
+    dl = MI->getDebugLoc();
+
+  // Use this to set condition codes as dead, which they should be
+  MachineInstr *n = nullptr;
+
+  // Do the store
+  // Remember, frame indices are lowered in LC32RegisterInfo.cpp
+  n = BuildMI(MBB, MI, dl, this->get(LC32::LDW), DestReg)
+          .addFrameIndex(FrameIndex)
+          .addImm(0);
+  n->getOperand(3).setIsDead();
 }

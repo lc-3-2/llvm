@@ -86,12 +86,10 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     auto instr_to_use =
         isInt<16>(Offset) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
     // Use AT as a staging area in which to compute the address
-    n = BuildMI(MBB, MI, dl, TII.get(instr_to_use))
-            .addReg(LC32::AT, RegState::Define)
+    n = BuildMI(MBB, MI, dl, TII.get(instr_to_use), LC32::AT)
             .addImm(Offset);
     n->getOperand(2).setIsDead();
-    n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDr))
-            .addReg(LC32::AT, RegState::Define)
+    n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDr), LC32::AT)
             .addReg(LC32::FP)
             .addReg(LC32::AT, RegState::Kill);
     n->getOperand(3).setIsDead();
@@ -121,8 +119,7 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     auto instr_to_use =
         isInt<16>(Offset) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
     // Put the offset into AT and ADD from there
-    n = BuildMI(MBB, MI, dl, TII.get(instr_to_use))
-            .addReg(LC32::AT, RegState::Define)
+    n = BuildMI(MBB, MI, dl, TII.get(instr_to_use), LC32::AT)
             .addImm(Offset);
     n->getOperand(2).setIsDead();
     n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDr))
