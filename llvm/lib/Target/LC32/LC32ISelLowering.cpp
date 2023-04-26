@@ -30,6 +30,17 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   this->setBooleanContents(ZeroOrOneBooleanContent);
   this->setBooleanVectorContents(ZeroOrOneBooleanContent);
 
+  // Setup how we should extend loads
+  // Not all loads have corresponding instructions
+  this->setLoadExtAction(ISD::EXTLOAD,  MVT::i32, MVT::i1,  Promote);
+  this->setLoadExtAction(ISD::SEXTLOAD, MVT::i32, MVT::i1,  Promote);
+  this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, MVT::i1,  Promote);
+  this->setLoadExtAction(ISD::EXTLOAD,  MVT::i32, MVT::i4,  Promote);
+  this->setLoadExtAction(ISD::SEXTLOAD, MVT::i32, MVT::i4,  Promote);
+  this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, MVT::i4,  Promote);
+  this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, MVT::i8,  Expand);
+  this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, MVT::i16, Expand);
+
   // Sign extension doesn't have custom instructions
   this->setOperationAction(ISD::SIGN_EXTEND,       MVT::i8,  Expand);
   this->setOperationAction(ISD::SIGN_EXTEND,       MVT::i16, Expand);
