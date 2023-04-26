@@ -26,12 +26,20 @@
 
 include "td/LC32OperandInfo.td"
 
-include "td/instr/LC32ALUInstrInfo.td"
-include "td/instr/LC32SHFInstrInfo.td"
-include "td/instr/LC32MemInstrInfo.td"
-include "td/instr/LC32SubroutineInstrInfo.td"
-include "td/instr/LC32SupervisorInstrInfo.td"
+//---
+// The order here is important for dependencies
 
+include "td/instr/LC32LoadConstInstrInfo.td"
+
+include "td/instr/LC32ALUInstrInfo.td"
 include "td/instr/LC32MoveInstrInfo.td"
+
+include "td/instr/LC32SHFInstrInfo.td"
+
+include "td/instr/LC32MemInstrInfo.td"
+
+include "td/instr/LC32SubroutineInstrInfo.td"
+
+include "td/instr/LC32SupervisorInstrInfo.td"
 
 def LC32InstrInfo : InstrInfo;

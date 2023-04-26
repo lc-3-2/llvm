@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file details the calling convention for the LC-3.2. It converts
-// everything to 32-bit integers, then assigns them to the stack. This goes for
-// both arguments and return values.
+// This file details the calling convention for the LC-3.2. It assigns
+// everything to the stack for calls. For returns, it tries to return an i32,
+// otherwise it does sret.
 //
 // For the return values, we only do the first one. Essentially, this amounts to
 // only assigning to the stack if the stack is currently empty.
@@ -20,7 +20,6 @@
 
 // Arguments
 def LC32CallingConv : CallingConv<[
-  CCIfType<[i1, i4, i8, i16], CCPromoteToType<i32>>,
   CCAssignToStack<4, 4>
 ]>;
 

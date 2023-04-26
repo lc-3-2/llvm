@@ -76,7 +76,9 @@ def NOT : InstAlias<"NOT\t$dr, $sr", (XORi GPR:$dr, GPR:$sr, -1)>;
 
 // Manually synthesize ORs
 // This requires patterns to invert immediates in-place
-def SelectInvertedImm5 : ComplexPattern<i32, 1, "SelectInvertedImm5", [imm]>;
+def SelectInvertedImm5  : ComplexPattern<i32, 1, "SelectInvertedImm5", [imm]>;
+def SelectInvertedImm16 : ComplexPattern<i32, 1, "SelectInvertedImm16", [imm]>;
+def SelectInvertedImm32 : ComplexPattern<i32, 1, "SelectInvertedImm32", [imm]>;
 def : Pattern<
   (or GPR:$sr1, GPR:$sr2),
   [(XORi (ANDr (XORi GPR:$sr1, -1), (XORi GPR:$sr2, -1)), -1)]
@@ -84,4 +86,12 @@ def : Pattern<
 def : Pattern<
   (or GPR:$sr1, SelectInvertedImm5:$imm5),
   [(XORi (ANDi (XORi GPR:$sr1, -1), SelectInvertedImm5:$imm5), -1)]
+>;
+def : Pattern<
+  (or GPR:$sr1, SelectInvertedImm16:$imm16),
+  [(XORi (ANDr (XORi GPR:$sr1, -1), (P_LOADCONSTH SelectInvertedImm16:$imm16)), -1)]
+>;
+def : Pattern<
+  (or GPR:$sr1, SelectInvertedImm32:$imm32),
+  [(XORi (ANDr (XORi GPR:$sr1, -1), (P_LOADCONSTW SelectInvertedImm32:$imm32)), -1)]
 >;

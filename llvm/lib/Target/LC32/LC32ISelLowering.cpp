@@ -18,23 +18,13 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
                                        const LC32Subtarget &STI)
     : TargetLowering(TM) {
 
-  // Convenience lists
-  static const std::vector<MVT> INT_TYPES_LTI8 = {MVT::i1, MVT::i4};
-  static const std::vector<MVT> INT_TYPES_LTI32 = {MVT::i1, MVT::i4, MVT::i8,
-                                                   MVT::i16};
-  static const std::vector<MVT> INT_TYPES_I8_I16 = {MVT::i8, MVT::i16};
-
   // Setup register classes
   this->TRI = STI.getRegisterInfo();
   this->addRegisterClass(MVT::i32, &LC32::GPRRegClass);
   this->computeRegisterProperties(this->TRI);
 
-  // Setup VLA
-  this->setStackPointerRegisterToSaveRestore(LC32::SP);
-
-  // Setup booleans
-  this->setBooleanContents(ZeroOrOneBooleanContent);
-  this->setBooleanVectorContents(ZeroOrOneBooleanContent);
+  // Follow source order when scheduling
+  this->setSchedulingPreference(Sched::Source);
 
   // Set function alignment
   this->setMinFunctionAlignment(Align(2));
@@ -43,32 +33,26 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   // Set stack alignment
   this->setMinStackArgumentAlignment(Align(4));
 
+  // Setup booleans
+  this->setBooleanContents(ZeroOrOneBooleanContent);
+  this->setBooleanVectorContents(ZeroOrOneBooleanContent);
+
+  // Setup VLA
+  this->setStackPointerRegisterToSaveRestore(LC32::SP);
+
   // Setup how we should extend loads
   // Not all loads have corresponding instructions
-  for (const auto &vt : INT_TYPES_LTI8) {
+  for (const auto &vt : {MVT::i1, MVT::i4}) {
     this->setLoadExtAction(ISD::EXTLOAD, MVT::i32, vt, Promote);
     this->setLoadExtAction(ISD::SEXTLOAD, MVT::i32, vt, Promote);
     this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, vt, Promote);
   }
-  for (const auto &vt : INT_TYPES_I8_I16) {
+  for (const auto &vt : {MVT::i8, MVT::i16}) {
     this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, vt, Expand);
   }
 
-  // Promote smaller multiplications and divisions to 32-bit
-  for (const auto &vt : INT_TYPES_LTI32) {
-    this->setOperationAction(ISD::MUL, vt, Promote);
-    this->setOperationAction(ISD::MULHU, vt, Promote);
-    this->setOperationAction(ISD::MULHS, vt, Promote);
-    this->setOperationAction(ISD::SMUL_LOHI, vt, Promote);
-    this->setOperationAction(ISD::UMUL_LOHI, vt, Promote);
-    this->setOperationAction(ISD::SDIV, vt, Promote);
-    this->setOperationAction(ISD::UDIV, vt, Promote);
-    this->setOperationAction(ISD::SREM, vt, Promote);
-    this->setOperationAction(ISD::UREM, vt, Promote);
-    this->setOperationAction(ISD::SDIVREM, vt, Promote);
-    this->setOperationAction(ISD::UDIVREM, vt, Promote);
-  }
-  // Do libcalls for 32-bit multiplications and divisions
+  // Do libcalls for multiplications and divisions
+  // Expand operations that are based on them
   this->setOperationAction(ISD::MUL, MVT::i32, LibCall);
   this->setOperationAction(ISD::MULHU, MVT::i32, Expand);
   this->setOperationAction(ISD::MULHS, MVT::i32, Expand);
@@ -81,48 +65,28 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   this->setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
   this->setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
 
-  // Bitwise operations only work on 32-bit
-  for (const auto &vt : INT_TYPES_LTI32) {
-    this->setOperationAction(ISD::AND, vt, Promote);
-    this->setOperationAction(ISD::OR, vt, Promote);
-    this->setOperationAction(ISD::XOR, vt, Promote);
-  }
-
-  // Promote smaller shifts
-  for (const auto &vt : INT_TYPES_LTI32) {
-    this->setOperationAction(ISD::SHL, vt, Promote);
-    this->setOperationAction(ISD::SRA, vt, Promote);
-    this->setOperationAction(ISD::SRL, vt, Promote);
-  }
-
-  // Expand rotations and part shifts
-  for (const auto &vt : MVT::integer_valuetypes()) {
-    this->setOperationAction(ISD::ROTL, vt, Expand);
-    this->setOperationAction(ISD::ROTR, vt, Expand);
-    this->setOperationAction(ISD::SHL_PARTS, vt, Expand);
-    this->setOperationAction(ISD::SRA_PARTS, vt, Expand);
-    this->setOperationAction(ISD::SRL_PARTS, vt, Expand);
-  }
+  // Expand complex bitwise
+  this->setOperationAction(ISD::ROTL, MVT::i32, Expand);
+  this->setOperationAction(ISD::ROTR, MVT::i32, Expand);
+  this->setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
+  this->setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
+  this->setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
+  this->setOperationAction(ISD::BSWAP, MVT::i32, Expand);
+  this->setOperationAction(ISD::CTTZ, MVT::i32, Expand);
+  this->setOperationAction(ISD::CTLZ, MVT::i32, Expand);
+  this->setOperationAction(ISD::CTPOP, MVT::i32, Expand);
+  this->setOperationAction(ISD::BITREVERSE, MVT::i32, Expand);
+  this->setOperationAction(ISD::PARITY, MVT::i32, Expand);
+  this->setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
+  this->setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Expand);
 
   // Extension doesn't have custom instructions
-  for (const auto &vt : MVT::integer_valuetypes()) {
+  for (const auto &vt : {MVT::i1, MVT::i4, MVT::i8, MVT::i16}) {
     this->setOperationAction(ISD::SIGN_EXTEND, vt, Expand);
     this->setOperationAction(ISD::ZERO_EXTEND, vt, Expand);
     this->setOperationAction(ISD::ANY_EXTEND, vt, Expand);
     this->setOperationAction(ISD::TRUNCATE, vt, Expand);
     this->setOperationAction(ISD::SIGN_EXTEND_INREG, vt, Expand);
-  }
-
-  // Counting bits doesn't have custom instructions either
-  for (const auto &vt : MVT::integer_valuetypes()) {
-    this->setOperationAction(ISD::BSWAP, vt, Expand);
-    this->setOperationAction(ISD::CTTZ, vt, Expand);
-    this->setOperationAction(ISD::CTLZ, vt, Expand);
-    this->setOperationAction(ISD::CTPOP, vt, Expand);
-    this->setOperationAction(ISD::BITREVERSE, vt, Expand);
-    this->setOperationAction(ISD::PARITY, vt, Expand);
-    this->setOperationAction(ISD::CTTZ_ZERO_UNDEF, vt, Expand);
-    this->setOperationAction(ISD::CTLZ_ZERO_UNDEF, vt, Expand);
   }
 }
 
@@ -161,10 +125,6 @@ SDValue LC32TargetLowering::LowerFormalArguments(
   // See: LanaiISelLowering.cpp
   for (const CCValAssign &va : ArgLocs) {
     assert(va.isMemLoc() && "LC-3.2 should have all arguments on the stack");
-
-    // Make sure object size is what we expect
-    assert(va.getValVT().getSizeInBits() == 32 &&
-           "LC-3.2 only supports words as arguments");
 
     // Get the frame index
     // Note the offset from the frame pointer

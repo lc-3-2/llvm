@@ -42,6 +42,8 @@ private:
 
   // See: td/instr/LC32ALUInstrInfo.td
   bool SelectInvertedImm5(SDValue In, SDValue &Out);
+  bool SelectInvertedImm16(SDValue In, SDValue &Out);
+  bool SelectInvertedImm32(SDValue In, SDValue &Out);
 };
 
 // Required for INITIALIZE_PASS

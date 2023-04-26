@@ -29,15 +29,17 @@ INITIALIZE_PASS(LC32DAGToDAGISel, DEBUG_TYPE,
 void LC32DAGToDAGISel::Select(SDNode *N) { this->SelectCode(N); }
 
 bool LC32DAGToDAGISel::SelectFrameIndex(SDValue In, SDValue &Out) {
-  // Note that the precondition is verified in TableGen
-  // We can assume the input is a FrameIndex
+  // Check we actually got a frameindex
+  if (In.getOpcode() != ISD::FrameIndex)
+    return false;
+  // Convert to a TargetFrameIndex
   Out = this->CurDAG->getTargetFrameIndex(
       cast<FrameIndexSDNode>(In)->getIndex(), MVT::i32);
   return true;
 }
 
 bool LC32DAGToDAGISel::SelectInvertedImm5(SDValue In, SDValue &Out) {
-  // Check that what we got was a constant, and not some other type of immediate
+  // Check we actually got a constant
   if (In.getOpcode() != ISD::Constant)
     return false;
   // Get the value, and check preconditions
@@ -46,5 +48,29 @@ bool LC32DAGToDAGISel::SelectInvertedImm5(SDValue In, SDValue &Out) {
     return false;
   // Convert
   Out = this->CurDAG->getConstant(~in_val, SDLoc(In), EVT(MVT::i32), false);
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectInvertedImm16(SDValue In, SDValue &Out) {
+  // Check we actually got a constant
+  if (In.getOpcode() != ISD::Constant)
+    return false;
+  // Get the value, and check preconditions
+  uint64_t in_val = cast<ConstantSDNode>(In.getNode())->getSExtValue();
+  if (!isInt<16>(in_val))
+    return false;
+  // Convert
+  Out = this->CurDAG->getConstant(~in_val, SDLoc(In), EVT(MVT::i32), false);
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectInvertedImm32(SDValue In, SDValue &Out) {
+  // Check we actually got a constant
+  if (In.getOpcode() != ISD::Constant)
+    return false;
+  // Get the value and convert
+  uint64_t in_val = cast<ConstantSDNode>(In.getNode())->getSExtValue();
+  Out = this->CurDAG->getConstant(SignExtend64<32>(~in_val), SDLoc(In),
+                                  EVT(MVT::i32), false);
   return true;
 }
