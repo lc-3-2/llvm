@@ -37,7 +37,11 @@ private:
 
   void Select(SDNode *N) override;
 
+  // See: td/instr/LC32MemInstrInfo.td
   bool SelectFrameIndex(SDValue In, SDValue &Out);
+
+  // See: td/instr/LC32ALUInstrInfo.td
+  bool SelectInvertedImm5(SDValue In, SDValue &Out);
 };
 
 // Required for INITIALIZE_PASS

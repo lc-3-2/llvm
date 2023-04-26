@@ -71,3 +71,17 @@ defm XOR : ALU<"XOR", 0b1001, xor>;
 
 // Don't need a pattern for NOT since LLVM already uses XOR with -1
 def NOT : InstAlias<"NOT\t$dr, $sr", (XORi GPR:$dr, GPR:$sr, -1)>;
+
+//---
+
+// Manually synthesize ORs
+// This requires patterns to invert immediates in-place
+def SelectInvertedImm5 : ComplexPattern<i32, 1, "SelectInvertedImm5", [imm]>;
+def : Pattern<
+  (or GPR:$sr1, GPR:$sr2),
+  [(XORi (ANDr (XORi GPR:$sr1, -1), (XORi GPR:$sr2, -1)), -1)]
+>;
+def : Pattern<
+  (or GPR:$sr1, SelectInvertedImm5:$imm5),
+  [(XORi (ANDi (XORi GPR:$sr1, -1), SelectInvertedImm5:$imm5), -1)]
+>;
