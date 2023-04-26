@@ -28,6 +28,8 @@ bool LC32OperandImm::isBOffset6() const { return isInt<6>(this->Value); }
 bool LC32OperandImm::isHOffset6() const { return isInt<6>(this->Value); }
 bool LC32OperandImm::isWOffset6() const { return isInt<6>(this->Value); }
 bool LC32OperandImm::isTrapVect8() const { return isUInt<8>(this->Value); }
+bool LC32OperandImm::isConst16() const { return isInt<16>(this->Value); }
+bool LC32OperandImm::isConst32() const { return isInt<32>(this->Value); }
 
 void LC32OperandImm::addImm5Operands(MCInst &Inst, unsigned N) {
   assert(N == 1 && "Invalid number of operands!");
@@ -50,6 +52,14 @@ void LC32OperandImm::addWOffset6Operands(MCInst &Inst, unsigned N) {
   Inst.addOperand(MCOperand::createImm(this->Value << 2));
 }
 void LC32OperandImm::addTrapVect8Operands(MCInst &Inst, unsigned N) {
+  assert(N == 1 && "Invalid number of operands!");
+  Inst.addOperand(MCOperand::createImm(this->Value));
+}
+void LC32OperandImm::addConst16Operands(MCInst &Inst, unsigned N) {
+  assert(N == 1 && "Invalid number of operands!");
+  Inst.addOperand(MCOperand::createImm(this->Value));
+}
+void LC32OperandImm::addConst32Operands(MCInst &Inst, unsigned N) {
   assert(N == 1 && "Invalid number of operands!");
   Inst.addOperand(MCOperand::createImm(this->Value));
 }

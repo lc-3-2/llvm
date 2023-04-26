@@ -34,6 +34,8 @@ public:
   bool isHOffset6() const override;
   bool isWOffset6() const override;
   bool isTrapVect8() const override;
+  bool isConst16() const override;
+  bool isConst32() const override;
 
   void addImm5Operands(MCInst &Inst, unsigned N) override;
   void addAmount3Operands(MCInst &Inst, unsigned N) override;
@@ -41,6 +43,8 @@ public:
   void addHOffset6Operands(MCInst &Inst, unsigned N) override;
   void addWOffset6Operands(MCInst &Inst, unsigned N) override;
   void addTrapVect8Operands(MCInst &Inst, unsigned N) override;
+  void addConst16Operands(MCInst &Inst, unsigned N) override;
+  void addConst32Operands(MCInst &Inst, unsigned N) override;
 
 private:
   uint64_t Value;

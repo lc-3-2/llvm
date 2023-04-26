@@ -54,3 +54,45 @@ def C_MOVE_IMM5 : Instruction {
 }
 
 //---
+
+def P_LOADCONSTH : Instruction {
+  let Namespace = "LC32";
+  let AsmString = "PSEUDO.LOADCONSTH\t$dr, $const16";
+  let isPseudo = true;
+
+  let Defs = [CC];
+  let OutOperandList = (outs GPR:$dr);
+  let InOperandList = (ins Const16:$const16);
+
+  let Pattern = [(set GPR:$dr, Const16:$const16)];
+
+  let isMoveImm = true;
+  let isReMaterializable = true;
+  let mayLoad = false;
+  let mayStore = false;
+  let hasSideEffects = false;
+}
+
+def P_LOADCONSTW : Instruction {
+  let Namespace = "LC32";
+  let AsmString = "PSEUDO.LOADCONSTW\t$dr, $const32";
+  let isPseudo = true;
+
+  let Defs = [CC];
+  let OutOperandList = (outs GPR:$dr);
+  let InOperandList = (ins Const32:$const32);
+
+  let Pattern = [(set GPR:$dr, Const32:$const32)];
+
+  let isMoveImm = true;
+  let isReMaterializable = true;
+  let mayLoad = false;
+  let mayStore = false;
+  let hasSideEffects = false;
+}
+
+def P_LOADCONSTB : InstAlias<
+  "PSEUDO.LOADCONSTB\t$dr, $const8",
+  (P_LOADCONSTH GPR:$dr, Const16:$const8),
+  0
+>;

@@ -11,6 +11,7 @@
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32FrameLowering"
 
@@ -66,8 +67,12 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
     int64_t to_go = -MFI.getStackSize();
     assert(to_go < 0);
 
+    // Check that the stack frame isn't too big
+    if (!isInt<32>(to_go))
+      report_fatal_error("Stack frame bigger than half of memory");
+
     // If we only have a small amount, do repeated adds
-    // Threshold was chosen to be the size of LOADIMMH
+    // Threshold was chosen to be the size of LOADCONSTH
     if (to_go >= -64) {
       // Keep track of if this is the first iteration
       bool first = true;
@@ -89,7 +94,20 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
       return;
     }
 
-    llvm_unreachable("TODO");
+    // Use the smallest instruction that fits
+    auto instr_to_use =
+        isInt<16>(to_go) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
+    // Put the offset into AT and ADD from there
+    n = BuildMI(MBB, MBBI, dl, TII.get(instr_to_use))
+            .addReg(LC32::AT, RegState::Define)
+            .addImm(to_go);
+    n->getOperand(2).setIsDead();
+    n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDr))
+            .addReg(LC32::SP, RegState::Define)
+            .addReg(LC32::FP)
+            .addReg(LC32::AT, RegState::Kill);
+    n->getOperand(3).setIsDead();
+    return;
   }
 }
 

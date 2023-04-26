@@ -95,3 +95,24 @@ def TrapVect8 : Operand<i8> {
   let OperandType = "OPERAND_IMMEDIATE";
   let ParserMatchClass = TrapVect8OperandClass;
 }
+
+//---
+// Used by: P_LOADCONSTH, P_LOADCONSTW
+
+def Const16OperandClass : AsmOperandClass {
+  let Name = "Const16";
+}
+
+def Const16 : Operand<i32>, ImmLeaf<i32, [{ return isInt<16>(Imm); }]> {
+  let OperandType = "OPERAND_IMMEDIATE";
+  let ParserMatchClass = Const16OperandClass;
+}
+
+def Const32OperandClass : AsmOperandClass {
+  let Name = "Const32";
+}
+
+def Const32 : Operand<i32>, ImmLeaf<i32, [{ return isInt<32>(Imm); }]> {
+  let OperandType = "OPERAND_IMMEDIATE";
+  let ParserMatchClass = Const32OperandClass;
+}

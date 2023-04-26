@@ -45,13 +45,14 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                            RegScavenger *RS) const {
 
   // Populate variables
+  // Note that offsets are truncated to the size of memory
   MachineBasicBlock &MBB = *MI->getParent();
   MachineFunction &MF = *MBB.getParent();
   DebugLoc dl = MI->getDebugLoc();
   const LC32InstrInfo &TII =
       *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
   int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
-  int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
+  int32_t Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
 
   // Use this to set condition codes as dead, which they should be
   MachineInstr *n = nullptr;
@@ -81,7 +82,22 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
       return false;
     }
 
-    llvm_unreachable("TODO");
+    // Use the smallest instruction that fits
+    auto instr_to_use =
+        isInt<16>(Offset) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
+    // Use AT as a staging area in which to compute the address
+    n = BuildMI(MBB, MI, dl, TII.get(instr_to_use))
+            .addReg(LC32::AT, RegState::Define)
+            .addImm(Offset);
+    n->getOperand(2).setIsDead();
+    n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDr))
+            .addReg(LC32::AT, RegState::Define)
+            .addReg(LC32::FP)
+            .addReg(LC32::AT, RegState::Kill);
+    n->getOperand(3).setIsDead();
+    MI->getOperand(1).ChangeToRegister(LC32::AT, false, false, true);
+    MI->getOperand(2).ChangeToImmediate(0);
+    return false;
   }
 
   // Handle C_LEA_FRAMEINDEX
@@ -92,16 +108,29 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     // If the offset is small enough, we can just ADD
     if (isInt<5>(Offset)) {
       n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDi))
-          .addReg(MI->getOperand(0).getReg(),
-                  getKillRegState(MI->getOperand(0).isKill()))
-          .addReg(LC32::FP)
-          .addImm(Offset);
+              .addReg(MI->getOperand(0).getReg(),
+                      getRegState(MI->getOperand(0)))
+              .addReg(LC32::FP)
+              .addImm(Offset);
       n->getOperand(3).setIsDead();
       MBB.erase(MI);
       return false;
     }
 
-    llvm_unreachable("TODO");
+    // Use the smallest instruction that fits
+    auto instr_to_use =
+        isInt<16>(Offset) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
+    // Put the offset into AT and ADD from there
+    n = BuildMI(MBB, MI, dl, TII.get(instr_to_use))
+            .addReg(LC32::AT, RegState::Define)
+            .addImm(Offset);
+    n->getOperand(2).setIsDead();
+    n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDr))
+            .addReg(MI->getOperand(0).getReg(), getRegState(MI->getOperand(0)))
+            .addReg(LC32::FP)
+            .addReg(LC32::AT, RegState::Kill);
+    n->getOperand(3).setIsDead();
+    return false;
   }
 
   llvm_unreachable("Bad instruction with frame index");

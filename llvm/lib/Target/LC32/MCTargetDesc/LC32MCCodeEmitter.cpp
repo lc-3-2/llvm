@@ -27,6 +27,48 @@ LC32MCCodeEmitter::LC32MCCodeEmitter(MCContext &Ctx, MCInstrInfo const &MCII)
 void LC32MCCodeEmitter::encodeInstruction(const MCInst &Inst, raw_ostream &OS,
                                           SmallVectorImpl<MCFixup> &Fixups,
                                           const MCSubtargetInfo &STI) const {
+  // Handle pseudo instructions
+  if (Inst.getOpcode() == LC32::P_LOADCONSTH) {
+    // Get the operands
+    uint64_t dr =
+        this->getMachineOpValue(Inst, Inst.getOperand(0), Fixups, STI);
+    uint64_t imm16 =
+        this->getMachineOpValue(Inst, Inst.getOperand(1), Fixups, STI);
+    // Construct encodings
+    uint16_t lea_enc = 0xe002 | (dr << 9);
+    uint16_t ldh_enc = 0x6000 | (dr << 9) | (dr << 6);
+    uint16_t br_enc = 0x0e01;
+    // Write
+    support::endian::write(OS, lea_enc, support::endianness::little);
+    support::endian::write(OS, ldh_enc, support::endianness::little);
+    support::endian::write(OS, br_enc, support::endianness::little);
+    support::endian::write(OS, static_cast<uint16_t>(imm16),
+                           support::endianness::little);
+    // Done
+    return;
+  }
+  if (Inst.getOpcode() == LC32::P_LOADCONSTW) {
+    // Get the operands
+    uint64_t dr =
+        this->getMachineOpValue(Inst, Inst.getOperand(0), Fixups, STI);
+    uint64_t imm32 =
+        this->getMachineOpValue(Inst, Inst.getOperand(1), Fixups, STI);
+    // Construct encodings
+    uint16_t lea_enc = 0xe002 | (dr << 9);
+    uint16_t ldw_enc = 0xa000 | (dr << 9) | (dr << 6);
+    uint16_t br_enc = 0x0e01;
+    uint16_t trap_enc = 0xf0ff;
+    // Write
+    support::endian::write(OS, lea_enc, support::endianness::little);
+    support::endian::write(OS, ldw_enc, support::endianness::little);
+    support::endian::write(OS, br_enc, support::endianness::little);
+    support::endian::write(OS, trap_enc, support::endianness::little);
+    support::endian::write(OS, static_cast<uint32_t>(imm32),
+                           support::endianness::little);
+    // Done
+    return;
+  }
+
   // Non-pseudo instructions are just written as-is
   // Remember to convert to uint16_t so only two bytes are written
   uint64_t enc = this->getBinaryCodeForInstr(Inst, Fixups, STI);

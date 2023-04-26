@@ -9,6 +9,7 @@
 #include "LC32AsmBackend.h"
 #include "LC32ELFObjectTargetWriter.h"
 #include "LC32FixupKinds.h"
+#include "LC32MCTargetDesc.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCFixupKindInfo.h"
@@ -44,9 +45,13 @@ bool LC32AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count,
 void LC32AsmBackend::emitInstructionBegin(MCObjectStreamer &OS,
                                           const MCInst &Inst,
                                           const MCSubtargetInfo &STI) {
+  // Long pseudo instructions are aligned to four bytes
   // Non-pseudo instructions are aligned to two bytes
   // Emit zeros until then
-  OS.emitValueToAlignment(Align(2));
+  if (Inst.getOpcode() == LC32::P_LOADCONSTW)
+    OS.emitValueToAlignment(Align(4));
+  else
+    OS.emitValueToAlignment(Align(2));
 }
 
 unsigned LC32AsmBackend::getNumFixupKinds() const {

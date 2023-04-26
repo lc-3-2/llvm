@@ -40,6 +40,7 @@ def OUT  : InstAlias<"OUT",  (TRAP 0x21)>;
 def PUTS : InstAlias<"PUTS", (TRAP 0x22)>;
 def IN   : InstAlias<"IN",   (TRAP 0x23)>;
 def HALT : InstAlias<"HALT", (TRAP 0x25)>;
+def DIE  : InstAlias<"DIE",  (TRAP 0xff)>;
 
 def RTI : Instruction {
   let Namespace = "LC32";
