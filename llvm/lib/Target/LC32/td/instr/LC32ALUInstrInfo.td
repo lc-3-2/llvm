@@ -74,6 +74,28 @@ def NOT : InstAlias<"NOT\t$dr, $sr", (XORi GPR:$dr, GPR:$sr, -1)>;
 
 //---
 
+// Manually synthesize SUBs
+// This requires patterns to increment immediates in-place
+def SelectIncrementedImm5 : ComplexPattern<i32, 1, "SelectIncrementedImm5", [imm]>;
+def SelectIncrementedImm16 : ComplexPattern<i32, 1, "SelectIncrementedImm16", [imm]>;
+def SelectIncrementedImm32 : ComplexPattern<i32, 1, "SelectIncrementedImm32", [imm]>;
+def : Pattern<
+  (sub GPR:$sr1, GPR:$sr2),
+  [(ADDr GPR:$sr1, (ADDi (XORi GPR:$sr2, -1), 1))]
+>;
+def : Pattern<
+  (sub SelectIncrementedImm5:$imm5, GPR:$sr),
+  [(ADDi (XORi GPR:$sr, -1), SelectIncrementedImm5:$imm5)]
+>;
+def : Pattern<
+  (sub SelectIncrementedImm16:$imm16, GPR:$sr),
+  [(ADDr (XORi GPR:$sr, -1), (P_LOADCONSTH SelectIncrementedImm16:$imm16))]
+>;
+def : Pattern<
+  (sub SelectIncrementedImm32:$imm32, GPR:$sr),
+  [(ADDr (XORi GPR:$sr, -1), (P_LOADCONSTW SelectIncrementedImm32:$imm32))]
+>;
+
 // Manually synthesize ORs
 // This requires patterns to invert immediates in-place
 def SelectInvertedImm5  : ComplexPattern<i32, 1, "SelectInvertedImm5", [imm]>;

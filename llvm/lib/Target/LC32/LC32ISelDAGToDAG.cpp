@@ -21,8 +21,12 @@ INITIALIZE_PASS(LC32DAGToDAGISel, DEBUG_TYPE,
 
 // Provides: SelectCode
 // Requires: SelectFrameIndex
+// Requires: SelectIncrementedImm5
+// Requires: SelectIncrementedImm16
+// Requires: SelectIncrementedImm32
 // Requires: SelectInvertedImm5
-// Requires: SelectInvertedImm
+// Requires: SelectInvertedImm16
+// Requires: SelectInvertedImm32
 #define GET_DAGISEL_BODY LC32DAGToDAGISel
 #include "LC32GenDAGISel.inc"
 
@@ -35,6 +39,43 @@ bool LC32DAGToDAGISel::SelectFrameIndex(SDValue In, SDValue &Out) {
   // Convert to a TargetFrameIndex
   Out = this->CurDAG->getTargetFrameIndex(
       cast<FrameIndexSDNode>(In)->getIndex(), MVT::i32);
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectIncrementedImm5(SDValue In, SDValue &Out) {
+  // Check we actually got a constant
+  if (In.getOpcode() != ISD::Constant)
+    return false;
+  // Get the value, and check preconditions
+  uint64_t in_val = cast<ConstantSDNode>(In.getNode())->getSExtValue();
+  if (!isInt<5>(in_val + 1))
+    return false;
+  // Convert
+  Out = this->CurDAG->getConstant(in_val + 1, SDLoc(In), EVT(MVT::i32), false);
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectIncrementedImm16(SDValue In, SDValue &Out) {
+  // Check we actually got a constant
+  if (In.getOpcode() != ISD::Constant)
+    return false;
+  // Get the value, and check preconditions
+  uint64_t in_val = cast<ConstantSDNode>(In.getNode())->getSExtValue();
+  if (!isInt<16>(in_val + 1))
+    return false;
+  // Convert
+  Out = this->CurDAG->getConstant(in_val + 1, SDLoc(In), EVT(MVT::i32), false);
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectIncrementedImm32(SDValue In, SDValue &Out) {
+  // Check we actually got a constant
+  if (In.getOpcode() != ISD::Constant)
+    return false;
+  // Get the value and convert
+  uint64_t in_val = cast<ConstantSDNode>(In.getNode())->getSExtValue();
+  Out = this->CurDAG->getConstant(SignExtend64<32>(in_val + 1), SDLoc(In),
+                                  EVT(MVT::i32), false);
   return true;
 }
 
