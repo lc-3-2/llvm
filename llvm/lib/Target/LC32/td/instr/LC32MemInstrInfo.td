@@ -251,3 +251,38 @@ def C_LEA_FRAMEINDEX : Instruction {
 }
 
 //---
+
+// Custom functions to turn addresses into their target variant
+def SelectGlobalAddress  : ComplexPattern<i32, 1, "SelectGlobalAddress",  [globaladdr]>;
+def SelectExternalSymbol : ComplexPattern<i32, 1, "SelectExternalSymbol", [externalsym]>;
+def SelectConstantPool   : ComplexPattern<i32, 1, "SelectConstantPool",   [constpool]>;
+def SelectJumpTable      : ComplexPattern<i32, 1, "SelectJumpTable",      [jumptable]>;
+def SelectBlockAddress   : ComplexPattern<i32, 1, "SelectBlockAddress",   [blockaddress]>;
+
+def LEA : Instruction {
+  let Namespace = "LC32";
+  let AsmString = "LEA\t$dr, $pcoffset9";
+
+  let OutOperandList = (outs GPR:$dr);
+  let InOperandList = (ins PCOffset9:$pcoffset9);
+  let Size = 2;
+
+  let Pattern = [(set GPR:$dr, SelectGlobalAddress:$pcoffset9)];
+
+  let mayLoad = false;
+  let mayStore = false;
+  let hasSideEffects = false;
+
+  bits<3> dr;
+  bits<9> pcoffset9;
+
+  bits<16> Inst;
+  let Inst{15-12} = 0b1110;
+  let Inst{11-9}  = dr;
+  let Inst{8-0}   = pcoffset9;
+}
+
+def : Pattern<(SelectExternalSymbol:$addr), [(LEA SelectExternalSymbol:$addr)]>;
+def : Pattern<(SelectConstantPool:$addr),   [(LEA SelectConstantPool:$addr)]>;
+def : Pattern<(SelectJumpTable:$addr),      [(LEA SelectJumpTable:$addr)]>;
+def : Pattern<(SelectBlockAddress:$addr),   [(LEA SelectBlockAddress:$addr)]>;

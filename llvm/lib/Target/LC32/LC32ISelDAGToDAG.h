@@ -39,6 +39,11 @@ private:
 
   // See: td/instr/LC32MemInstrInfo.td
   bool SelectFrameIndex(SDValue In, SDValue &Out);
+  bool SelectGlobalAddress(SDValue In, SDValue &Out);
+  bool SelectExternalSymbol(SDValue In, SDValue &Out);
+  bool SelectConstantPool(SDValue In, SDValue &Out);
+  bool SelectJumpTable(SDValue In, SDValue &Out);
+  bool SelectBlockAddress(SDValue In, SDValue &Out);
 };
 
 // Required for INITIALIZE_PASS

@@ -8,6 +8,7 @@
 
 #include "LC32InstPrinter.h"
 #include "LC32MCTargetDesc.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/FormattedStream.h"
@@ -21,6 +22,7 @@ using namespace llvm;
 // Provides: getRegisterName
 // Requires: printOperand
 // Requires: printShiftedSignedImmOperand
+// Requires: printPCOffset
 #define PRINT_ALIAS_INSTR
 #include "LC32GenAsmWriter.inc"
 
@@ -73,7 +75,6 @@ void LC32InstPrinter::printShiftedSignedImmOperand(const MCInst *MI,
   // Get the operand
   const MCOperand &op = MI->getOperand(OpNo);
   // Check operand has the right form
-  // Check operand has the right form
   // Get around commas breaking assert
   {
     assert(op.isImm() && "Not an immediate");
@@ -83,4 +84,34 @@ void LC32InstPrinter::printShiftedSignedImmOperand(const MCInst *MI,
   // Handle immediate shifting
   // Prefix them with a #
   O << '#' << (op.getImm() >> S);
+}
+
+template <unsigned N>
+void LC32InstPrinter::printPCOffset(const MCInst *MI, unsigned OpNo,
+                                    raw_ostream &O, const char *Modifier) {
+  // Get the operand
+  const MCOperand &op = MI->getOperand(OpNo);
+
+  // Immediate case
+  if (op.isImm()) {
+    // Correct for PC
+    int64_t real_imm = op.getImm() - 2;
+    // Check operand has right form
+    // Get around commas breaking assert
+    {
+      bool is_correct = isShiftedInt<N, 1>(real_imm);
+      assert(is_correct && "Bad value for immediate");
+    }
+    // Print
+    O << '#' << (real_imm >> 1);
+    return;
+  }
+
+  // Expression case
+  if (op.isExpr()) {
+    op.getExpr()->print(O, &this->MAI);
+    return;
+  }
+
+  llvm_unreachable("Bad operand type for PC offset");
 }

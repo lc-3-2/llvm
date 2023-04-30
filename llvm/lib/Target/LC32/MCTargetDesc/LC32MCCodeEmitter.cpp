@@ -108,3 +108,10 @@ uint64_t LC32MCCodeEmitter::getShiftedSignedImmOpValue(
   // Return
   return op.getImm() >> S;
 }
+
+template <unsigned N>
+uint64_t LC32MCCodeEmitter::getPCOffsetValue(const MCInst &MI, unsigned OpNo,
+                                             SmallVectorImpl<MCFixup> &Fixups,
+                                             const MCSubtargetInfo &STI) const {
+  llvm_unreachable("TODO");
+}

@@ -43,7 +43,6 @@ private:
   MCContext &Ctx;
 
   // Operand encoding instructions required by TableGen
-  // Note that we can't template this
   uint64_t getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                              SmallVectorImpl<MCFixup> &Fixups,
                              const MCSubtargetInfo &STI) const;
@@ -51,6 +50,10 @@ private:
   uint64_t getShiftedSignedImmOpValue(const MCInst &MI, unsigned OpNo,
                                       SmallVectorImpl<MCFixup> &Fixups,
                                       const MCSubtargetInfo &STI) const;
+  template <unsigned N>
+  uint64_t getPCOffsetValue(const MCInst &MI, unsigned OpNo,
+                            SmallVectorImpl<MCFixup> &Fixups,
+                            const MCSubtargetInfo &STI) const;
 };
 
 } // namespace llvm

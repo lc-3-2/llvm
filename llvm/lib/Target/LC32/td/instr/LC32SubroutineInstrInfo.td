@@ -135,3 +135,27 @@ def JSRR : Instruction {
   let Inst{8-6}   = baser;
   let Inst{5-0}   = 0b000000;
 }
+
+def JSR : Instruction {
+  let Namespace = "LC32";
+  let AsmString = "JSR\t$pcoffset11";
+
+  let Defs = [SP, CC];
+  let OutOperandList = (outs);
+  let InOperandList = (ins PCOffset11:$pcoffset11);
+  let Size = 2;
+
+  let Pattern = [(N_LC32_CALL SelectGlobalAddress:$pcoffset11)];
+
+  let isCall = true;
+  let hasSideEffects = true;
+
+  bits<11> pcoffset11;
+
+  bits<16> Inst;
+  let Inst{15-12} = 0b0100;
+  let Inst{11}    = 0b1;
+  let Inst{10-0}  = pcoffset11;
+}
+
+def : Pattern<(N_LC32_CALL SelectExternalSymbol:$addr), [(JSR SelectExternalSymbol:$addr)]>;

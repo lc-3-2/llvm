@@ -48,9 +48,24 @@ static DecodeStatus DecodeShiftedSignedImm(MCInst &MI, uint64_t Imm,
   return DecodeStatus::Success;
 }
 
+template <unsigned N>
+static DecodeStatus DecodePCOffset(MCInst &MI, uint64_t Imm, uint64_t Address,
+                                   const MCDisassembler *Decoder) {
+  // Check if this is an address we know
+  // TODO: Determine isBranch instead of hardcoding false
+  bool sym_worked = Decoder->tryAddingSymbolicOperand(
+      MI, Address + (Imm << 1) + 2, Address, false, 0, 2, 2);
+  // Otherwise, create an immediate
+  if (!sym_worked)
+    MI.addOperand(MCOperand::createImm(SignExtend64<N + 1>((Imm << 1) + 2)));
+  // Done
+  return DecodeStatus::Success;
+}
+
 // Provides: decodeInstruction
 // Requires: DecodeGPRRegisterClass
 // Requires: DecodeShiftedSignedImm
+// Requires: DecodePCOffset
 #include "LC32GenDisassemblerTables.inc"
 
 DecodeStatus LC32Disassembler::getInstruction(MCInst &MI, uint64_t &Size,

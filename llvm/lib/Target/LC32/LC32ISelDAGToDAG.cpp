@@ -21,17 +21,70 @@ INITIALIZE_PASS(LC32DAGToDAGISel, DEBUG_TYPE,
 
 // Provides: SelectCode
 // Requires: SelectFrameIndex
+// Requires: SelectGlobalAddress
+// Requires: SelectExternalSymbol
+// Requires: SelectConstantPool
+// Requires: SelectJumpTable
+// Requires: SelectBlockAddress
 #define GET_DAGISEL_BODY LC32DAGToDAGISel
 #include "LC32GenDAGISel.inc"
 
 void LC32DAGToDAGISel::Select(SDNode *N) { this->SelectCode(N); }
 
 bool LC32DAGToDAGISel::SelectFrameIndex(SDValue In, SDValue &Out) {
-  // Check we actually got a frameindex
   if (In.getOpcode() != ISD::FrameIndex)
     return false;
-  // Convert to a TargetFrameIndex
+  assert(In.getValueType() == MVT::i32 && "Addresses should be i32");
   Out = this->CurDAG->getTargetFrameIndex(
       cast<FrameIndexSDNode>(In)->getIndex(), MVT::i32);
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectGlobalAddress(SDValue In, SDValue &Out) {
+  if (In.getOpcode() != ISD::GlobalAddress)
+    return false;
+  assert(In.getValueType() == MVT::i32 && "Addresses should be i32");
+  Out = this->CurDAG->getTargetGlobalAddress(
+      cast<GlobalAddressSDNode>(In)->getGlobal(), SDLoc(In), MVT::i32,
+      cast<GlobalAddressSDNode>(In)->getOffset());
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectExternalSymbol(SDValue In, SDValue &Out) {
+  if (In.getOpcode() != ISD::ExternalSymbol)
+    return false;
+  assert(In.getValueType() == MVT::i32 && "Addresses should be i32");
+  Out = this->CurDAG->getTargetExternalSymbol(
+      cast<ExternalSymbolSDNode>(In)->getSymbol(), MVT::i32);
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectConstantPool(SDValue In, SDValue &Out) {
+  if (In.getOpcode() != ISD::ConstantPool)
+    return false;
+  assert(In.getValueType() == MVT::i32 && "Addresses should be i32");
+  Out = this->CurDAG->getTargetConstantPool(
+      cast<ConstantPoolSDNode>(In)->getConstVal(), MVT::i32,
+      cast<ConstantPoolSDNode>(In)->getAlign(),
+      cast<ConstantPoolSDNode>(In)->getOffset());
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectJumpTable(SDValue In, SDValue &Out) {
+  if (In.getOpcode() != ISD::JumpTable)
+    return false;
+  assert(In.getValueType() == MVT::i32 && "Addresses should be i32");
+  Out = this->CurDAG->getTargetJumpTable(cast<JumpTableSDNode>(In)->getIndex(),
+                                         MVT::i32);
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectBlockAddress(SDValue In, SDValue &Out) {
+  if (In.getOpcode() != ISD::BlockAddress)
+    return false;
+  assert(In.getValueType() == MVT::i32 && "Addresses should be i32");
+  Out = this->CurDAG->getTargetBlockAddress(
+      cast<BlockAddressSDNode>(In)->getBlockAddress(), MVT::i32,
+      cast<BlockAddressSDNode>(In)->getOffset());
   return true;
 }

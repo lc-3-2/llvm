@@ -85,6 +85,33 @@ def WOffset6 : Operand<i32>, ImmLeaf<i32, [{ return isShiftedInt<6,2>(Imm); }]> 
 }
 
 //---
+// Used by: LEA, BR, JSR
+
+def PCOffset9OperandClass : AsmOperandClass {
+  let Name = "PCOffset9";
+}
+
+def PCOffset9 : Operand<i32> {
+  let OperandType = "OPERAND_IMMEDIATE";
+  let ParserMatchClass = PCOffset9OperandClass;
+  let PrintMethod = "printPCOffset<9>";
+  let EncoderMethod = "getPCOffsetValue<9>";
+  let DecoderMethod = "DecodePCOffset<9>";
+}
+
+def PCOffset11OperandClass : AsmOperandClass {
+  let Name = "PCOffset11";
+}
+
+def PCOffset11 : Operand<i32> {
+  let OperandType = "OPERAND_IMMEDIATE";
+  let ParserMatchClass = PCOffset11OperandClass;
+  let PrintMethod = "printPCOffset<11>";
+  let EncoderMethod = "getPCOffsetValue<11>";
+  let DecoderMethod = "DecodePCOffset<11>";
+}
+
+//---
 // Used by: TRAP
 
 def TrapVect8OperandClass : AsmOperandClass {
