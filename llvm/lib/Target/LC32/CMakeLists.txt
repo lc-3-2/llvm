@@ -19,7 +19,9 @@ add_llvm_target(LC32CodeGen
   LC32TargetMachine.cpp
   LC32Subtarget.cpp
   LC32ISelDAGToDAG.cpp
-  LC32ISelLowering.cpp
+  LC32ISelLoweringConstructor.cpp
+  LC32ISelLoweringCallConv.cpp
+  LC32ISelLoweringOps.cpp
   LC32FrameLowering.cpp
   LC32InstrInfo.cpp
   LC32RegisterInfo.cpp

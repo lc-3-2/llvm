@@ -6,9 +6,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This module implements the bulk of lowering. While the DAGToDAG pass handles
-// instruction selection, this pass handles the calling convention and stack
-// frames.
+// This module implements the bulk of lowering. It handles the calling
+// convention, as well as custom operations. The constructor tells the framework
+// what custom operations need lowering.
+//
+// Because of the sheer size of this module, it is split over multiple files.
+// LC32ISelLoweringConstructor.cpp houses the constructor.
+// LC32ISelLoweringCallConv.cpp handles calling convention lowering. Finally,
+// LC32ISelLoweringOps.cpp handles operations that have to be lowered custom.
 //
 // See: CCState
 //
@@ -28,20 +33,33 @@ class LC32RegisterInfo;
 namespace LC32ISD {
 enum {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
+
+  // Behaves just like NOT
+  // See: td/instr/LC32ALUInstrInfo.td
+  OR_LOWERING_NOT,
+
+  // Operand 0: Chain
   RET,
 };
 } // namespace LC32ISD
 
 class LC32TargetLowering : public TargetLowering {
 public:
+  // See: LC32ISelLoweringConstructor.cpp
   LC32TargetLowering(const TargetMachine &TM, const LC32Subtarget &STI);
 
+  // See: LC32ISelLoweringOps.cpp
   const char *getTargetNodeName(unsigned Opcode) const override;
+
+  // This delegates to different functions to custom lower operations
+  // See: LC32ISelLoweringOps.cpp
+  SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
 
 private:
   const LC32RegisterInfo *TRI;
 
   // Calling Convention
+  // See: LC32ISelLoweringCallConv.cpp
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
                                bool isVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -57,6 +75,9 @@ private:
                       SelectionDAG &DAG) const override;
   SDValue LowerCall(CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const override;
+
+  // See: LC32ISelLoweringOps.cpp
+  SDValue LowerOR(SDValue Op, SelectionDAG &DAG) const;
 };
 
 } // namespace llvm

@@ -39,14 +39,6 @@ private:
 
   // See: td/instr/LC32MemInstrInfo.td
   bool SelectFrameIndex(SDValue In, SDValue &Out);
-
-  // See: td/instr/LC32ALUInstrInfo.td
-  bool SelectIncrementedImm5(SDValue In, SDValue &Out);
-  bool SelectIncrementedImm16(SDValue In, SDValue &Out);
-  bool SelectIncrementedImm32(SDValue In, SDValue &Out);
-  bool SelectInvertedImm5(SDValue In, SDValue &Out);
-  bool SelectInvertedImm16(SDValue In, SDValue &Out);
-  bool SelectInvertedImm32(SDValue In, SDValue &Out);
 };
 
 // Required for INITIALIZE_PASS
