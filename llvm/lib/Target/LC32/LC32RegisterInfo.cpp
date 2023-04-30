@@ -17,6 +17,14 @@ using namespace llvm;
 #define GET_REGINFO_TARGET_DESC
 #include "LC32GenRegisterInfo.inc"
 
+static_assert(std::is_same<size_t, unsigned long>::value, "Bad type");
+static_assert(std::is_same<ssize_t, long>::value, "Bad type");
+static cl::opt<unsigned> MaxRepeatedAdd(
+    "lc_3.2-frame-offset-max-repeated-add",
+    cl::desc("When realizing frame offsets, the maximum number of repeated "
+             "adds to do instead of using PSEUDO.LOADCONST"),
+    cl::init(4));
+
 LC32RegisterInfo::LC32RegisterInfo() : LC32GenRegisterInfo(LC32::LR) {}
 
 const MCPhysReg *
@@ -53,9 +61,7 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
       *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
   int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
   int32_t Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
-
-  // Use this to set condition codes as dead, which they should be
-  MachineInstr *n = nullptr;
+  assert(SPAdj == 0 && "We don't use SPAdj");
 
   // Handle loads and stores
   if (MI->getOpcode() == LC32::LDB || MI->getOpcode() == LC32::STB ||
@@ -82,16 +88,8 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
       return false;
     }
 
-    // Use the smallest instruction that fits
-    auto instr_to_use =
-        isInt<16>(Offset) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
-    // Use AT as a staging area in which to compute the address
-    n = BuildMI(MBB, MI, dl, TII.get(instr_to_use), LC32::AT).addImm(Offset);
-    n->getOperand(2).setIsDead();
-    n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDr), LC32::AT)
-            .addReg(LC32::FP)
-            .addReg(LC32::AT, RegState::Kill);
-    n->getOperand(3).setIsDead();
+    // Construct the address and load from it
+    this->genAddLargeImm(TII, MBB, MI, dl, LC32::AT, LC32::FP, Offset);
     MI->getOperand(1).ChangeToRegister(LC32::AT, false, false, true);
     MI->getOperand(2).ChangeToImmediate(0);
     return false;
@@ -102,32 +100,76 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   if (MI->getOpcode() == LC32::C_LEA_FRAMEINDEX) {
     assert(FIOperandNum == 1 && "Bad frame index operand index");
 
-    // If the offset is small enough, we can just ADD
-    if (isInt<5>(Offset)) {
-      n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDi))
-              .addReg(MI->getOperand(0).getReg(),
-                      getRegState(MI->getOperand(0)))
-              .addReg(LC32::FP)
-              .addImm(Offset);
-      n->getOperand(3).setIsDead();
-      MBB.erase(MI);
-      return false;
-    }
-
-    // Use the smallest instruction that fits
-    auto instr_to_use =
-        isInt<16>(Offset) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
-    // Put the offset into AT and ADD from there
-    n = BuildMI(MBB, MI, dl, TII.get(instr_to_use), LC32::AT).addImm(Offset);
-    n->getOperand(2).setIsDead();
-    n = BuildMI(MBB, MI, dl, TII.get(LC32::ADDr))
-            .addReg(MI->getOperand(0).getReg(), getRegState(MI->getOperand(0)))
-            .addReg(LC32::FP)
-            .addReg(LC32::AT, RegState::Kill);
-    n->getOperand(3).setIsDead();
+    this->genAddLargeImm(TII, MBB, MI, dl, MI->getOperand(0).getReg(), LC32::FP,
+                         Offset, getRegState(MI->getOperand(0)));
     MBB.erase(MI);
     return false;
   }
 
   llvm_unreachable("Bad instruction with frame index");
+}
+
+void LC32RegisterInfo::genAddLargeImm(const LC32InstrInfo &TII,
+                                      MachineBasicBlock &MBB,
+                                      MachineBasicBlock::iterator MBBI,
+                                      DebugLoc &dl, Register dr, Register sr,
+                                      int64_t imm, unsigned dr_flags,
+                                      unsigned sr_flags) const {
+
+  // Check that the registers don't use AT
+  // It's fine if they define it
+  assert(sr != LC32::AT && "Source register can't be AT");
+
+  // Use this to set condition codes as dead, which they should be
+  MachineInstr *n = nullptr;
+
+  // If the immediate is zero, just ADDi
+  if (imm == 0) {
+    n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
+            .addReg(dr, dr_flags)
+            .addReg(sr, sr_flags)
+            .addImm(0);
+    n->getOperand(3).setIsDead();
+    return;
+  }
+
+  // Compute if we can get away with the repeated adds
+  if (imm >= -16l * static_cast<ssize_t>(MaxRepeatedAdd.getValue()) &&
+      imm <= 15l * static_cast<ssize_t>(MaxRepeatedAdd.getValue())) {
+    int64_t to_go = imm;
+    bool first_loop = true;
+    while (to_go != 0) {
+      int64_t to_add = std::max(-16l, std::min(15l, to_go));
+      bool last_loop = to_add == to_go;
+
+      n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
+              .addReg(dr, last_loop ? dr_flags
+                                    : static_cast<unsigned>(RegState::Define))
+              .addReg(first_loop ? sr : dr,
+                      first_loop ? sr_flags
+                                 : static_cast<unsigned>(RegState::Kill))
+              .addImm(to_add);
+      n->getOperand(3).setIsDead();
+
+      to_go -= to_add;
+      first_loop = false;
+    }
+    return;
+  }
+
+  // Otherwise, use AT as a staging register
+  // Start by calculating which instruction to use
+  auto instr = isInt<16>(imm) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
+  // Load the offset into AT
+  n = BuildMI(MBB, MBBI, dl, TII.get(instr), LC32::AT)
+          .addImm(static_cast<int32_t>(imm));
+  n->getOperand(2).setIsDead();
+  // Do the add
+  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDr))
+          .addReg(dr, dr_flags)
+          .addReg(sr, sr_flags)
+          .addReg(LC32::AT, RegState::Kill);
+  n->getOperand(3).setIsDead();
+  // Done
+  return;
 }
