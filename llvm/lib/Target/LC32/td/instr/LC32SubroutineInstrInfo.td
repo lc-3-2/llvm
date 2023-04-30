@@ -68,3 +68,40 @@ def C_RET : Instruction, PseudoInstExpansion<(JMP LR)> {
   let mayStore = false;
   let hasSideEffects = true;
 }
+
+//---
+
+// Nodes for call sequencing. This data is shared across targets, but the
+// arguments are different. Thus, we have to define it outselves
+def NP_LC32_CALLSEQ_START : SDCallSeqStart<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+def NP_LC32_CALLSEQ_END   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+def N_LC32_CALLSEQ_START : SDNode<"ISD::CALLSEQ_START", NP_LC32_CALLSEQ_START, [SDNPHasChain, SDNPOutGlue]>;
+def N_LC32_CALLSEQ_END   : SDNode<"ISD::CALLSEQ_END",   NP_LC32_CALLSEQ_END,   [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+
+// Use pseudo instructions to match call sequencing operations. These are
+// eliminated in LC32InstrInfo and LC32FrameLowering.
+let
+  Namespace = "LC32",
+  isPseudo = true,
+  isCodeGenOnly = true,
+
+  Uses = [SP],
+  Defs = [SP, CC],
+  OutOperandList = (outs),
+  InOperandList = (ins i32imm:$amtin, i32imm:$amtout),
+
+  mayLoad = false,
+  mayStore = false,
+  hasSideEffects = true
+in {
+
+  def C_ADJCALLSTACKUP : Instruction {
+    let Pattern = [(N_LC32_CALLSEQ_START timm:$amtin, timm:$amtout)];
+  }
+
+  def C_ADJCALLSTACKDOWN : Instruction {
+    let Pattern = [(N_LC32_CALLSEQ_END timm:$amtin, timm:$amtout)];
+  }
+}
+
+//---

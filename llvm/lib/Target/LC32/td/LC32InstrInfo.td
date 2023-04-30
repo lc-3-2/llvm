@@ -32,9 +32,8 @@ include "td/LC32OperandInfo.td"
 include "td/instr/LC32LoadConstInstrInfo.td"
 
 include "td/instr/LC32ALUInstrInfo.td"
-include "td/instr/LC32MoveInstrInfo.td"
-
 include "td/instr/LC32SHFInstrInfo.td"
+include "td/instr/LC32MoveInstrInfo.td"
 
 include "td/instr/LC32MemInstrInfo.td"
 

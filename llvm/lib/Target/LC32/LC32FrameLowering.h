@@ -25,6 +25,12 @@ public:
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
+  // Call frame pseudo instructions were declared in the constructor of
+  // LC32InstrInfo. They are the C_ADJCALLSTACKUP/DOWN instructions.
+  MachineBasicBlock::iterator
+  eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MI) const override;
+
   bool hasFP(const MachineFunction &MF) const override;
 };
 

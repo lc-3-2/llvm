@@ -15,7 +15,9 @@ using namespace llvm;
 #define GET_INSTRINFO_CTOR_DTOR
 #include "LC32GenInstrInfo.inc"
 
-LC32InstrInfo::LC32InstrInfo(LC32Subtarget &STI) {}
+LC32InstrInfo::LC32InstrInfo(LC32Subtarget &STI)
+    : LC32GenInstrInfo(LC32::C_ADJCALLSTACKUP, LC32::C_ADJCALLSTACKDOWN, ~0u,
+                       LC32::C_RET) {}
 
 const LC32RegisterInfo &LC32InstrInfo::getRegisterInfo() const {
   return this->RegisterInfo;
@@ -38,9 +40,9 @@ void LC32InstrInfo::storeRegToStackSlot(
   // Do the store
   // Remember, frame indices are lowered in LC32RegisterInfo.cpp
   BuildMI(MBB, MI, dl, this->get(LC32::STW))
-          .addReg(SrcReg, getKillRegState(isKill))
-          .addFrameIndex(FrameIndex)
-          .addImm(0);
+      .addReg(SrcReg, getKillRegState(isKill))
+      .addFrameIndex(FrameIndex)
+      .addImm(0);
 }
 
 void LC32InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,

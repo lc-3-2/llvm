@@ -20,7 +20,7 @@
 
 // Arguments
 def LC32CallingConv : CallingConv<[
-  CCAssignToStack<1, 1>
+  CCAssignToStack<0, 0>
 ]>;
 
 // Return values

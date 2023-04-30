@@ -87,4 +87,36 @@ void LC32FrameLowering::emitEpilogue(MachineFunction &MF,
   n->getOperand(3).setIsDead();
 }
 
+MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
+    MachineFunction &MF, MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator MI) const {
+  // Populate variables
+  DebugLoc dl = MI->getDebugLoc();
+  const LC32InstrInfo &TII =
+      *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
+  const LC32RegisterInfo &TRI = TII.getRegisterInfo();
+
+  // Get the size associated with this pseudo
+  uint64_t amt = TII.getFrameSize(*MI);
+  // Check if we actually need to do anything
+  if (amt != 0) {
+
+    // Align to four bytes
+    assert(this->getStackAlign() == 4 &&
+           "LC-3.2 call stack should be word aligned");
+    amt = alignTo(amt, this->getStackAlign());
+
+    // Do the addition
+    if (MI->getOpcode() == TII.getCallFrameSetupOpcode())
+      TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, -amt);
+    else if (MI->getOpcode() == TII.getCallFrameDestroyOpcode())
+      TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, amt + 4);
+    else
+      llvm_unreachable("Tried to eliminate bad instruction");
+  }
+
+  // Remember to erase the original pseudo
+  return MBB.erase(MI);
+}
+
 bool LC32FrameLowering::hasFP(const MachineFunction &MF) const { return true; }

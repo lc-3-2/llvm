@@ -137,6 +137,8 @@ SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
   // We only support the one convention
   if (CLI.CallConv != CallingConv::C)
     report_fatal_error("Unsupported CallConv");
+  // We don't do tail calls
+  CLI.IsTailCall = false;
 
   // Populate variables
   SDValue Chain = CLI.Chain;
@@ -152,7 +154,8 @@ SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Find out how many bytes to push onto the stack
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
-  llvm_unreachable("TODO");
+  Chain = CLI.DAG.getCALLSEQ_START(Chain, NumBytes, 0, CLI.DL);
+  Chain = CLI.DAG.getCALLSEQ_END(Chain, NumBytes, 0, Chain.getValue(1), CLI.DL);
 
   return Chain;
 }
