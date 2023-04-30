@@ -111,3 +111,27 @@ in {
 // parameter - the address to call.
 def NT_LC32_CALL : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
 def N_LC32_CALL : SDNode<"LC32ISD::CALL", NT_LC32_CALL, [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue]>;
+
+def JSRR : Instruction {
+  let Namespace = "LC32";
+  let AsmString = "JSRR\t$baser";
+
+  let Defs = [SP, CC];
+  let OutOperandList = (outs);
+  let InOperandList = (ins GPR:$baser);
+  let Size = 2;
+
+  let Pattern = [(N_LC32_CALL GPR:$baser)];
+
+  let isCall = true;
+  let hasSideEffects = true;
+
+  bits<3> baser;
+
+  bits<16> Inst;
+  let Inst{15-12} = 0b0100;
+  let Inst{11}    = 0b0;
+  let Inst{10-9}  = 0b00;
+  let Inst{8-6}   = baser;
+  let Inst{5-0}   = 0b000000;
+}

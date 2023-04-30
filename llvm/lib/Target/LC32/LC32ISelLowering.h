@@ -38,6 +38,12 @@ enum {
   // See: td/instr/LC32ALUInstrInfo.td
   OR_LOWERING_NOT,
 
+  // Output 0: Chain/Glue
+  // Operand 0: Chain/Glue
+  // Operand 1: Callee
+  // See: td/instr/LC32SubroutineInstrInfo.tfd
+  CALL,
+
   // Operand 0: Chain
   RET,
 };

@@ -15,10 +15,13 @@ const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   case LC32ISD::OR_LOWERING_NOT:
     return "LC32ISD::OR_LOWERING_NOT";
+  case LC32ISD::CALL:
+    return "LC32ISD::CALL";
   case LC32ISD::RET:
     return "LC32ISD::RET";
+  default:
+    return nullptr;
   }
-  return nullptr;
 }
 
 SDValue LC32TargetLowering::LowerOperation(SDValue Op,
@@ -37,6 +40,7 @@ SDValue LC32TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::XOR:
     return this->visitXOR(N, DCI);
   case LC32ISD::OR_LOWERING_NOT:
+  case LC32ISD::CALL:
   case LC32ISD::RET:
     return SDValue();
   default:
