@@ -21,12 +21,6 @@ INITIALIZE_PASS(LC32DAGToDAGISel, DEBUG_TYPE,
 
 // Provides: SelectCode
 // Requires: SelectFrameIndex
-// Requires: SelectIncrementedImm5
-// Requires: SelectIncrementedImm16
-// Requires: SelectIncrementedImm32
-// Requires: SelectInvertedImm5
-// Requires: SelectInvertedImm16
-// Requires: SelectInvertedImm32
 #define GET_DAGISEL_BODY LC32DAGToDAGISel
 #include "LC32GenDAGISel.inc"
 

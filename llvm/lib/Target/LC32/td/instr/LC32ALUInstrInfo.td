@@ -81,5 +81,6 @@ def NOT : InstAlias<"NOT\t$dr, $sr", (XORi GPR:$dr, GPR:$sr, -1)>;
 // using DeMorgan's law and combines it to an OR. This leads to an infinite loop
 // of us combining and legalizing. This custom node prevents the DAG combiner
 // from treating it like a normal XOR.
+// See: llvm/lib/CodeGen/SelectionDAG/DAGCombiner.cpp:8789
 def N_OR_LOWERING_NOT : SDNode<"LC32ISD::OR_LOWERING_NOT", SDTIntUnaryOp>;
 def : Pattern<(N_OR_LOWERING_NOT GPR:$sr1), [(XORi GPR:$sr1, -1)]>;

@@ -31,6 +31,19 @@ SDValue LC32TargetLowering::LowerOperation(SDValue Op,
   }
 }
 
+SDValue LC32TargetLowering::PerformDAGCombine(SDNode *N,
+                                              DAGCombinerInfo &DCI) const {
+  switch (N->getOpcode()) {
+  case ISD::XOR:
+    return this->visitXOR(N, DCI);
+  case LC32ISD::OR_LOWERING_NOT:
+  case LC32ISD::RET:
+    return SDValue();
+  default:
+    llvm_unreachable("Bad opcode for custom combine");
+  }
+}
+
 SDValue LC32TargetLowering::LowerOR(SDValue Op, SelectionDAG &DAG) const {
   // Populate variables
   SDLoc dl(Op);
@@ -50,4 +63,15 @@ SDValue LC32TargetLowering::LowerOR(SDValue Op, SelectionDAG &DAG) const {
   SDValue b_prime = DAG.getNOT(dl, Op.getOperand(1), MVT::i32);
   SDValue x_prime = DAG.getNode(ISD::AND, dl, MVT::i32, a_prime, b_prime);
   return DAG.getNode(LC32ISD::OR_LOWERING_NOT, dl, MVT::i32, x_prime);
+}
+
+SDValue LC32TargetLowering::visitXOR(SDNode *N, DAGCombinerInfo &DCI) const {
+  // fold (not (N_OR_LOWERING_NOT x)) -> x
+  if (N->getOperand(0).getNode() != nullptr &&
+      N->getOperand(0).getOpcode() == LC32ISD::OR_LOWERING_NOT &&
+      isAllOnesConstant(N->getOperand(1))) {
+    return N->getOperand(0).getNode()->getOperand(0);
+  }
+  // Can't combine here
+  return SDValue();
 }

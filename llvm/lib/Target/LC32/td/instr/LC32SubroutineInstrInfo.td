@@ -73,10 +73,10 @@ def C_RET : Instruction, PseudoInstExpansion<(JMP LR)> {
 
 // Nodes for call sequencing. This data is shared across targets, but the
 // arguments are different. Thus, we have to define it outselves
-def NP_LC32_CALLSEQ_START : SDCallSeqStart<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
-def NP_LC32_CALLSEQ_END   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
-def N_LC32_CALLSEQ_START : SDNode<"ISD::CALLSEQ_START", NP_LC32_CALLSEQ_START, [SDNPHasChain, SDNPOutGlue]>;
-def N_LC32_CALLSEQ_END   : SDNode<"ISD::CALLSEQ_END",   NP_LC32_CALLSEQ_END,   [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+def NT_LC32_CALLSEQ_START : SDCallSeqStart<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+def NT_LC32_CALLSEQ_END   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+def N_LC32_CALLSEQ_START : SDNode<"ISD::CALLSEQ_START", NT_LC32_CALLSEQ_START, [SDNPHasChain, SDNPOutGlue]>;
+def N_LC32_CALLSEQ_END   : SDNode<"ISD::CALLSEQ_END",   NT_LC32_CALLSEQ_END,   [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 // Use pseudo instructions to match call sequencing operations. These are
 // eliminated in LC32InstrInfo and LC32FrameLowering.
@@ -105,3 +105,9 @@ in {
 }
 
 //---
+
+// Nodes for abstract calls. These are lowered to JSR(R) during instruction
+// selection. Since all parameters are in memory, this node only takes one
+// parameter - the address to call.
+def NT_LC32_CALL : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
+def N_LC32_CALL : SDNode<"LC32ISD::CALL", NT_LC32_CALL, [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue]>;

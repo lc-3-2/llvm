@@ -54,6 +54,7 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   // LLVM doesn't know to expand OR via DeMorgan's, so we have to do it
   // ourselves. We also give DAG combining information.
   this->setOperationAction(ISD::OR, MVT::i32, Custom);
+  this->setTargetDAGCombine(ISD::XOR);
 
   // Do libcalls for multiplications and divisions
   // Expand operations that are based on them

@@ -55,6 +55,10 @@ public:
   // See: LC32ISelLoweringOps.cpp
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
 
+  // This deleates to combine the DAG
+  // See: LC32ISelLoweringOps.cpp
+  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
+
 private:
   const LC32RegisterInfo *TRI;
 
@@ -78,6 +82,9 @@ private:
 
   // See: LC32ISelLoweringOps.cpp
   SDValue LowerOR(SDValue Op, SelectionDAG &DAG) const;
+
+  // See: LC32ISelLoweringOps.cpp
+  SDValue visitXOR(SDNode *N, DAGCombinerInfo &DCI) const;
 };
 
 } // namespace llvm
