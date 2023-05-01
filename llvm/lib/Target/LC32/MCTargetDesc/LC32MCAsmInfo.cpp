@@ -23,7 +23,10 @@ LC32MCAsmInfo::LC32MCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
   this->AllowAdditionalComments = false;
 
   // Use the .align directive
+  // The code for making this in bytes is not implemented
+  // See: llvm/lib/MC/MCAsmStreamer.cpp
   this->UseDotAlignForAlignment = true;
+  this->AlignmentIsInBytes = false;
 
   // Directive aliases
   this->ZeroDirective = "\t.blkb\t";
@@ -35,9 +38,6 @@ LC32MCAsmInfo::LC32MCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
   this->Data16bitsDirective = "\t.fillh\t";
   this->Data32bitsDirective = "\t.fillw\t";
   this->Data64bitsDirective = "\t.fillq\t";
-
-  // Emit debug information
-  this->SupportsDebugInformation = true;
 }
 
 bool LC32MCAsmInfo::isValidUnquotedName(StringRef Name) const {
