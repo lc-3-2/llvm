@@ -93,4 +93,15 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
     this->setOperationAction(ISD::TRUNCATE, vt, Expand);
     this->setOperationAction(ISD::SIGN_EXTEND_INREG, vt, Expand);
   }
+
+  // Expand complex conditionals
+  this->setOperationAction(ISD::BR_JT, MVT::Other, Expand);
+  this->setOperationAction(ISD::BRCOND, MVT::Other, Expand);
+  this->setOperationAction(ISD::SELECT, MVT::i32, Expand);
+  this->setOperationAction(ISD::SETCC, MVT::i32, Expand);
+
+  // Custom lowering for base conditionals
+  // We also have to handle ISD::BR, but we handle that in TableGen
+  this->setOperationAction(ISD::BR_CC, MVT::i32, Custom);
+  this->setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 }

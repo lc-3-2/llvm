@@ -8,7 +8,8 @@
 //
 // This module implements the bulk of lowering. It handles the calling
 // convention, as well as custom operations. The constructor tells the framework
-// what custom operations need lowering.
+// what custom operations need lowering. Some of these operations need library
+// calls. The list of library calls is in llvm/IR/RuntimeLibcalls.def.
 //
 // Because of the sheer size of this module, it is split over multiple files.
 // LC32ISelLoweringConstructor.cpp houses the constructor.
