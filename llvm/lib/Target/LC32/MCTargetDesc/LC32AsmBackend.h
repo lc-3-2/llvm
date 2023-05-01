@@ -45,6 +45,8 @@ public:
                   const MCSubtargetInfo *STI) const override;
 
   // Relaxation Interface
+  bool mayNeedRelaxation(const MCInst &Inst,
+                         const MCSubtargetInfo &STI) const override;
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                             const MCRelaxableFragment *DF,
                             const MCAsmLayout &Layout) const override;
@@ -65,7 +67,7 @@ private:
    * \param [in] Ctx Assembler context for errors
    * \return The encoded value
    */
-  uint64_t adjustFixupValue(MCFixupKind Kind, uint64_t Value,
+  uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
                             MCContext &Ctx) const;
 };
 

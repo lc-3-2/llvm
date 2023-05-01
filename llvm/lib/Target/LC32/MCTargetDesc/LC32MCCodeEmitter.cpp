@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LC32MCCodeEmitter.h"
+#include "LC32FixupKinds.h"
 #include "LC32MCTargetDesc.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
@@ -54,9 +55,9 @@ void LC32MCCodeEmitter::encodeInstruction(const MCInst &Inst, raw_ostream &OS,
     uint64_t imm32 =
         this->getMachineOpValue(Inst, Inst.getOperand(1), Fixups, STI);
     // Construct encodings
-    uint16_t lea_enc = 0xe002 | (dr << 9);
+    uint16_t lea_enc = 0xe003 | (dr << 9);
     uint16_t ldw_enc = 0xa000 | (dr << 9) | (dr << 6);
-    uint16_t br_enc = 0x0e01;
+    uint16_t br_enc = 0x0e03;
     uint16_t trap_enc = 0xf0ff;
     // Write
     support::endian::write(OS, lea_enc, support::endianness::little);
@@ -89,6 +90,16 @@ LC32MCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   if (MO.isImm())
     return MO.getImm();
 
+  // Handle expressions
+  if (MO.isExpr()) {
+    // PSEUDO.LOADCONSTW
+    if (MI.getOpcode() == LC32::P_LOADCONSTW) {
+      Fixups.push_back(
+          MCFixup::create(8, MO.getExpr(), FK_Data_4, MI.getLoc()));
+      return 0;
+    }
+  }
+
   llvm_unreachable("Unknown operand type");
 }
 
@@ -113,5 +124,35 @@ template <unsigned N>
 uint64_t LC32MCCodeEmitter::getPCOffsetValue(const MCInst &MI, unsigned OpNo,
                                              SmallVectorImpl<MCFixup> &Fixups,
                                              const MCSubtargetInfo &STI) const {
-  llvm_unreachable("TODO");
+  static_assert(N == 9 || N == 11, "Bad PCOffset bitcount");
+
+  // Get the operand
+  const MCOperand &op = MI.getOperand(OpNo);
+
+  // Immediate case
+  if (op.isImm()) {
+    // Correct for PC
+    int64_t offset_imm = op.getImm() - 2;
+    // Check operand has right form
+    // Get around commas breaking assert
+    {
+      bool is_correct = isShiftedInt<N, 1>(offset_imm);
+      assert(is_correct && "Bad value for immediate");
+    }
+    // Return
+    return offset_imm >> 1;
+  }
+
+  // Expression case
+  if (op.isExpr()) {
+    // Compute and add fixup
+    auto tfk =
+        N == 9 ? lc32::Fixups::TFK_PCOffset9 : lc32::Fixups::TFK_PCOffset11;
+    Fixups.push_back(MCFixup::create(
+        0, op.getExpr(), static_cast<MCFixupKind>(tfk), MI.getLoc()));
+    // Stub value
+    return 0;
+  }
+
+  llvm_unreachable("Bad operand type for PC offset");
 }

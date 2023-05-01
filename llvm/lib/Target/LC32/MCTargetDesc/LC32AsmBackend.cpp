@@ -64,7 +64,12 @@ LC32AsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
   // Table for all the fixup information
   // Needed since we have to return a reference
   // Must match LC32FixupKinds.h
-  const static MCFixupKindInfo Infos[NumTargetFixupKinds] = {};
+  const static MCFixupKindInfo Infos[] = {
+      {"TFK_PCOffset9", 0, 9, MCFixupKindInfo::FKF_IsPCRel},
+      {"TFK_PCOffset11", 0, 11, MCFixupKindInfo::FKF_IsPCRel},
+  };
+  static_assert(std::size(Infos) == NumTargetFixupKinds,
+                "Not all fixup kinds added to Infos array");
 
   // If it's an LLVM-defined fixup, handle it
   if (Kind < FirstTargetFixupKind)
@@ -83,7 +88,7 @@ void LC32AsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                                 const MCSubtargetInfo *STI) const {
   // Compute the actual fixup value
   // If it doesn't change the encoding, don't do anything
-  Value = this->adjustFixupValue(Fixup.getKind(), Value, Asm.getContext());
+  Value = this->adjustFixupValue(Fixup, Value, Asm.getContext());
 
   // Get the information for the fixup
   // How many bits and where to start
@@ -101,22 +106,72 @@ void LC32AsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
     Data[byte_offset + i] |= (Value >> (i << 3)) & 0xff;
   }
 }
-uint64_t LC32AsmBackend::adjustFixupValue(MCFixupKind Kind, uint64_t Value,
+uint64_t LC32AsmBackend::adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
                                           MCContext &Ctx) const {
   // Remember, this code has to work for LLVM-defined fixups too
   // Thus, have a default case where we just return Value
+  unsigned Kind = Fixup.getKind();
   switch (Kind) {
+
+  case TFK_PCOffset9:
+  case TFK_PCOffset11: {
+    // Check that the preconditions are met
+    if ((Value & 0x1) != 0)
+      Ctx.reportError(Fixup.getLoc(), "PCOffset not halfword aligned");
+    if (Kind == TFK_PCOffset9 && !isShiftedInt<9, 1>(Value - 2))
+      Ctx.reportError(Fixup.getLoc(), "PCOffset9 out of range");
+    if (Kind == TFK_PCOffset11 && !isShiftedInt<11, 1>(Value - 2))
+      Ctx.reportError(Fixup.getLoc(), "PCOffset11 out of range");
+    // Compute the offset and return
+    int64_t Offset = Value;
+    Offset -= 2;
+    Offset >>= 1;
+    if (Kind == TFK_PCOffset9)
+      Offset &= 0x1ff;
+    if (Kind == TFK_PCOffset11)
+      Offset &= 0x7ff;
+    return Offset;
+  }
+
   default:
     return Value;
+  }
+}
+
+bool LC32AsmBackend::mayNeedRelaxation(const MCInst &Inst,
+                                       const MCSubtargetInfo &STI) const {
+  switch (Inst.getOpcode()) {
+  case LC32::LEA:
+  //case LC32::JSR:
+    return true;
+  default:
+    return false;
   }
 }
 
 bool LC32AsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                                           const MCRelaxableFragment *DF,
                                           const MCAsmLayout &Layout) const {
-  return false;
+  unsigned Kind = Fixup.getKind();
+  switch (Kind) {
+  case TFK_PCOffset9:
+    return !isShiftedInt<9, 1>(Value - 2);
+  case TFK_PCOffset11:
+    return !isShiftedInt<11, 1>(Value - 2);
+  default:
+    return false;
+  }
 }
+
 void LC32AsmBackend::relaxInstruction(MCInst &Inst,
                                       const MCSubtargetInfo &STI) const {
-  llvm_unreachable("No fixups need relaxation");
+
+  switch (Inst.getOpcode()) {
+  case LC32::LEA:
+    // LEA -> PSEUDO.LOADCONSTW
+    Inst.setOpcode(LC32::P_LOADCONSTW);
+    return;
+  default:
+    llvm_unreachable("Bad instruction to relax");
+  }
 }

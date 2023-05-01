@@ -95,15 +95,15 @@ void LC32InstPrinter::printPCOffset(const MCInst *MI, unsigned OpNo,
   // Immediate case
   if (op.isImm()) {
     // Correct for PC
-    int64_t real_imm = op.getImm() - 2;
+    int64_t offset_imm = op.getImm() - 2;
     // Check operand has right form
     // Get around commas breaking assert
     {
-      bool is_correct = isShiftedInt<N, 1>(real_imm);
+      bool is_correct = isShiftedInt<N, 1>(offset_imm);
       assert(is_correct && "Bad value for immediate");
     }
     // Print
-    O << '#' << (real_imm >> 1);
+    O << '#' << (offset_imm >> 1);
     return;
   }
 

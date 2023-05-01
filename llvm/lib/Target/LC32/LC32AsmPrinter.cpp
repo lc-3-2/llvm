@@ -15,6 +15,8 @@
 #include "TargetInfo/LC32TargetInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/TargetRegistry.h"
 using namespace llvm;
@@ -32,6 +34,9 @@ private:
   bool emitPseudoExpansionLowering(MCStreamer &OutStreamer,
                                    const MachineInstr *MI);
   void lowerOperand(MachineOperand MO, MCOperand &MCOp);
+
+  // Utility methods
+  MCOperand lowerSymbolOperand(MachineOperand MO, MCSymbol *Sym);
 };
 
 } // namespace
@@ -98,6 +103,7 @@ void LC32AsmPrinter::lowerOperand(MachineOperand MO, MCOperand &MCOp) {
   // Lower a single operand
   // Usually, this would be placed in a separate file, but we don't really need
   // that.
+  SmallString<256> symbol_name;
   switch (MO.getType()) {
   default:
     llvm_unreachable("Bad operand type");
@@ -117,16 +123,57 @@ void LC32AsmPrinter::lowerOperand(MachineOperand MO, MCOperand &MCOp) {
 
   // Lower global addresses
   case MachineOperand::MO_GlobalAddress:
-    // Create the base symbol
-    const MCExpr *expr = MCSymbolRefExpr::create(
-        this->getSymbol(MO.getGlobal()), this->OutContext);
-    // Add any offset if present
-    if (MO.getOffset() != 0)
-      expr = MCBinaryExpr::createAdd(
-          expr, MCConstantExpr::create(MO.getOffset(), this->OutContext),
-          this->OutContext);
-    // Done
-    MCOp = MCOperand::createExpr(expr);
+    MCOp = this->lowerSymbolOperand(MO, this->getSymbol(MO.getGlobal()));
+    return;
+
+  // Lower external addresses
+  case MachineOperand::MO_ExternalSymbol:
+    MCOp = this->lowerSymbolOperand(
+        MO, this->GetExternalSymbolSymbol(MO.getSymbolName()));
+    return;
+
+  // Lower constant pool references
+  case MachineOperand::MO_ConstantPoolIndex:
+    // Compute the name
+    raw_svector_ostream(symbol_name)
+        << this->getDataLayout().getPrivateGlobalPrefix()
+        << "ConstantPoolIndex_" << this->getFunctionNumber() << '_'
+        << MO.getIndex();
+    // Return
+    MCOp = this->lowerSymbolOperand(
+        MO, this->OutContext.getOrCreateSymbol(symbol_name));
+    return;
+
+  // Lower jump table references
+  case MachineOperand::MO_JumpTableIndex:
+    // Compute the name
+    raw_svector_ostream(symbol_name)
+        << this->getDataLayout().getPrivateGlobalPrefix()
+        << "JumpTableIndex_" << this->getFunctionNumber() << '_'
+        << MO.getIndex();
+    // Return
+    MCOp = this->lowerSymbolOperand(
+        MO, this->OutContext.getOrCreateSymbol(symbol_name));
+    return;
+
+  // Lower block addresses
+  case MachineOperand::MO_BlockAddress:
+    MCOp = this->lowerSymbolOperand(
+        MO, this->GetBlockAddressSymbol(MO.getBlockAddress()));
     return;
   }
+}
+
+MCOperand LC32AsmPrinter::lowerSymbolOperand(MachineOperand MO, MCSymbol *Sym) {
+  // Check the flags
+  assert(MO.getTargetFlags() == 0 && "Operand target flags should be zero");
+  // Create the base symbol
+  const MCExpr *expr = MCSymbolRefExpr::create(Sym, this->OutContext);
+  // Add any offset if present
+  if (MO.getOffset() != 0)
+    expr = MCBinaryExpr::createAdd(
+        expr, MCConstantExpr::create(MO.getOffset(), this->OutContext),
+        this->OutContext);
+  // Done
+  return MCOperand::createExpr(expr);
 }

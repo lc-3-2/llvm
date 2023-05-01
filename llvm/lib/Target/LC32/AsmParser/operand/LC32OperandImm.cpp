@@ -55,11 +55,11 @@ void LC32OperandImm::addWOffset6Operands(MCInst &Inst, unsigned N) {
 }
 void LC32OperandImm::addPCOffset9Operands(MCInst &Inst, unsigned N) {
   assert(N == 1 && "Invalid number of operands!");
-  Inst.addOperand(MCOperand::createImm(this->Value << 1));
+  Inst.addOperand(MCOperand::createImm((this->Value << 1) + 2));
 }
 void LC32OperandImm::addPCOffset11Operands(MCInst &Inst, unsigned N) {
   assert(N == 1 && "Invalid number of operands!");
-  Inst.addOperand(MCOperand::createImm(this->Value << 1));
+  Inst.addOperand(MCOperand::createImm((this->Value << 1) + 2));
 }
 void LC32OperandImm::addTrapVect8Operands(MCInst &Inst, unsigned N) {
   assert(N == 1 && "Invalid number of operands!");
@@ -81,26 +81,25 @@ llvm::lc32::OPERAND_PARSER_IMM(LC32AsmParser &t,
   // Remember the starting location
   SMLoc stt = t.getLexer().getLoc();
 
-  // If the next token is a hash, we're committed
-  bool committed = false;
+  // Case of decimal immediate
+  // Must start with a hash
   if (t.getLexer().is(AsmToken::Hash)) {
-    committed = true;
     t.getLexer().Lex();
-  }
 
-  // Parse the sign
-  // If there is a sign, it commits us too
-  int64_t sign = 1;
-  if (t.getLexer().is(AsmToken::Minus)) {
-    sign = -1;
-    committed = true;
-    t.getLexer().Lex();
-  }
+    // Parse the sign if it exists
+    int64_t sign = 1;
+    if (t.getLexer().is(AsmToken::Minus)) {
+      sign = -1;
+      t.getLexer().Lex();
+    } else if (t.getLexer().is(AsmToken::Plus)) {
+      sign = 1;
+      t.getLexer().Lex();
+    }
 
-  // Parse integers
-  // Special case for hex integers
-  // They're parsed as identifiers, so we have to parse them ourselves
-  if (t.getLexer().is(AsmToken::Integer)) {
+    // The next token should be an integer
+    if (t.getLexer().isNot(AsmToken::Integer))
+      return MatchOperand_ParseFail;
+
     // Parse the value
     // Remember to track the end location
     int64_t val = sign * t.getLexer().getTok().getIntVal();
@@ -109,9 +108,11 @@ llvm::lc32::OPERAND_PARSER_IMM(LC32AsmParser &t,
     // Create and return
     op = std::make_unique<LC32OperandImm>(val, stt, end);
     return MatchOperand_Success;
+  }
 
-  } else if (t.getLexer().is(AsmToken::Identifier)) {
-    // Check that it starts with an x
+  // Case of hex immediate
+  // Must be a bare identifier that starts with `x` or `X`
+  if (t.getLexer().is(AsmToken::Identifier)) {
     StringRef id = t.getLexer().getTok().getIdentifier();
     if (id.startswith("x") || id.startswith("X")) {
       // It should have at least one digit after it
@@ -138,8 +139,6 @@ llvm::lc32::OPERAND_PARSER_IMM(LC32AsmParser &t,
         val <<= 4;
         val += c_val;
       }
-      // Handle sign
-      val *= sign;
       // Same as with normal integers
       SMLoc end = t.getLexer().getTok().getEndLoc();
       t.getLexer().Lex();
@@ -148,6 +147,6 @@ llvm::lc32::OPERAND_PARSER_IMM(LC32AsmParser &t,
     }
   }
 
-  // We failed, so die
-  return committed ? MatchOperand_ParseFail : MatchOperand_NoMatch;
+  // Default
+  return MatchOperand_NoMatch;
 }

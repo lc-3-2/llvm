@@ -9,6 +9,7 @@
 #include "LC32AsmParser.h"
 #include "LC32Operand.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
+#include "operand/LC32OperandExpr.h"
 #include "operand/LC32OperandImm.h"
 #include "operand/LC32OperandReg.h"
 #include "operand/LC32OperandToken.h"
@@ -36,6 +37,7 @@ using namespace llvm::lc32;
 const std::vector<std::function<operand_parser_t>> OPERAND_PARSERS = {
     OPERAND_PARSER_REG,
     OPERAND_PARSER_IMM,
+    OPERAND_PARSER_EXPR,
 };
 
 void LC32Operand::anchor() {}
