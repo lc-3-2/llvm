@@ -24,7 +24,7 @@ LC32MCAsmInfo::LC32MCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
 
   // Use the .align directive
   // The code for making this in bytes is not implemented
-  // See: llvm/lib/MC/MCAsmStreamer.cpp
+  // See: llvm/lib/MC/MCAsmStreamer.cpp:1414
   this->UseDotAlignForAlignment = true;
   this->AlignmentIsInBytes = false;
 
