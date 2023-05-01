@@ -6,7 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//
+// This file handles converting MachineInstrs to MCInsts. In the process, it
+// gets rid of all the different types of addresses and replaces them with
+// symbols. This way, they can be fed into the MC layer.
 //
 //===----------------------------------------------------------------------===//
 
@@ -92,9 +94,11 @@ void LC32AsmPrinter::emitInstruction(const MachineInstr *MI) {
   temp_instr.setOpcode(MI->getOpcode());
   for (const auto &mo : MI->operands()) {
     // Iterate over all the operands and lower them
+    // Only add the operand if it was set
     MCOperand temp_mcop;
     this->lowerOperand(mo, temp_mcop);
-    temp_instr.addOperand(temp_mcop);
+    if (temp_mcop.isValid())
+      temp_instr.addOperand(temp_mcop);
   }
   this->EmitToStreamer(*this->OutStreamer, temp_instr);
 }
@@ -148,9 +152,8 @@ void LC32AsmPrinter::lowerOperand(MachineOperand MO, MCOperand &MCOp) {
   case MachineOperand::MO_JumpTableIndex:
     // Compute the name
     raw_svector_ostream(symbol_name)
-        << this->getDataLayout().getPrivateGlobalPrefix()
-        << "JumpTableIndex_" << this->getFunctionNumber() << '_'
-        << MO.getIndex();
+        << this->getDataLayout().getPrivateGlobalPrefix() << "JumpTableIndex_"
+        << this->getFunctionNumber() << '_' << MO.getIndex();
     // Return
     MCOp = this->lowerSymbolOperand(
         MO, this->OutContext.getOrCreateSymbol(symbol_name));

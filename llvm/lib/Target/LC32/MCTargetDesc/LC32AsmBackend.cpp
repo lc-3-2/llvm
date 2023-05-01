@@ -142,7 +142,7 @@ bool LC32AsmBackend::mayNeedRelaxation(const MCInst &Inst,
                                        const MCSubtargetInfo &STI) const {
   switch (Inst.getOpcode()) {
   case LC32::LEA:
-  //case LC32::JSR:
+  case LC32::JSR:
     return true;
   default:
     return false;
