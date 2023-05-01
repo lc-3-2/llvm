@@ -46,9 +46,13 @@ void LC32AsmBackend::emitInstructionBegin(MCObjectStreamer &OS,
                                           const MCInst &Inst,
                                           const MCSubtargetInfo &STI) {
   // Long pseudo instructions are aligned to four bytes
+  // Relaxable instruction also have to be aligned to four bytes
   // Non-pseudo instructions are aligned to two bytes
   // Emit zeros until then
-  if (Inst.getOpcode() == LC32::P_LOADCONSTW)
+  if (Inst.getOpcode() == LC32::P_LOADCONSTW ||
+      Inst.getOpcode() == LC32::P_FARJSR)
+    OS.emitValueToAlignment(Align(4));
+  else if (Inst.getOpcode() == LC32::LEA || Inst.getOpcode() == LC32::JSR)
     OS.emitValueToAlignment(Align(4));
   else
     OS.emitValueToAlignment(Align(2));
@@ -170,6 +174,10 @@ void LC32AsmBackend::relaxInstruction(MCInst &Inst,
   case LC32::LEA:
     // LEA -> PSEUDO.LOADCONSTW
     Inst.setOpcode(LC32::P_LOADCONSTW);
+    return;
+  case LC32::JSR:
+    // JSR -> PSEUDO.FARJSR
+    Inst.setOpcode(LC32::P_FARJSR);
     return;
   default:
     llvm_unreachable("Bad instruction to relax");

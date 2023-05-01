@@ -69,6 +69,24 @@ void LC32MCCodeEmitter::encodeInstruction(const MCInst &Inst, raw_ostream &OS,
     // Done
     return;
   }
+  if (Inst.getOpcode() == LC32::P_FARJSR) {
+    uint64_t addr =
+        this->getMachineOpValue(Inst, Inst.getOperand(0), Fixups, STI);
+    // Construct encodings
+    uint16_t lea_enc = 0xe603;
+    uint16_t ldw_enc = 0xa6c0;
+    uint16_t jsrr_enc = 0x40c0;
+    uint16_t br_enc = 0x0e02;
+    // Write
+    support::endian::write(OS, lea_enc, support::endianness::little);
+    support::endian::write(OS, ldw_enc, support::endianness::little);
+    support::endian::write(OS, jsrr_enc, support::endianness::little);
+    support::endian::write(OS, br_enc, support::endianness::little);
+    support::endian::write(OS, static_cast<uint32_t>(addr),
+                           support::endianness::little);
+    // Done
+    return;
+  }
 
   // Non-pseudo instructions are just written as-is
   // Remember to convert to uint16_t so only two bytes are written
@@ -92,8 +110,8 @@ LC32MCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
 
   // Handle expressions
   if (MO.isExpr()) {
-    // PSEUDO.LOADCONSTW
-    if (MI.getOpcode() == LC32::P_LOADCONSTW) {
+    if (MI.getOpcode() == LC32::P_LOADCONSTW ||
+        MI.getOpcode() == LC32::P_FARJSR) {
       Fixups.push_back(
           MCFixup::create(8, MO.getExpr(), FK_Data_4, MI.getLoc()));
       return 0;

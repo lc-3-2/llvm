@@ -20,7 +20,7 @@ def LDB : Instruction {
   let Namespace = "LC32";
   let AsmString = "LDB\t$dr, $baser, $boffset6";
 
-  let Defs = [CC];
+  let Defs = [AT, CC];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins GPR:$baser, BOffset6:$boffset6);
   let Size = 2;
@@ -51,7 +51,7 @@ def LDH : Instruction {
   let Namespace = "LC32";
   let AsmString = "LDH\t$dr, $baser, $hoffset6";
 
-  let Defs = [CC];
+  let Defs = [AT, CC];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins GPR:$baser, HOffset6:$hoffset6);
   let Size = 2;
@@ -82,7 +82,7 @@ def LDW : Instruction {
   let Namespace = "LC32";
   let AsmString = "LDW\t$dr, $baser, $woffset6";
 
-  let Defs = [CC];
+  let Defs = [AT, CC];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins GPR:$baser, WOffset6:$woffset6);
   let Size = 2;
@@ -116,6 +116,7 @@ def STB : Instruction {
   let Namespace = "LC32";
   let AsmString = "STB\t$sr, $baser, $boffset6";
 
+  let Defs = [AT, CC];
   let OutOperandList = (outs);
   let InOperandList = (ins GPR:$sr, GPR:$baser, BOffset6:$boffset6);
   let Size = 2;
@@ -143,6 +144,7 @@ def STH : Instruction {
   let Namespace = "LC32";
   let AsmString = "STH\t$sr, $baser, $hoffset6";
 
+  let Defs = [AT, CC];
   let OutOperandList = (outs);
   let InOperandList = (ins GPR:$sr, GPR:$baser, HOffset6:$hoffset6);
   let Size = 2;
@@ -170,6 +172,7 @@ def STW : Instruction {
   let Namespace = "LC32";
   let AsmString = "STW\t$sr, $baser, $woffset6";
 
+  let Defs = [AT, CC];
   let OutOperandList = (outs);
   let InOperandList = (ins GPR:$sr, GPR:$baser, WOffset6:$woffset6);
   let Size = 2;
@@ -238,7 +241,7 @@ def C_LEA_FRAMEINDEX : Instruction {
   let isPseudo = true;
   let isCodeGenOnly = true;
 
-  let Defs = [CC];
+  let Defs = [AT, CC];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins i32imm:$fi);
 
@@ -263,6 +266,7 @@ def LEA : Instruction {
   let Namespace = "LC32";
   let AsmString = "LEA\t$dr, $pcoffset9";
 
+  let Defs = [CC];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins PCOffset9:$pcoffset9);
   let Size = 2;
