@@ -10,6 +10,10 @@
 // pseudo instructions, but the assembly code needs to know about them for
 // relaxation. These have special code in the MCCodeEmitter.
 //
+// Note the use of AddedComplexity. These are used to prioritize which
+// instructions should be selected when moving an immediate into a register.
+// They were chosen by looking at LC32GenDAGISel.inc.
+//
 // See: LC32MoveInstrInfo.td
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
 //
@@ -25,6 +29,7 @@ def P_LOADCONSTH : Instruction {
   let InOperandList = (ins Const16:$const16);
 
   let Pattern = [(set GPR:$dr, Const16:$const16)];
+  let AddedComplexity = 1;
 
   let isMoveImm = true;
   let isReMaterializable = true;
@@ -43,6 +48,7 @@ def P_LOADCONSTW : Instruction {
   let InOperandList = (ins Const32:$const32);
 
   let Pattern = [(set GPR:$dr, Const32:$const32)];
+  let AddedComplexity = 0;
 
   let isMoveImm = true;
   let isReMaterializable = true;

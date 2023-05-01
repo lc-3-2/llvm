@@ -11,6 +11,10 @@
 // the AsmPrinter. Everything with PseudoInstExpansion will be auto-generated,
 // while everything else has to be manually lowered.
 //
+// Note the use of AddedComplexity. These are used to prioritize which
+// instructions should be selected when moving an immediate into a register.
+// They were chosen by looking at LC32GenDAGISel.inc.
+//
 // See: LC32LoadConstInstrInfo.td
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
 //
@@ -26,6 +30,7 @@ def C_MOVE_ZERO : Instruction, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr, 0)> {
   let InOperandList = (ins);
 
   let Pattern = [(set GPR:$dr, 0)];
+  let AddedComplexity = 2;
 
   let isMoveImm = true;
   let isAsCheapAsAMove = true;
@@ -45,6 +50,7 @@ def C_MOVE_IMM5 : Instruction {
   let InOperandList = (ins Imm5:$imm5);
 
   let Pattern = [(set GPR:$dr, Imm5:$imm5)];
+  let AddedComplexity = 2;
 
   let isMoveImm = true;
   let isAsCheapAsAMove = true;
