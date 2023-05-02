@@ -36,6 +36,12 @@ void LC32InstPrinter::printInst(const MCInst *MI, uint64_t Address,
   // Print annotation if needed
   this->printAnnotation(OS, Annot);
 
+  // Special handling for NOP
+  if (MI->getOpcode() == LC32::BR && MI->getOperand(0).getImm() == 0b000) {
+    OS << "NOP";
+    return;
+  }
+
   // If no special handling, call TableGen
   // Try aliases first
   {
@@ -114,4 +120,38 @@ void LC32InstPrinter::printPCOffset(const MCInst *MI, unsigned OpNo,
   }
 
   llvm_unreachable("Bad operand type for PC offset");
+}
+
+void LC32InstPrinter::printNZP(const MCInst *MI, unsigned OpNo, raw_ostream &O,
+                               const char *Modifier) {
+  // Get the operand
+  const MCOperand &op = MI->getOperand(OpNo);
+  // Check operand has right form
+  assert(op.isImm() && "NZP operands must be immediates");
+  // Print
+  switch (op.getImm()) {
+  case 0b100:
+    O << "n";
+    return;
+  case 0b010:
+    O << "z";
+    return;
+  case 0b001:
+    O << "p";
+    return;
+  case 0b110:
+    O << "nz";
+    return;
+  case 0b101:
+    O << "np";
+    return;
+  case 0b011:
+    O << "zp";
+    return;
+  case 0b111:
+    O << "nzp";
+    return;
+  default:
+    llvm_unreachable("NZP operand out of range for printing");
+  }
 }

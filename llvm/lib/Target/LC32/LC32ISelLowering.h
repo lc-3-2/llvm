@@ -39,14 +39,27 @@ enum {
   // See: td/instr/LC32ALUInstrInfo.td
   OR_LOWERING_NOT,
 
-  // Output 0: Chain/Glue
-  // Operand 0: Chain/Glue
+  // Output 0: Chain
+  // Output 1: Glue
+  // Operand 0: Chain
   // Operand 1: Callee
+  // Operand 2: Glue
   // See: td/instr/LC32SubroutineInstrInfo.tfd
   CALL,
 
   // Operand 0: Chain
   RET,
+
+  // Output 0: Glue
+  // Operand 0: Operand to compare with zero
+  CMP_ZERO,
+
+  // Output 0: Chain
+  // Operand 0: Chain
+  // Operand 1: NZP
+  // Operand 2: Target
+  // Operand 3: Glue
+  BR,
 };
 } // namespace LC32ISD
 

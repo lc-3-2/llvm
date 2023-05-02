@@ -11,6 +11,7 @@
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "operand/LC32OperandExpr.h"
 #include "operand/LC32OperandImm.h"
+#include "operand/LC32OperandNZP.h"
 #include "operand/LC32OperandReg.h"
 #include "operand/LC32OperandToken.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -153,15 +154,56 @@ bool LC32AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // Mnemonics ignore case, so convert to lower
   std::string mnemonic = Name.lower();
 
-  // Check that the mnemonic is correct
-  if (!LC32CheckMnemonic(mnemonic, this->getAvailableFeatures(), 0)) {
-    return this->Error(
-        NameLoc,
-        "invalid mnemonic" +
-            LC32MnemonicSpellCheck(mnemonic, this->getAvailableFeatures(), 0));
+  // Check for BR instructions
+  if (mnemonic == "nop") {
+    Operands.push_back(std::make_unique<LC32OperandToken>("br", NameLoc));
+    Operands.push_back(
+        std::make_unique<LC32OperandNZP>(0b000, NameLoc, NameLoc));
+    Operands.push_back(std::make_unique<LC32OperandImm>(0, NameLoc, NameLoc));
+
+  } else if (mnemonic == "br") {
+    Operands.push_back(std::make_unique<LC32OperandToken>("br", NameLoc));
+    Operands.push_back(
+        std::make_unique<LC32OperandNZP>(0b111, NameLoc, NameLoc));
+
+  } else if (mnemonic.substr(0, 2) == "br") {
+
+    // Carve out the part of the mnemonic we need
+    std::string cc = mnemonic.substr(2);
+
+    // Iterate over all the possibilities, looking for a match
+    // Value at index i corresponds to nzp i + 1
+    std::vector<std::string> cc_possibilities = {"p",  "z",  "zp", "n",
+                                                 "np", "nz", "nzp"};
+    bool match = false;
+    uint8_t nzp;
+    for (uint8_t i = 0; i < cc_possibilities.size(); i++) {
+      if (cc == cc_possibilities[i]) {
+        match = true;
+        nzp = i + 1;
+      }
+    }
+
+    // If no match, die
+    if (!match)
+      return this->Error(
+          NameLoc, "invalid mnemonic" +
+                       LC32MnemonicSpellCheck(mnemonic,
+                                              this->getAvailableFeatures(), 0));
+    // Otherwise, add
+    Operands.push_back(std::make_unique<LC32OperandToken>("br", NameLoc));
+    Operands.push_back(std::make_unique<LC32OperandNZP>(nzp, NameLoc, NameLoc));
+
+  } else {
+    // Check that the mnemonic is correct
+    // Then just add the mnemonic to the operands
+    if (!LC32CheckMnemonic(mnemonic, this->getAvailableFeatures(), 0))
+      return this->Error(
+          NameLoc, "invalid mnemonic" +
+                       LC32MnemonicSpellCheck(mnemonic,
+                                              this->getAvailableFeatures(), 0));
+    Operands.push_back(std::make_unique<LC32OperandToken>(mnemonic, NameLoc));
   }
-  // Otherwise, add
-  Operands.push_back(std::make_unique<LC32OperandToken>(mnemonic, NameLoc));
 
   // Parse all the operands
   bool first_operand = true;
@@ -227,8 +269,8 @@ bool LC32AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_MnemonicFail:
     return this->Error(IDLoc, "invalid instruction mnemonic");
 
-  // For an invalid operand, ErrorInfo contains the operand index containing the
-  // error, or ~0ull if not present.
+  // For an invalid operand, ErrorInfo contains the operand index containing
+  // the error, or ~0ull if not present.
   case Match_InvalidOperand:
     if (ErrorInfo == 0ull)
       return this->Error(IDLoc, "bad operand value");

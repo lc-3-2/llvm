@@ -55,6 +55,8 @@ private:
   template <unsigned N>
   void printPCOffset(const MCInst *MI, unsigned OpNo, raw_ostream &O,
                      const char *Modifier = nullptr);
+  void printNZP(const MCInst *MI, unsigned OpNo, raw_ostream &O,
+                const char *Modifier = nullptr);
 };
 
 } // namespace llvm

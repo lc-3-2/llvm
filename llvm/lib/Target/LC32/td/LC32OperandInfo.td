@@ -112,6 +112,20 @@ def PCOffset11 : Operand<i32> {
 }
 
 //---
+// Used by: BR
+// Internally, this is an IMM, encoded as nzp. Also, these can't be named CC
+// since that is what the register is named.
+
+def NZPOperandClass : AsmOperandClass {
+  let Name = "NZP";
+}
+
+def NZP : Operand<i8> {
+  let ParserMatchClass = NZPOperandClass;
+  let PrintMethod = "printNZP";
+}
+
+//---
 // Used by: TRAP
 
 def TrapVect8OperandClass : AsmOperandClass {

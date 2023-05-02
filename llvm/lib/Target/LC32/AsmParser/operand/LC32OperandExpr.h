@@ -17,7 +17,6 @@
 #define LLVM_LIB_TARGET_LC32_ASMPARSER_LC32OPERANDEXPR_H
 
 #include "LC32Operand.h"
-#define DEBUG_TYPE "LC32AsmParser"
 
 // Usually, the contents of this file are in an anonymous namespace. I'll put
 // them in a namespace for the LC-3.2
@@ -44,7 +43,5 @@ private:
 extern operand_parser_t OPERAND_PARSER_EXPR;
 
 } // namespace llvm::lc32
-
-#undef DEBUG_TYPE
 
 #endif // LLVM_LIB_TARGET_LC32_ASMPARSER_LC32OPERANDIMM_H

@@ -66,6 +66,7 @@ public:
   virtual bool isTrapVect8() const { return false; }
   virtual bool isConst16() const { return false; }
   virtual bool isConst32() const { return false; }
+  virtual bool isNZP() const { return false; }
 
   // Render methods
   // Needed by TableGen, and specified in the TableGen files. Also, these can't
@@ -101,6 +102,9 @@ public:
     llvm_unreachable("Bad type");
   }
   virtual void addConst32Operands(MCInst &Inst, unsigned N) {
+    llvm_unreachable("Bad type");
+  }
+  virtual void addNZPOperands(MCInst &Inst, unsigned N) {
     llvm_unreachable("Bad type");
   }
 

@@ -171,4 +171,4 @@ def P_FARJSR : Instruction {
   let hasSideEffects = true;
 }
 
-def : Pattern<(N_LC32_CALL SelectExternalSymbol:$addr), [(JSR SelectExternalSymbol:$addr)]>;
+def : Pattern<(N_LC32_CALL SelectExternalSymbol:$addr), [(JSR PCOffset11:$addr)]>;

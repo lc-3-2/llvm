@@ -5,6 +5,7 @@ add_llvm_component_library(LLVMLC32AsmParser
   operand/LC32OperandReg.cpp
   operand/LC32OperandImm.cpp
   operand/LC32OperandExpr.cpp
+  operand/LC32OperandNZP.cpp
 
   LINK_COMPONENTS
   MCParser
