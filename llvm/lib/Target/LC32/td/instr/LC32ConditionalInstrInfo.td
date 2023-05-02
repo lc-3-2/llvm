@@ -46,15 +46,15 @@ def N_BR : SDNode<"LC32ISD::BR", NT_BR, [SDNPHasChain, SDNPOptInGlue]>;
 
 def BR : Instruction {
   let Namespace = "LC32";
-  let AsmString = "BR$nzp\t$pcoffset9";
+  let AsmString = "BR$nzp\t$target";
 
   let Defs = [AT, CC];
   let Uses = [CC];
   let OutOperandList = (outs);
-  let InOperandList = (ins NZP:$nzp, BRTarget:$pcoffset9);
+  let InOperandList = (ins NZP:$nzp, BRTarget:$target);
   let Size = 2;
 
-  let Pattern = [(N_BR timm:$nzp, bb:$pcoffset9)];
+  let Pattern = [(N_BR timm:$nzp, bb:$target)];
 
   let isBranch = true;
   let isTerminator = true;
@@ -63,12 +63,29 @@ def BR : Instruction {
   let hasSideEffects = false;
 
   bits<3> nzp;
-  bits<9> pcoffset9;
+  bits<9> target;
 
   bits<16> Inst;
   let Inst{15-12} = 0b0000;
   let Inst{11-9}  = nzp;
-  let Inst{8-0}   = pcoffset9;
+  let Inst{8-0}   = target;
 }
 
-def : Pattern<(br bb:$pcoffset9), [(BR 0b111, BRTarget:$pcoffset9)]>;
+def P_FARBR : Instruction {
+  let Namespace = "LC32";
+  let AsmString = "PSEUDO.FARBR$nzp\t$target";
+  let isPseudo = true;
+
+  let Defs = [AT, CC];
+  let Uses = [CC];
+  let OutOperandList = (outs);
+  let InOperandList = (ins NZP:$nzp, Const32:$target);
+
+  let isBranch = true;
+  let isTerminator = true;
+  let mayLoad = false;
+  let mayStore = false;
+  let hasSideEffects = false;
+}
+
+def : Pattern<(br bb:$target), [(BR 0b111, BRTarget:$target)]>;

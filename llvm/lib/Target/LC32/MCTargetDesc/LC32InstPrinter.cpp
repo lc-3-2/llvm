@@ -37,8 +37,9 @@ void LC32InstPrinter::printInst(const MCInst *MI, uint64_t Address,
   this->printAnnotation(OS, Annot);
 
   // Special handling for NOP
-  if (MI->getOpcode() == LC32::BR && MI->getOperand(0).getImm() == 0b000) {
-    OS << "NOP";
+  if ((MI->getOpcode() == LC32::BR || MI->getOpcode() == LC32::P_FARBR) &&
+      MI->getOperand(0).getImm() == 0b000) {
+    OS << "\tNOP";
     return;
   }
 
@@ -67,6 +68,12 @@ void LC32InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   // Prefix them with a #
   if (op.isImm()) {
     O << '#' << op.getImm();
+    return;
+  }
+
+  // Print expressions
+  if (op.isExpr()) {
+    op.getExpr()->print(O, &this->MAI);
     return;
   }
 
