@@ -91,7 +91,7 @@ def PCOffset9OperandClass : AsmOperandClass {
   let Name = "PCOffset9";
 }
 
-def PCOffset9 : Operand<i32> {
+def PCOffset9 : Operand<iPTR> {
   let OperandType = "OPERAND_IMMEDIATE";
   let ParserMatchClass = PCOffset9OperandClass;
   let PrintMethod = "printPCOffset<9>";
@@ -103,7 +103,7 @@ def PCOffset11OperandClass : AsmOperandClass {
   let Name = "PCOffset11";
 }
 
-def PCOffset11 : Operand<i32> {
+def PCOffset11 : Operand<iPTR> {
   let OperandType = "OPERAND_IMMEDIATE";
   let ParserMatchClass = PCOffset11OperandClass;
   let PrintMethod = "printPCOffset<11>";
@@ -113,14 +113,24 @@ def PCOffset11 : Operand<i32> {
 
 //---
 // Used by: BR
-// Internally, this is an IMM, encoded as nzp. Also, these can't be named CC
-// since that is what the register is named.
+//
+// We need the BRTarget since basic blocks have type OtherVT.
+//
+// Internally, condition codes are Imm, encoded as `nzp`. Also, these can't be
+// named CC since that is what the register is named.
+
+def BRTarget : Operand<OtherVT> {
+  let ParserMatchClass = PCOffset9OperandClass;
+  let PrintMethod = "printPCOffset<9>";
+  let EncoderMethod = "getPCOffsetValue<9>";
+  let DecoderMethod = "DecodePCOffset<9>";
+}
 
 def NZPOperandClass : AsmOperandClass {
   let Name = "NZP";
 }
 
-def NZP : Operand<i8> {
+def NZP : Operand<i32> {
   let ParserMatchClass = NZPOperandClass;
   let PrintMethod = "printNZP";
 }
@@ -132,7 +142,7 @@ def TrapVect8OperandClass : AsmOperandClass {
   let Name = "TrapVect8";
 }
 
-def TrapVect8 : Operand<i8> {
+def TrapVect8 : Operand<i32> {
   let OperandType = "OPERAND_IMMEDIATE";
   let ParserMatchClass = TrapVect8OperandClass;
 }

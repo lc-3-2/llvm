@@ -256,11 +256,11 @@ def C_LEA_FRAMEINDEX : Instruction {
 //---
 
 // Custom functions to turn addresses into their target variant
-def SelectGlobalAddress  : ComplexPattern<i32, 1, "SelectGlobalAddress",  [globaladdr]>;
-def SelectExternalSymbol : ComplexPattern<i32, 1, "SelectExternalSymbol", [externalsym]>;
-def SelectConstantPool   : ComplexPattern<i32, 1, "SelectConstantPool",   [constpool]>;
-def SelectJumpTable      : ComplexPattern<i32, 1, "SelectJumpTable",      [jumptable]>;
-def SelectBlockAddress   : ComplexPattern<i32, 1, "SelectBlockAddress",   [blockaddress]>;
+def SelectGlobalAddress  : ComplexPattern<iPTR, 1, "SelectGlobalAddress",  [globaladdr]>;
+def SelectExternalSymbol : ComplexPattern<iPTR, 1, "SelectExternalSymbol", [externalsym]>;
+def SelectConstantPool   : ComplexPattern<iPTR, 1, "SelectConstantPool",   [constpool]>;
+def SelectJumpTable      : ComplexPattern<iPTR, 1, "SelectJumpTable",      [jumptable]>;
+def SelectBlockAddress   : ComplexPattern<iPTR, 1, "SelectBlockAddress",   [blockaddress]>;
 
 def LEA : Instruction {
   let Namespace = "LC32";

@@ -52,7 +52,8 @@ void LC32AsmBackend::emitInstructionBegin(MCObjectStreamer &OS,
   if (Inst.getOpcode() == LC32::P_LOADCONSTW ||
       Inst.getOpcode() == LC32::P_FARJSR)
     OS.emitValueToAlignment(Align(4));
-  else if (Inst.getOpcode() == LC32::LEA || Inst.getOpcode() == LC32::JSR)
+  else if (Inst.getOpcode() == LC32::LEA || Inst.getOpcode() == LC32::JSR ||
+           Inst.getOpcode() == LC32::BR)
     OS.emitValueToAlignment(Align(4));
   else
     OS.emitValueToAlignment(Align(2));
@@ -147,6 +148,7 @@ bool LC32AsmBackend::mayNeedRelaxation(const MCInst &Inst,
   switch (Inst.getOpcode()) {
   case LC32::LEA:
   case LC32::JSR:
+  case LC32::BR:
     return true;
   default:
     return false;

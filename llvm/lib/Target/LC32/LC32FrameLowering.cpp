@@ -22,9 +22,11 @@ LC32FrameLowering::LC32FrameLowering()
 void LC32FrameLowering::emitPrologue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
   // Populate variables
+  // If the first block is empty, the debug location will be invalid. Deal with
+  // that
   assert(&MF.front() == &MBB && "Shrink-wrapping not supported");
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  DebugLoc dl = MBBI->getDebugLoc();
+  DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const LC32InstrInfo &TII =
       *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -38,14 +40,18 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   MachineInstr *n = nullptr;
 
   // Save LR and FP
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
+  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
       .addReg(LC32::LR, RegState::Kill)
       .addReg(LC32::SP)
       .addImm(-8);
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
+  n->getOperand(3).setIsDead();
+  n->getOperand(4).setIsDead();
+  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
       .addReg(LC32::FP, RegState::Kill)
       .addReg(LC32::SP)
       .addImm(-12);
+  n->getOperand(3).setIsDead();
+  n->getOperand(4).setIsDead();
 
   // Compute FP
   n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi), LC32::FP)
@@ -75,16 +81,19 @@ void LC32FrameLowering::emitEpilogue(MachineFunction &MF,
           .addReg(LC32::FP, RegState::Kill)
           .addImm(12);
   n->getOperand(3).setIsDead();
+  n->getOperand(4).setIsDead();
 
   // Restore LR and FP
   n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::LR)
           .addReg(LC32::SP)
           .addImm(-4);
   n->getOperand(3).setIsDead();
+  n->getOperand(4).setIsDead();
   n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::FP)
           .addReg(LC32::SP)
           .addImm(-8);
   n->getOperand(3).setIsDead();
+  n->getOperand(4).setIsDead();
 }
 
 MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
@@ -96,23 +105,31 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
       *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
   const LC32RegisterInfo &TRI = TII.getRegisterInfo();
 
+  // Check the type of the variable we're eliminating
+  assert(TII.getCallFrameSetupOpcode() != TII.getCallFrameDestroyOpcode() &&
+         "Call frame setup and destroy are same");
+  assert((MI->getOpcode() == TII.getCallFrameSetupOpcode() ||
+          MI->getOpcode() == TII.getCallFrameDestroyOpcode()) &&
+         "Bad type of instruction to eliminate");
+
   // Get the size associated with this pseudo
   uint64_t amt = TII.getFrameSize(*MI);
-  // Check if we actually need to do anything
-  if (amt != 0) {
+  // Align to four bytes
+  assert(this->getStackAlign() == 4 && "LC-3.2 stack should be word aligned");
+  amt = alignTo(amt, this->getStackAlign());
 
-    // Align to four bytes
-    assert(this->getStackAlign() == 4 &&
-           "LC-3.2 call stack should be word aligned");
-    amt = alignTo(amt, this->getStackAlign());
-
-    // Do the addition
-    if (MI->getOpcode() == TII.getCallFrameSetupOpcode())
+  // Differentiate on setup and teardown
+  // This is because setup can afford to do nothing if the frame size is zero.
+  // Teardown always has to add at least four.
+  if (MI->getOpcode() == TII.getCallFrameSetupOpcode()) {
+    if (amt != 0)
       TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, -amt);
-    else if (MI->getOpcode() == TII.getCallFrameDestroyOpcode())
-      TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, amt + 4);
-    else
-      llvm_unreachable("Tried to eliminate bad instruction");
+
+  } else if (MI->getOpcode() == TII.getCallFrameDestroyOpcode()) {
+    TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, amt + 4);
+
+  } else {
+    llvm_unreachable("Tried to eliminate bad instruction");
   }
 
   // Remember to erase the original pseudo

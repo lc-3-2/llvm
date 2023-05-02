@@ -41,7 +41,7 @@ def CMP_ZERO : Instruction, PseudoInstExpansion<(ADDi GPR:$sr, GPR:$sr, 0)> {
 //---
 // The branch
 
-def NT_BR : SDTypeProfile<0, 2, [SDTCisVT<0, i8>, SDTCisVT<1, OtherVT>]>;
+def NT_BR : SDTypeProfile<0, 2, [SDTCisVT<0, i32>, SDTCisVT<1, OtherVT>]>;
 def N_BR : SDNode<"LC32ISD::BR", NT_BR, [SDNPHasChain, SDNPOptInGlue]>;
 
 def BR : Instruction {
@@ -54,7 +54,7 @@ def BR : Instruction {
   let InOperandList = (ins NZP:$nzp, BRTarget:$pcoffset9);
   let Size = 2;
 
-  let Pattern = [(N_BR NZP:$nzp, bb:$pcoffset9)];
+  let Pattern = [(N_BR timm:$nzp, bb:$pcoffset9)];
 
   let isBranch = true;
   let isTerminator = true;

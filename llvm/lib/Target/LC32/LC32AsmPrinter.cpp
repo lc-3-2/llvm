@@ -125,6 +125,11 @@ void LC32AsmPrinter::lowerOperand(MachineOperand MO, MCOperand &MCOp) {
     MCOp = MCOperand::createImm(MO.getImm());
     return;
 
+  // Lower branch targets
+  case MachineOperand::MO_MachineBasicBlock:
+    MCOp = this->lowerSymbolOperand(MO, MO.getMBB()->getSymbol());
+    return;
+
   // Lower global addresses
   case MachineOperand::MO_GlobalAddress:
     MCOp = this->lowerSymbolOperand(MO, this->getSymbol(MO.getGlobal()));
@@ -173,7 +178,8 @@ MCOperand LC32AsmPrinter::lowerSymbolOperand(MachineOperand MO, MCSymbol *Sym) {
   // Create the base symbol
   const MCExpr *expr = MCSymbolRefExpr::create(Sym, this->OutContext);
   // Add any offset if present
-  if (MO.getOffset() != 0)
+  // Some operand classes don't have this method, so check for that
+  if (!MO.isMBB() && !MO.isJTI() && MO.getOffset() != 0)
     expr = MCBinaryExpr::createAdd(
         expr, MCConstantExpr::create(MO.getOffset(), this->OutContext),
         this->OutContext);
