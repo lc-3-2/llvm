@@ -81,7 +81,6 @@ void LC32FrameLowering::emitEpilogue(MachineFunction &MF,
           .addReg(LC32::FP, RegState::Kill)
           .addImm(12);
   n->getOperand(3).setIsDead();
-  n->getOperand(4).setIsDead();
 
   // Restore LR and FP
   n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::LR)

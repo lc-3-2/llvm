@@ -102,6 +102,8 @@ private:
 
   // See: LC32ISelLoweringOps.cpp
   SDValue LowerOR(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
 
   // See: LC32ISelLoweringOps.cpp
   SDValue visitXOR(SDNode *N, DAGCombinerInfo &DCI) const;

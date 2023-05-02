@@ -41,6 +41,10 @@ public:
                             const TargetRegisterInfo *TRI,
                             Register VReg) const override;
 
+  void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                   const DebugLoc &DL, MCRegister DestReg, MCRegister SrcReg,
+                   bool KillSrc) const override;
+
 private:
   // Modules need the register information to work with this class. Therefore,
   // we provide access to it.

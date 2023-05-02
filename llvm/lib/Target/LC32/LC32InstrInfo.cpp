@@ -37,12 +37,17 @@ void LC32InstrInfo::storeRegToStackSlot(
   if (MI != MBB.end())
     dl = MI->getDebugLoc();
 
+  // Use this to set condition codes as dead, which they should be
+  MachineInstr *n = nullptr;
+
   // Do the store
   // Remember, frame indices are lowered in LC32RegisterInfo.cpp
-  BuildMI(MBB, MI, dl, this->get(LC32::STW))
+  n = BuildMI(MBB, MI, dl, this->get(LC32::STW))
       .addReg(SrcReg, getKillRegState(isKill))
       .addFrameIndex(FrameIndex)
       .addImm(0);
+  n->getOperand(3).setIsDead();
+  n->getOperand(4).setIsDead();
 }
 
 void LC32InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -68,6 +73,26 @@ void LC32InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   // Remember, frame indices are lowered in LC32RegisterInfo.cpp
   n = BuildMI(MBB, MI, dl, this->get(LC32::LDW), DestReg)
           .addFrameIndex(FrameIndex)
+          .addImm(0);
+  n->getOperand(3).setIsDead();
+  n->getOperand(4).setIsDead();
+}
+
+void LC32InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MI,
+                                const DebugLoc &DL, MCRegister DestReg,
+                                MCRegister SrcReg, bool KillSrc) const {
+  // See: LanaiInstrInfo.cpp
+
+  // Check that the register class is what we expect
+  assert(LC32::GPRRegClass.contains(DestReg, SrcReg) && "Bad register copy");
+
+  // Use this to set condition codes as dead, which they should be
+  MachineInstr *n = nullptr;
+
+  // Do an ADDi
+  n = BuildMI(MBB, MI, DL, this->get(LC32::ADDi), DestReg)
+          .addReg(SrcReg, getKillRegState(KillSrc))
           .addImm(0);
   n->getOperand(3).setIsDead();
 }
