@@ -1,4 +1,5 @@
-//===- RelocationResolver.cpp ------------------------------------*- C++ -*-===//
+//===- RelocationResolver.cpp ------------------------------------*- C++
+//-*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -745,6 +746,28 @@ static uint64_t resolveWasm64(uint64_t Type, uint64_t Offset, uint64_t S,
   }
 }
 
+static bool supportsLC32(uint64_t Type) {
+  switch (Type) {
+  case ELF::R_LC_3_2_NONE:
+  case ELF::R_LC_3_2_32:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static uint64_t resolveLC32(uint64_t Type, uint64_t Offset, uint64_t S,
+                            uint64_t LocData, int64_t Addend) {
+  switch (Type) {
+  case ELF::R_LC_3_2_NONE:
+    return LocData;
+  case ELF::R_LC_3_2_32:
+    return static_cast<uint32_t>(S + Addend);
+  default:
+    llvm_unreachable("Invalid relocation type");
+  }
+}
+
 std::pair<SupportsRelocation, RelocationResolver>
 getRelocationResolver(const ObjectFile &Obj) {
   if (Obj.isCOFF()) {
@@ -825,6 +848,8 @@ getRelocationResolver(const ObjectFile &Obj) {
       return {supportsRISCV, resolveRISCV};
     case Triple::csky:
       return {supportsCSKY, resolveCSKY};
+    case Triple::lc_3_2:
+      return {supportsLC32, resolveLC32};
     default:
       return {nullptr, nullptr};
     }

@@ -38,6 +38,9 @@ LC32MCAsmInfo::LC32MCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
   this->Data16bitsDirective = "\t.fillh\t";
   this->Data32bitsDirective = "\t.fillw\t";
   this->Data64bitsDirective = "\t.fillq\t";
+
+  // Output debug information if asked
+  this->SupportsDebugInformation = true;
 }
 
 bool LC32MCAsmInfo::isValidUnquotedName(StringRef Name) const {
