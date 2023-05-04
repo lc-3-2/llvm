@@ -29,13 +29,15 @@ LC32RegisterInfo::LC32RegisterInfo() : LC32GenRegisterInfo(LC32::LR) {}
 
 const MCPhysReg *
 LC32RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  // We use caller save
-  static const MCPhysReg CALLEE_SAVED_REGS[] = {0};
+  // Caller may not have saved the GP if they think we're not going to use it
+  // Otherwise, we use caller save
+  static const MCPhysReg CALLEE_SAVED_REGS[] = {LC32::GP, 0};
   return CALLEE_SAVED_REGS;
 }
 
 BitVector LC32RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector ret(this->getNumRegs());
+  ret.set(LC32::AT);
   ret.set(LC32::GP);
   ret.set(LC32::FP);
   ret.set(LC32::SP);
