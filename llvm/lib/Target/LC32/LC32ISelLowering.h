@@ -50,16 +50,12 @@ enum {
   // Operand 0: Chain
   RET,
 
-  // Output 0: Glue
-  // Operand 0: Operand to compare with zero
-  CMP_ZERO,
-
   // Output 0: Chain
   // Operand 0: Chain
   // Operand 1: NZP
-  // Operand 2: Target
-  // Operand 3: Glue
-  BR,
+  // Operand 2: Value to compare with zero
+  // Operand 3: Target
+  BR_CMP_ZERO,
 };
 } // namespace LC32ISD
 

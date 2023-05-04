@@ -86,6 +86,26 @@ void LC32AsmPrinter::emitInstruction(const MachineInstr *MI) {
     this->EmitToStreamer(*this->OutStreamer, temp_add);
     return;
   }
+  if (MI->getOpcode() == LC32::C_BR_CMP_ZERO) {
+    MCInst temp_add;
+    MCInst temp_br;
+    MCOperand nzp;
+    MCOperand sr;
+    MCOperand target;
+    this->lowerOperand(MI->getOperand(0), nzp);
+    this->lowerOperand(MI->getOperand(1), sr);
+    this->lowerOperand(MI->getOperand(2), target);
+    temp_add.setOpcode(LC32::ADDi);
+    temp_add.addOperand(sr);
+    temp_add.addOperand(sr);
+    temp_add.addOperand(MCOperand::createImm(0));
+    temp_br.setOpcode(LC32::BR);
+    temp_br.addOperand(nzp);
+    temp_br.addOperand(target);
+    this->EmitToStreamer(*this->OutStreamer, temp_add);
+    this->EmitToStreamer(*this->OutStreamer, temp_br);
+    return;
+  }
 
   // Lower as-is
   // Usually, this would be placed in a separate file, but we don't really need

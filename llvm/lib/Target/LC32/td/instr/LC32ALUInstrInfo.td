@@ -20,9 +20,7 @@ multiclass ALU<string name, bits<4> opcode, SDNode node> {
   let
     Namespace = "LC32",
 
-    Defs = [CC],
     OutOperandList = (outs GPR:$dr),
-
     Size = 2,
 
     mayLoad = false,

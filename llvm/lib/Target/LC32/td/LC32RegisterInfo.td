@@ -8,8 +8,12 @@
 //
 // This file specifies the registers for the LC-3.2. It specifies all the
 // general-purpose registers, even ones that can't be allocated since the
-// assembler needs to know about them. It also defines a register for the
-// condition codes to track the data dependence.
+// assembler needs to know about them.
+//
+// Notice that the condition codes are not modeled. Usually, they would be used
+// to track data dependencies via implicit defs, but that's actually
+// insufficient for us. Instead, we wrap condition code checking into a pseudo
+// instruction. Thus, we have no need for the condition codes.
 //
 // Usually: LC32RegisterInfo.td
 //
@@ -42,11 +46,3 @@ def SP : LC32Register<"R6", 6, ["SP"]>;
 def LR : LC32Register<"R7", 7, ["LR"]>;
 
 def GPR : RegisterClass<"LC32", [i32], 32, (add R0, R1, R2, AT, GP, FP, SP, LR)>;
-
-//---
-// Model condition codes. This is a data depencence between instructions,
-// particularly for branches. We need to capture this.
-
-def CC : Register<"CC", ["PSR"]> {
-  let Namespace = "LC32";
-}

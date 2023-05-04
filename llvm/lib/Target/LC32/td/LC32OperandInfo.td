@@ -116,8 +116,8 @@ def PCOffset11 : Operand<iPTR> {
 //
 // We need the BRTarget since basic blocks have type OtherVT.
 //
-// Internally, condition codes are Imm, encoded as `nzp`. Also, these can't be
-// named CC since that is what the register is named.
+// Internally, the NZP fields are are Imm, encoded with bits. For instance, `n`
+// would be encoded as `0b100`. They have to be i32 since that's what's legal.
 
 def BRTarget : Operand<OtherVT> {
   let ParserMatchClass = PCOffset9OperandClass;

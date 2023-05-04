@@ -28,9 +28,7 @@ multiclass SHF<string name, bit a, bit d, SDNode node> {
   let
     Namespace = "LC32",
 
-    Defs = [CC],
     OutOperandList = (outs GPR:$dr),
-
     Size = 2,
 
     mayLoad = false,

@@ -24,7 +24,6 @@ def P_LOADCONSTH : Instruction {
   let AsmString = "PSEUDO.LOADCONSTH\t$dr, $const16";
   let isPseudo = true;
 
-  let Defs = [CC];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins Const16:$const16);
 
@@ -43,7 +42,6 @@ def P_LOADCONSTW : Instruction {
   let AsmString = "PSEUDO.LOADCONSTW\t$dr, $const32";
   let isPseudo = true;
 
-  let Defs = [CC];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins Const32:$const32);
 

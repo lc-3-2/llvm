@@ -17,7 +17,6 @@ def TRAP : Instruction {
   let Namespace = "LC32";
   let AsmString = "TRAP\t$trapvect8";
 
-  let Defs = [CC];
   let OutOperandList = (outs);
   let InOperandList = (ins TrapVect8:$trapvect8);
   let Size = 2;
@@ -35,12 +34,12 @@ def TRAP : Instruction {
   let Inst{7-0}   = trapvect8;
 }
 
-def GETC : InstAlias<"GETC", (TRAP 0x20)>;
-def OUT  : InstAlias<"OUT",  (TRAP 0x21)>;
-def PUTS : InstAlias<"PUTS", (TRAP 0x22)>;
-def IN   : InstAlias<"IN",   (TRAP 0x23)>;
-def HALT : InstAlias<"HALT", (TRAP 0x25)>;
-def DIE  : InstAlias<"DIE",  (TRAP 0xff)>;
+def GETC  : InstAlias<"GETC",  (TRAP 0x20)>;
+def OUT   : InstAlias<"OUT",   (TRAP 0x21)>;
+def PUTS  : InstAlias<"PUTS",  (TRAP 0x22)>;
+def IN    : InstAlias<"IN",    (TRAP 0x23)>;
+def HALT  : InstAlias<"HALT",  (TRAP 0x25)>;
+def CRASH : InstAlias<"CRASH",  (TRAP 0xff)>;
 
 def RTI : Instruction {
   let Namespace = "LC32";

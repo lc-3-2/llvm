@@ -36,7 +36,6 @@ LC32RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 BitVector LC32RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector ret(this->getNumRegs());
-  ret.set(LC32::AT);
   ret.set(LC32::GP);
   ret.set(LC32::FP);
   ret.set(LC32::SP);
@@ -101,7 +100,7 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     assert(FIOperandNum == 1 && "Bad frame index operand index");
 
     this->genAddLargeImm(TII, MBB, MI, dl, MI->getOperand(0).getReg(), LC32::FP,
-                         Offset, getRegState(MI->getOperand(0)));
+                         Offset, false, getRegState(MI->getOperand(0)));
     MBB.erase(MI);
     return false;
   }
@@ -109,27 +108,25 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   llvm_unreachable("Bad instruction with frame index");
 }
 
-void LC32RegisterInfo::genAddLargeImm(const LC32InstrInfo &TII,
-                                      MachineBasicBlock &MBB,
-                                      MachineBasicBlock::iterator MBBI,
-                                      DebugLoc &dl, Register dr, Register sr,
-                                      int64_t imm, unsigned dr_flags,
-                                      unsigned sr_flags) const {
+void LC32RegisterInfo::genAddLargeImm(
+    const LC32InstrInfo &TII, MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator MBBI, DebugLoc &dl, Register dr, Register sr,
+    int64_t imm, bool alias, unsigned dr_flags, unsigned sr_flags) const {
 
-  // Check that the registers don't use AT
-  // It's fine if they define it
-  assert(sr != LC32::AT && "Source register can't be AT");
-
-  // Use this to set condition codes as dead, which they should be
-  MachineInstr *n = nullptr;
+  if (alias)
+    // Check that the source and the destination don't alias
+    assert(sr != dr && "Source and destination may not alias");
+  else
+    // Check that AT isn't used
+    // It may be defined
+    assert(sr != LC32::AT && "May not use AT");
 
   // If the immediate is zero, just ADDi
   if (imm == 0) {
-    n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-            .addReg(dr, dr_flags)
-            .addReg(sr, sr_flags)
-            .addImm(0);
-    n->getOperand(3).setIsDead();
+    BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
+        .addReg(dr, dr_flags)
+        .addReg(sr, sr_flags)
+        .addImm(0);
     return;
   }
 
@@ -142,14 +139,12 @@ void LC32RegisterInfo::genAddLargeImm(const LC32InstrInfo &TII,
       int64_t to_add = std::max(-16l, std::min(15l, to_go));
       bool last_loop = to_add == to_go;
 
-      n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-              .addReg(dr, last_loop ? dr_flags
-                                    : static_cast<unsigned>(RegState::Define))
-              .addReg(first_loop ? sr : dr,
-                      first_loop ? sr_flags
-                                 : static_cast<unsigned>(RegState::Kill))
-              .addImm(to_add);
-      n->getOperand(3).setIsDead();
+      BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
+          .addReg(dr, last_loop ? dr_flags
+                                : static_cast<unsigned>(RegState::Define))
+          .addReg(first_loop ? sr : dr,
+                  first_loop ? sr_flags : static_cast<unsigned>(RegState::Kill))
+          .addImm(to_add);
 
       to_go -= to_add;
       first_loop = false;
@@ -157,19 +152,19 @@ void LC32RegisterInfo::genAddLargeImm(const LC32InstrInfo &TII,
     return;
   }
 
-  // Otherwise, use AT as a staging register
+  // Otherwise, use a staging register
   // Start by calculating which instruction to use
   auto instr = isInt<16>(imm) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
-  // Load the offset into AT
-  n = BuildMI(MBB, MBBI, dl, TII.get(instr), LC32::AT)
-          .addImm(static_cast<int32_t>(imm));
-  n->getOperand(2).setIsDead();
+  // Load the offset into either dr or AT, depending on whether the operands
+  // alias
+  Register stage = alias ? LC32::AT : dr;
+  BuildMI(MBB, MBBI, dl, TII.get(instr), stage)
+      .addImm(static_cast<int32_t>(imm));
   // Do the add
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDr))
-          .addReg(dr, dr_flags)
-          .addReg(sr, sr_flags)
-          .addReg(LC32::AT, RegState::Kill);
-  n->getOperand(3).setIsDead();
+  BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDr))
+      .addReg(dr, dr_flags)
+      .addReg(sr, sr_flags)
+      .addReg(stage, RegState::Kill);
   // Done
   return;
 }

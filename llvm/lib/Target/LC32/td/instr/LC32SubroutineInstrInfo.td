@@ -86,7 +86,7 @@ let
   isCodeGenOnly = true,
 
   Uses = [SP],
-  Defs = [AT, SP, CC],
+  Defs = [AT, SP],
   OutOperandList = (outs),
   InOperandList = (ins i32imm:$amtin, i32imm:$amtout),
 
@@ -116,7 +116,7 @@ def JSRR : Instruction {
   let Namespace = "LC32";
   let AsmString = "JSRR\t$baser";
 
-  let Defs = [SP, CC];
+  let Defs = [SP];
   let OutOperandList = (outs);
   let InOperandList = (ins GPR:$baser);
   let Size = 2;
@@ -140,7 +140,7 @@ def JSR : Instruction {
   let Namespace = "LC32";
   let AsmString = "JSR\t$pcoffset11";
 
-  let Defs = [AT, SP, CC];
+  let Defs = [AT, SP];
   let OutOperandList = (outs);
   let InOperandList = (ins PCOffset11:$pcoffset11);
   let Size = 2;
@@ -158,17 +158,17 @@ def JSR : Instruction {
   let Inst{10-0}  = pcoffset11;
 }
 
+def : Pattern<(N_LC32_CALL SelectExternalSymbol:$addr), [(JSR PCOffset11:$addr)]>;
+
 def P_FARJSR : Instruction {
   let Namespace = "LC32";
   let AsmString = "PSEUDO.FARJSR\t$addr";
   let isPseudo = true;
 
-  let Defs = [AT, SP, CC];
+  let Defs = [AT, SP];
   let OutOperandList = (outs);
   let InOperandList = (ins Const32:$addr);
 
   let isCall = true;
   let hasSideEffects = true;
 }
-
-def : Pattern<(N_LC32_CALL SelectExternalSymbol:$addr), [(JSR PCOffset11:$addr)]>;

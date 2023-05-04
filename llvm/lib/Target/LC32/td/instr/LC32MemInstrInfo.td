@@ -9,9 +9,6 @@
 // This file contains declarations for all the memory operations, so LD* and
 // ST*. It also contains pattern matching code for them.
 //
-// TODO: Find a good way to macro the patterns. As is, this copy-pasta
-// programming is error-prone.
-//
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
 //
 //===----------------------------------------------------------------------===//
@@ -20,7 +17,7 @@ def LDB : Instruction {
   let Namespace = "LC32";
   let AsmString = "LDB\t$dr, $baser, $boffset6";
 
-  let Defs = [AT, CC];
+  let Defs = [AT];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins GPR:$baser, BOffset6:$boffset6);
   let Size = 2;
@@ -51,7 +48,7 @@ def LDH : Instruction {
   let Namespace = "LC32";
   let AsmString = "LDH\t$dr, $baser, $hoffset6";
 
-  let Defs = [AT, CC];
+  let Defs = [AT];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins GPR:$baser, HOffset6:$hoffset6);
   let Size = 2;
@@ -82,7 +79,7 @@ def LDW : Instruction {
   let Namespace = "LC32";
   let AsmString = "LDW\t$dr, $baser, $woffset6";
 
-  let Defs = [AT, CC];
+  let Defs = [AT];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins GPR:$baser, WOffset6:$woffset6);
   let Size = 2;
@@ -116,7 +113,7 @@ def STB : Instruction {
   let Namespace = "LC32";
   let AsmString = "STB\t$sr, $baser, $boffset6";
 
-  let Defs = [AT, CC];
+  let Defs = [AT];
   let OutOperandList = (outs);
   let InOperandList = (ins GPR:$sr, GPR:$baser, BOffset6:$boffset6);
   let Size = 2;
@@ -144,7 +141,7 @@ def STH : Instruction {
   let Namespace = "LC32";
   let AsmString = "STH\t$sr, $baser, $hoffset6";
 
-  let Defs = [AT, CC];
+  let Defs = [AT];
   let OutOperandList = (outs);
   let InOperandList = (ins GPR:$sr, GPR:$baser, HOffset6:$hoffset6);
   let Size = 2;
@@ -172,7 +169,7 @@ def STW : Instruction {
   let Namespace = "LC32";
   let AsmString = "STW\t$sr, $baser, $woffset6";
 
-  let Defs = [AT, CC];
+  let Defs = [AT];
   let OutOperandList = (outs);
   let InOperandList = (ins GPR:$sr, GPR:$baser, WOffset6:$woffset6);
   let Size = 2;
@@ -203,6 +200,28 @@ def : Pattern<(store GPR:$sr, GPR:$baser),         [(STW GPR:$sr, GPR:$baser, 0)
 // Custom function to turn frame indicies into target frame indicies
 def SelectFrameIndex : ComplexPattern<i32, 1, "SelectFrameIndex", [frameindex]>;
 
+def C_LEA_FRAMEINDEX : Instruction {
+  // For when we can't eliminate the frame index via a load. This computes the
+  // address we store to. This is lowered when we eliminate frame indices,
+  // instead of in the AsmPrinter like most of the other pseudo instructions.
+
+  let Namespace = "LC32";
+  let isPseudo = true;
+  let isCodeGenOnly = true;
+
+  let OutOperandList = (outs GPR:$dr);
+  let InOperandList = (ins i32imm:$fi);
+
+  let Pattern = [(set GPR:$dr, SelectFrameIndex:$fi)];
+
+  let isReMaterializable = true;
+  let mayLoad = false;
+  let mayStore = false;
+  let hasSideEffects = false;
+}
+
+//--
+
 // Loads and stores with frame indices. We can optimize these, so we select
 // here. The frame index is eliminated later.
 
@@ -232,27 +251,6 @@ def : Pattern<(truncstorei8 GPR:$sr, (add SelectFrameIndex:$fi, BOffset6:$boffse
 def : Pattern<(truncstorei16 GPR:$sr, (add SelectFrameIndex:$fi, HOffset6:$hoffset6)), [(STH GPR:$sr, SelectFrameIndex:$fi, HOffset6:$hoffset6)]>;
 def : Pattern<(truncstorei32 GPR:$sr, (add SelectFrameIndex:$fi, WOffset6:$woffset6)), [(STH GPR:$sr, SelectFrameIndex:$fi, WOffset6:$woffset6)]>;
 
-def C_LEA_FRAMEINDEX : Instruction {
-  // For when we can't eliminate the frame index via a load. This computes the
-  // address we store to. This is lowered when we eliminate frame indices,
-  // instead of in the AsmPrinter like most of the other pseudo instructions.
-
-  let Namespace = "LC32";
-  let isPseudo = true;
-  let isCodeGenOnly = true;
-
-  let Defs = [AT, CC];
-  let OutOperandList = (outs GPR:$dr);
-  let InOperandList = (ins i32imm:$fi);
-
-  let Pattern = [(set GPR:$dr, SelectFrameIndex:$fi)];
-
-  let isReMaterializable = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
-}
-
 //---
 
 // Custom functions to turn addresses into their target variant
@@ -266,7 +264,6 @@ def LEA : Instruction {
   let Namespace = "LC32";
   let AsmString = "LEA\t$dr, $pcoffset9";
 
-  let Defs = [CC];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins PCOffset9:$pcoffset9);
   let Size = 2;

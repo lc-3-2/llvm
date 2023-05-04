@@ -25,7 +25,6 @@ def C_MOVE_ZERO : Instruction, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr, 0)> {
   let isPseudo = true;
   let isCodeGenOnly = true;
 
-  let Defs = [CC];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins);
 
@@ -45,7 +44,6 @@ def C_MOVE_IMM5 : Instruction {
   let isPseudo = true;
   let isCodeGenOnly = true;
 
-  let Defs = [CC];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins Imm5:$imm5);
 

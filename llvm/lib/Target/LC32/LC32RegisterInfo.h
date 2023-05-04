@@ -53,6 +53,7 @@ public:
    * @param [in] dr The register to add into
    * @param [in] sr The register to add from
    * @param [in] imm The value to add
+   * @param [in] alias Allow sr and dr to alias, at the expense of using AT
    * @param [in] dr_flags The liveliness state of the destination register once
    *  the code is done. Should be either `Define` or `Dead`.
    * @param [in] sr_flags The liveliness state of the source register
@@ -60,7 +61,7 @@ public:
    */
   void genAddLargeImm(const LC32InstrInfo &TII, MachineBasicBlock &MBB,
                       MachineBasicBlock::iterator MBBI, DebugLoc &dl,
-                      Register dr, Register sr, int64_t imm,
+                      Register dr, Register sr, int64_t imm, bool alias = false,
                       unsigned dr_flags = RegState::Define,
                       unsigned sr_flags = 0u) const;
 };
