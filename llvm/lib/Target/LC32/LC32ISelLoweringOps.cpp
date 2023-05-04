@@ -8,8 +8,31 @@
 
 #include "LC32ISelLowering.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32ISelLoweringOps"
+
+static cl::opt<bool> UseSignedCMPLibCall(
+    "lc_3.2-use-libcall-for-signed-cmp",
+    cl::desc("When comparing signed integers, use a libcall to prevent "
+             "overflow instead of just subtracting"),
+    cl::init(false));
+static cl::opt<bool> UseUnsignedCMPLibCall(
+    "lc_3.2-use-libcall-for-unsigned-cmp",
+    cl::desc("When comparing unsigned integers, use a libcall to prevent "
+             "overflow instead of just subtracting"),
+    cl::init(false));
+
+static cl::opt<std::string> SignedCMPLibCallName(
+    "lc_3.2-signed-cmp-libcall-name",
+    cl::desc("What function to call when comparing signed integers in the "
+             "presence of --lc_3.2-use-libcall-for-signed-cmp"),
+    cl::init("__cmpsi"));
+static cl::opt<std::string> UnsignedCMPLibCallName(
+    "lc_3.2-unsigned-cmp-libcall-name",
+    cl::desc("What function to call when comparing unsigned integers in the "
+             "presence of --lc_3.2-use-libcall-for-unsigned-cmp"),
+    cl::init("__ucmpsi"));
 
 const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
@@ -137,6 +160,16 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
         DAG.getNode(ISD::XOR, dl, MVT::i32, LHS, RHS),
     };
   }
+
+  case ISD::SETLT:
+  case ISD::SETLE:
+  case ISD::SETGT:
+  case ISD::SETGE:
+  case ISD::SETULT:
+  case ISD::SETULE:
+  case ISD::SETUGT:
+  case ISD::SETUGE:
+    llvm_unreachable("TODO");
 
   default:
     llvm_unreachable("Bad CC");
