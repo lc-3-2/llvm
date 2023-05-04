@@ -147,7 +147,7 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
   switch (CC) {
   case ISD::SETEQ:
   case ISD::SETNE: {
-    // Compte the nzp
+    // Compute the nzp
     uint8_t nzp;
     if (CC == ISD::SETEQ)
       nzp = 0b010;
@@ -168,8 +168,40 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
   case ISD::SETULT:
   case ISD::SETULE:
   case ISD::SETUGT:
-  case ISD::SETUGE:
-    llvm_unreachable("TODO");
+  case ISD::SETUGE: {
+    // Useful variables
+    // See: llvm/CodeGen/ISDOpcodes.h:1428
+    SDValue new_chain = Chain;
+    bool is_unsigned = (CC & (1 << 3)) != 0;
+    bool is_signed = (CC & (1 << 3)) == 0;
+    // Compute nzp
+    // See: llvm/CodeGen/ISDOpcodes.h:1428
+    uint8_t nzp = 0b000;
+    {
+      uint8_t n = (CC & (1 << 2)) != 0 ? 0b100 : 0b000;
+      uint8_t z = (CC & (1 << 0)) != 0 ? 0b010 : 0b000;
+      uint8_t p = (CC & (1 << 1)) != 0 ? 0b001 : 0b000;
+      nzp = n | z | p;
+    }
+
+    // Compute the value
+    SDValue new_value;
+    if ((is_unsigned && !UseUnsignedCMPLibCall.getValue()) ||
+        (is_signed && !UseSignedCMPLibCall.getValue())) {
+      // It's just subtraction if we're not worried about overflow
+      new_value = DAG.getNode(ISD::SUB, dl, MVT::i32, LHS, RHS);
+
+    } else {
+      llvm_unreachable("TODO");
+    }
+
+    // Return
+    return DoCMPResult{
+        new_chain,
+        DAG.getTargetConstant(nzp, dl, MVT::i32),
+        new_value,
+    };
+  }
 
   default:
     llvm_unreachable("Bad CC");
