@@ -103,6 +103,20 @@ private:
 
   // See: LC32ISelLoweringOps.cpp
   SDValue visitXOR(SDNode *N, DAGCombinerInfo &DCI) const;
+
+  /**
+   * Helper method for LowerBR_CC and LowerSELECT_CC.
+   *
+   * Both those operations need to be lowered to a comparison against zero. This
+   * emits a structure with the results.
+   */
+  struct DoCMPResult {
+    SDValue Chain; //< The new chain
+    SDValue NZP;   //< The NZP to put for the branch
+    SDValue Value; //< The value to compare against zero
+  };
+  DoCMPResult DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
+                    ISD::CondCode CC, SDValue LHS, SDValue RHS) const;
 };
 
 } // namespace llvm

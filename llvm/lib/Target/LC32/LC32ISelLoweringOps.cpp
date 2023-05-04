@@ -96,13 +96,12 @@ SDValue LC32TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Target = Op.getOperand(4);
   SDLoc dl(Op);
 
-  // Check that comparisons have the right type
-  assert(LHS.getValueType() == MVT::i32 &&
-         "Only i32 is supported for comparison");
-  assert(RHS.getValueType() == MVT::i32 &&
-         "Only i32 is supported for comparison");
+  // Generate the comparison
+  DoCMPResult cmp_res = this->DoCMP(DAG, dl, Chain, CC, LHS, RHS);
 
-  llvm_unreachable("Unimplemented");
+  // Generate the branch
+  return DAG.getNode(LC32ISD::BR_CMP_ZERO, dl, Op.getValueType(), cmp_res.Chain,
+                     cmp_res.NZP, cmp_res.Value, Target);
 }
 
 SDValue LC32TargetLowering::LowerSELECT_CC(SDValue Op,
@@ -111,4 +110,35 @@ SDValue LC32TargetLowering::LowerSELECT_CC(SDValue Op,
   SDLoc dl(Op);
 
   llvm_unreachable("Unimplemented");
+}
+
+LC32TargetLowering::DoCMPResult
+LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
+                          ISD::CondCode CC, SDValue LHS, SDValue RHS) const {
+  // Check that comparisons have the right type
+  assert(LHS.getValueType() == MVT::i32 &&
+         "Only i32 is supported for comparison");
+  assert(RHS.getValueType() == MVT::i32 &&
+         "Only i32 is supported for comparison");
+
+  switch (CC) {
+  case ISD::SETEQ:
+  case ISD::SETNE: {
+    // Compte the nzp
+    uint8_t nzp;
+    if (CC == ISD::SETEQ)
+      nzp = 0b010;
+    if (CC == ISD::SETNE)
+      nzp = 0b101;
+    // Return
+    return DoCMPResult{
+        Chain,
+        DAG.getTargetConstant(nzp, dl, MVT::i32),
+        DAG.getNode(ISD::XOR, dl, MVT::i32, LHS, RHS),
+    };
+  }
+
+  default:
+    llvm_unreachable("Bad CC");
+  }
 }
