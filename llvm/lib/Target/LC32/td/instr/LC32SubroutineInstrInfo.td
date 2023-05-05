@@ -116,7 +116,7 @@ def JSRR : Instruction {
   let Namespace = "LC32";
   let AsmString = "JSRR\t$baser";
 
-  let Defs = [SP];
+  let Defs = [SP, LR];
   let OutOperandList = (outs);
   let InOperandList = (ins GPR:$baser);
   let Size = 2;
@@ -140,7 +140,7 @@ def JSR : Instruction {
   let Namespace = "LC32";
   let AsmString = "JSR\t$pcoffset11";
 
-  let Defs = [AT, SP];
+  let Defs = [AT, SP, LR];
   let OutOperandList = (outs);
   let InOperandList = (ins PCOffset11:$pcoffset11);
   let Size = 2;
@@ -165,7 +165,7 @@ def P_FARJSR : Instruction {
   let AsmString = "PSEUDO.FARJSR\t$addr";
   let isPseudo = true;
 
-  let Defs = [AT, SP];
+  let Defs = [AT, SP, LR];
   let OutOperandList = (outs);
   let InOperandList = (ins Const32:$addr);
 

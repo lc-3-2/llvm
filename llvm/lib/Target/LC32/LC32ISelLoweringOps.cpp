@@ -23,16 +23,25 @@ static cl::opt<bool> UseUnsignedCMPLibCall(
              "overflow instead of just subtracting"),
     cl::init(false));
 
+static cl::opt<bool>
+    UseCMPLibCall("lc_3.2-use-libcall-for-cmp",
+                  cl::desc("Set --lc_3.2-use-libcall-for-signed-cmp and "
+                           "--lc_3.2-use-libcall-for-unsigned-cmp"),
+                  cl::init(false), cl::callback([&](const bool &v) {
+                    UseSignedCMPLibCall = v;
+                    UseUnsignedCMPLibCall = v;
+                  }));
+
 static cl::opt<std::string> SignedCMPLibCallName(
     "lc_3.2-signed-cmp-libcall-name",
     cl::desc("What function to call when comparing signed integers in the "
              "presence of --lc_3.2-use-libcall-for-signed-cmp"),
-    cl::init("__cmpsi"));
+    cl::init("__cmpsi"), cl::Hidden);
 static cl::opt<std::string> UnsignedCMPLibCallName(
     "lc_3.2-unsigned-cmp-libcall-name",
     cl::desc("What function to call when comparing unsigned integers in the "
              "presence of --lc_3.2-use-libcall-for-unsigned-cmp"),
-    cl::init("__ucmpsi"));
+    cl::init("__ucmpsi"), cl::Hidden);
 
 const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {

@@ -25,6 +25,14 @@ static cl::opt<unsigned> MaxRepeatedAdd(
              "adds to do instead of using PSEUDO.LOADCONST"),
     cl::init(4));
 
+static cl::opt<bool> UseR4("lc_3.2-use-r4",
+                           cl::desc("Allocate R4 as a general purpose register "
+                                    "instead of as the global pointer"),
+                           cl::init(false));
+static cl::opt<bool> UseR7("lc_3.2-use-r7",
+                           cl::desc("Allow use of R7 during functions"),
+                           cl::init(false));
+
 LC32RegisterInfo::LC32RegisterInfo() : LC32GenRegisterInfo(LC32::LR) {}
 
 const MCPhysReg *
@@ -37,11 +45,21 @@ LC32RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 BitVector LC32RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector ret(this->getNumRegs());
-  ret.set(LC32::AT);
-  ret.set(LC32::GP);
+
+  // Frame pointer and stack pointer have to be reserved
+  // This is because we don't have frame pointer elimination
   ret.set(LC32::FP);
   ret.set(LC32::SP);
-  ret.set(LC32::LR);
+
+  // Set global pointer and link register
+  if (!UseR4.getValue())
+    ret.set(LC32::GP);
+  if (!UseR7.getValue())
+    ret.set(LC32::LR);
+
+  // TODO: Handle frame index elimination without AT
+  ret.set(LC32::AT);
+
   return ret;
 }
 

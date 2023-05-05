@@ -36,20 +36,15 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   // Note that this does not affect the offsets of the frame indicies
   MFI.setOffsetAdjustment(-MFI.getStackSize() - 16);
 
-  // Use this to set AT as dead
-  MachineInstr *n = nullptr;
-
   // Save LR and FP
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
-          .addReg(LC32::LR, RegState::Kill)
-          .addReg(LC32::SP)
-          .addImm(-8);
-  n->getOperand(3).setIsDead();
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
-          .addReg(LC32::FP, RegState::Kill)
-          .addReg(LC32::SP)
-          .addImm(-12);
-  n->getOperand(3).setIsDead();
+  BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
+      .addReg(LC32::LR, RegState::Kill)
+      .addReg(LC32::SP)
+      .addImm(-8);
+  BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
+      .addReg(LC32::FP, RegState::Kill)
+      .addReg(LC32::SP)
+      .addImm(-12);
 
   // Compute FP
   BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi), LC32::FP)
@@ -70,23 +65,18 @@ void LC32FrameLowering::emitEpilogue(MachineFunction &MF,
   const LC32InstrInfo &TII =
       *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
 
-  // Use this to set AT as dead
-  MachineInstr *n = nullptr;
-
   // Restore SP
   BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi), LC32::SP)
       .addReg(LC32::FP, RegState::Kill)
       .addImm(12);
 
   // Restore LR and FP
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::LR)
-          .addReg(LC32::SP)
-          .addImm(-4);
-  n->getOperand(3).setIsDead();
-  n = BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::FP)
-          .addReg(LC32::SP)
-          .addImm(-8);
-  n->getOperand(3).setIsDead();
+  BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::LR)
+      .addReg(LC32::SP)
+      .addImm(-4);
+  BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::FP)
+      .addReg(LC32::SP)
+      .addImm(-8);
 }
 
 MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(

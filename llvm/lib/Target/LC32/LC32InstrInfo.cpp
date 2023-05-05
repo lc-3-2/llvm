@@ -37,16 +37,12 @@ void LC32InstrInfo::storeRegToStackSlot(
   if (MI != MBB.end())
     dl = MI->getDebugLoc();
 
-  // Use this to set AT as dead
-  MachineInstr *n = nullptr;
-
   // Do the store
   // Remember, frame indices are lowered in LC32RegisterInfo.cpp
-  n = BuildMI(MBB, MI, dl, this->get(LC32::STW))
-          .addReg(SrcReg, getKillRegState(isKill))
-          .addFrameIndex(FrameIndex)
-          .addImm(0);
-  n->getOperand(3).setIsDead();
+  BuildMI(MBB, MI, dl, this->get(LC32::STW))
+      .addReg(SrcReg, getKillRegState(isKill))
+      .addFrameIndex(FrameIndex)
+      .addImm(0);
 }
 
 void LC32InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -65,15 +61,11 @@ void LC32InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   if (MI != MBB.end())
     dl = MI->getDebugLoc();
 
-  // Use this to set AT as dead
-  MachineInstr *n = nullptr;
-
   // Do the store
   // Remember, frame indices are lowered in LC32RegisterInfo.cpp
-  n = BuildMI(MBB, MI, dl, this->get(LC32::LDW), DestReg)
-          .addFrameIndex(FrameIndex)
-          .addImm(0);
-  n->getOperand(3).setIsDead();
+  BuildMI(MBB, MI, dl, this->get(LC32::LDW), DestReg)
+      .addFrameIndex(FrameIndex)
+      .addImm(0);
 }
 
 void LC32InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
