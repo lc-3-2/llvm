@@ -86,7 +86,7 @@ let
   isCodeGenOnly = true,
 
   Uses = [SP],
-  Defs = [AT, SP],
+  Defs = [SP],
   OutOperandList = (outs),
   InOperandList = (ins i32imm:$amtin, i32imm:$amtout),
 
