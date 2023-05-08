@@ -7,7 +7,8 @@
 #===-----------------------------------------------------------------------===//
 #
 # Copied from the first part of the normal Dockerfile. It sets up the
-# environment, then stops before building.
+# environment, then stops before building. It also installs GDB since it's
+# useful to have for debugging.
 #
 # See: /llvm/utils/docker/debian10/Dockerfile
 # See: /docker-compose.yml
@@ -32,3 +33,7 @@ RUN wget "https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-li
         | sha256sum -c  && \
     unzip ninja-linux.zip -d /usr/local/bin && \
     rm ninja-linux.zip
+
+RUN apt-get update && \
+    apt-get install -y gdb && \
+    rm -rf /var/lib/apt/lists/*
