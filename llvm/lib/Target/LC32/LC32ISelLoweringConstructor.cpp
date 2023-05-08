@@ -49,10 +49,8 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
     this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, vt, Expand);
   }
 
-  // Subtract can be expanded by LLVM
-  this->setOperationAction(ISD::SUB, MVT::i32, Expand);
-  // LLVM doesn't know to expand OR via DeMorgan's, so we have to do it
-  // ourselves. We also give DAG combining information.
+  // SUB and OR need custom lowering so we don't go into an infinite loop
+  this->setOperationAction(ISD::SUB, MVT::i32, Custom);
   this->setOperationAction(ISD::OR, MVT::i32, Custom);
   this->setTargetDAGCombine(ISD::XOR);
 

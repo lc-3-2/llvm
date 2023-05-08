@@ -37,7 +37,7 @@ enum {
 
   // Behaves just like NOT
   // See: td/instr/LC32ALUInstrInfo.td
-  OR_LOWERING_NOT,
+  LOWERING_NOT,
 
   // Output 0: Chain
   // Output 1: Glue
@@ -97,12 +97,14 @@ private:
                     SmallVectorImpl<SDValue> &InVals) const override;
 
   // See: LC32ISelLoweringOps.cpp
+  SDValue LowerSUB(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
 
   // See: LC32ISelLoweringOps.cpp
   SDValue visitXOR(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue visitLOWERING_NOT(SDNode *N, DAGCombinerInfo &DCI) const;
 
   /**
    * Helper method for LowerBR_CC and LowerSELECT_CC.

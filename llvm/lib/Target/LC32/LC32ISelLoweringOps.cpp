@@ -45,8 +45,8 @@ static cl::opt<std::string> UnsignedCMPLibCallName(
 
 const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
-  case LC32ISD::OR_LOWERING_NOT:
-    return "LC32ISD::OR_LOWERING_NOT";
+  case LC32ISD::LOWERING_NOT:
+    return "LC32ISD::LOWERING_NOT";
   case LC32ISD::CALL:
     return "LC32ISD::CALL";
   case LC32ISD::RET:
@@ -61,6 +61,8 @@ const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
 SDValue LC32TargetLowering::LowerOperation(SDValue Op,
                                            SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
+  case ISD::SUB:
+    return this->LowerSUB(Op, DAG);
   case ISD::OR:
     return this->LowerOR(Op, DAG);
   case ISD::BR_CC:
@@ -77,7 +79,8 @@ SDValue LC32TargetLowering::PerformDAGCombine(SDNode *N,
   switch (N->getOpcode()) {
   case ISD::XOR:
     return this->visitXOR(N, DCI);
-  case LC32ISD::OR_LOWERING_NOT:
+  case LC32ISD::LOWERING_NOT:
+    return this->visitLOWERING_NOT(N, DCI);
   case LC32ISD::CALL:
   case LC32ISD::RET:
   case LC32ISD::BR_CMP_ZERO:
@@ -85,6 +88,28 @@ SDValue LC32TargetLowering::PerformDAGCombine(SDNode *N,
   default:
     llvm_unreachable("Bad opcode for custom combine");
   }
+}
+
+SDValue LC32TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) const {
+  // Populate variables
+  SDLoc dl(Op);
+
+  // Check the type
+  // This is fine since this happens after type legalization
+  assert(Op.getValueType() == MVT::i32 && "Only i32 is supported for SUB");
+  assert(Op.getOperand(0).getValueType() == MVT::i32 &&
+         "Only i32 is supported for SUB");
+  assert(Op.getOperand(1).getValueType() == MVT::i32 &&
+         "Only i32 is supported for SUB");
+
+  // Flip the bits and add one
+  // Remember to inhibit combining on the NOT
+  // See: td/instr/LC32ALUInstrInfo.td
+  SDValue b_prime =
+      DAG.getNode(LC32ISD::LOWERING_NOT, dl, MVT::i32, Op.getOperand(1));
+  SDValue b_neg = DAG.getNode(ISD::ADD, dl, MVT::i32, b_prime,
+                              DAG.getConstant(1, dl, MVT::i32));
+  return DAG.getNode(ISD::ADD, dl, MVT::i32, Op.getOperand(0), b_neg);
 }
 
 SDValue LC32TargetLowering::LowerOR(SDValue Op, SelectionDAG &DAG) const {
@@ -105,14 +130,26 @@ SDValue LC32TargetLowering::LowerOR(SDValue Op, SelectionDAG &DAG) const {
   SDValue a_prime = DAG.getNOT(dl, Op.getOperand(0), MVT::i32);
   SDValue b_prime = DAG.getNOT(dl, Op.getOperand(1), MVT::i32);
   SDValue x_prime = DAG.getNode(ISD::AND, dl, MVT::i32, a_prime, b_prime);
-  return DAG.getNode(LC32ISD::OR_LOWERING_NOT, dl, MVT::i32, x_prime);
+  return DAG.getNode(LC32ISD::LOWERING_NOT, dl, MVT::i32, x_prime);
 }
 
 SDValue LC32TargetLowering::visitXOR(SDNode *N, DAGCombinerInfo &DCI) const {
-  // fold (not (N_OR_LOWERING_NOT x)) -> x
+  // fold (not (N_LOWERING_NOT x)) -> x
   if (N->getOperand(0).getNode() != nullptr &&
-      N->getOperand(0).getOpcode() == LC32ISD::OR_LOWERING_NOT &&
+      N->getOperand(0).getOpcode() == LC32ISD::LOWERING_NOT &&
       isAllOnesConstant(N->getOperand(1))) {
+    return N->getOperand(0).getNode()->getOperand(0);
+  }
+  // Can't combine here
+  return SDValue();
+}
+
+SDValue LC32TargetLowering::visitLOWERING_NOT(SDNode *N,
+                                              DAGCombinerInfo &DCI) const {
+  // fold (N_LOWERING_NOT (not x)) -> x
+  if (N->getOperand(0).getNode() != nullptr &&
+      N->getOperand(0).getOpcode() == ISD::XOR &&
+      isAllOnesConstant(N->getOperand(0).getNode()->getOperand(1))) {
     return N->getOperand(0).getNode()->getOperand(0);
   }
   // Can't combine here
@@ -154,6 +191,7 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
          "Only i32 is supported for comparison");
 
   switch (CC) {
+  // For equality, we can use XOR
   case ISD::SETEQ:
   case ISD::SETNE: {
     // Compute the nzp
@@ -170,6 +208,7 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
     };
   }
 
+  // For inequality, we either subtract or do a libcall
   case ISD::SETLT:
   case ISD::SETLE:
   case ISD::SETGT:
@@ -201,7 +240,40 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
       new_value = DAG.getNode(ISD::SUB, dl, MVT::i32, LHS, RHS);
 
     } else {
-      llvm_unreachable("TODO");
+      // Compute the name of the function to call
+      const char *callee_name;
+      if (is_signed)
+        callee_name = SignedCMPLibCallName.getValue().c_str();
+      if (is_unsigned)
+        callee_name = UnsignedCMPLibCallName.getValue().c_str();
+      // Get the symbol associated with that name
+      SDValue callee = DAG.getExternalSymbol(
+          callee_name, this->getPointerTy(DAG.getDataLayout()));
+
+      // Calculate the arguments to the libcall
+      ArgListTy args;
+      args.reserve(2);
+      {
+        ArgListEntry arg0;
+        ArgListEntry arg1;
+        arg0.Node = LHS;
+        arg1.Node = RHS;
+        arg0.Ty = arg1.Ty = EVT(MVT::i32).getTypeForEVT(*DAG.getContext());
+        arg0.IsSExt = arg1.IsSExt = true;
+        args.push_back(arg0);
+        args.push_back(arg1);
+      }
+
+      // Calculate the libcall options
+      CallLoweringInfo CLI(DAG);
+      Type *ret_ty = EVT(MVT::i32).getTypeForEVT(*DAG.getContext());
+      CLI.setDebugLoc(dl)
+          .setChain(Chain)
+          .setCallee(CallingConv::C, ret_ty, callee, std::move(args))
+          .setSExtResult(true);
+
+      // Do the call
+      std::tie(new_value, new_chain) = this->LowerCallTo(CLI);
     }
 
     // Return
