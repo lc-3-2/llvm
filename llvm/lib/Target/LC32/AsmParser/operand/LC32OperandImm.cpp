@@ -23,7 +23,7 @@ void LC32OperandImm::print(raw_ostream &OS) const {
 
 bool LC32OperandImm::isImm() const { return true; }
 bool LC32OperandImm::isImm5() const { return isInt<5>(this->Value); }
-bool LC32OperandImm::isAmount3() const { return isUInt<3>(this->Value); }
+bool LC32OperandImm::isAmount5() const { return isUInt<5>(this->Value); }
 bool LC32OperandImm::isBOffset6() const { return isInt<6>(this->Value); }
 bool LC32OperandImm::isHOffset6() const { return isInt<6>(this->Value); }
 bool LC32OperandImm::isWOffset6() const { return isInt<6>(this->Value); }
@@ -37,7 +37,7 @@ void LC32OperandImm::addImm5Operands(MCInst &Inst, unsigned N) {
   assert(N == 1 && "Invalid number of operands!");
   Inst.addOperand(MCOperand::createImm(this->Value));
 }
-void LC32OperandImm::addAmount3Operands(MCInst &Inst, unsigned N) {
+void LC32OperandImm::addAmount5Operands(MCInst &Inst, unsigned N) {
   assert(N == 1 && "Invalid number of operands!");
   Inst.addOperand(MCOperand::createImm(this->Value));
 }

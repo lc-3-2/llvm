@@ -57,7 +57,7 @@ public:
   // Needed by TableGen, and specified in the TableGen files. Also, these can't
   // be made into a template because it's virtual.
   virtual bool isImm5() const { return false; }
-  virtual bool isAmount3() const { return false; }
+  virtual bool isAmount5() const { return false; }
   virtual bool isBOffset6() const { return false; }
   virtual bool isHOffset6() const { return false; }
   virtual bool isWOffset6() const { return false; }
@@ -77,7 +77,7 @@ public:
   virtual void addImm5Operands(MCInst &Inst, unsigned N) {
     llvm_unreachable("Bad type");
   }
-  virtual void addAmount3Operands(MCInst &Inst, unsigned N) {
+  virtual void addAmount5Operands(MCInst &Inst, unsigned N) {
     llvm_unreachable("Bad type");
   }
   virtual void addBOffset6Operands(MCInst &Inst, unsigned N) {
