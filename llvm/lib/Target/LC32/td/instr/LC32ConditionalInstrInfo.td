@@ -73,7 +73,7 @@ def NT_BR_CMP_ZERO : SDTypeProfile<
 def N_BR_CMP_ZERO : SDNode<
   "LC32ISD::BR_CMP_ZERO",
   NT_BR_CMP_ZERO,
-  [SDNPHasChain, SDNPOptInGlue]
+  [SDNPHasChain]
 >;
 
 def C_BR_CMP_ZERO : Instruction {
@@ -89,6 +89,39 @@ def C_BR_CMP_ZERO : Instruction {
 
   let isBranch = true;
   let isTerminator = true;
+  let mayLoad = false;
+  let mayStore = false;
+  let hasSideEffects = false;
+}
+
+//---
+// Pseudo instructon for selecting based on how the input compares with zero.
+// This is lowered with a custom inserter, and it desugars to branches.
+
+def NT_SELECT_CMP_ZERO : SDTypeProfile<
+  1, 4,
+  [SDTCisVT<0, i32>, SDTCisVT<1, i32>, SDTCisVT<2, i32>, SDTCisVT<3, i32>, SDTCisVT<4, i32>]
+>;
+def N_SELECT_CMP_ZERO : SDNode<
+  "LC32ISD::SELECT_CMP_ZERO",
+  NT_SELECT_CMP_ZERO,
+  [SDNPHasChain]
+>;
+
+def C_SELECT_CMP_ZERO : Instruction {
+  let Namespace = "LC32";
+  let isPseudo = true;
+  let isCodeGenOnly = true;
+  let usesCustomInserter = true;
+
+  let Defs = [AT];
+  let OutOperandList = (outs GPR:$dr);
+  let InOperandList = (ins NZP:$nzp, GPR:$sr, GPR:$truev, GPR:$falsev);
+
+  let Pattern =
+    [(set GPR:$dr, (N_SELECT_CMP_ZERO timm:$nzp, GPR:$sr, GPR:$truev, GPR:$falsev))];
+
+  let isSelect = true;
   let mayLoad = false;
   let mayStore = false;
   let hasSideEffects = false;

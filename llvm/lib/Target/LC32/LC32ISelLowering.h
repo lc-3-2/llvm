@@ -56,6 +56,15 @@ enum {
   // Operand 2: Value to compare with zero
   // Operand 3: Target
   BR_CMP_ZERO,
+
+  // Output 0: Chain
+  // Output 1: Value
+  // Operand 0: Chain
+  // Operand 1: NZP
+  // Operand 2: Value to compare with zero
+  // Operand 3: Value if true
+  // Operand 4: Value if false
+  SELECT_CMP_ZERO,
 };
 } // namespace LC32ISD
 
@@ -71,9 +80,15 @@ public:
   // See: LC32ISelLoweringOps.cpp
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
 
-  // This deleates to combine the DAG
+  // This delegates to combine the DAG
   // See: LC32ISelLoweringOps.cpp
   SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
+
+  // This emits instructions that need help
+  // See: LC32ISelLoweringOps.cpp
+  MachineBasicBlock *
+  EmitInstrWithCustomInserter(MachineInstr &MI,
+                              MachineBasicBlock *BB) const override;
 
 private:
   const LC32RegisterInfo *TRI;
@@ -105,6 +120,10 @@ private:
   // See: LC32ISelLoweringOps.cpp
   SDValue visitXOR(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue visitLOWERING_NOT(SDNode *N, DAGCombinerInfo &DCI) const;
+
+  // See: LC32ISelLoweringOps.cpp
+  MachineBasicBlock *emitC_SELECT_CMP_ZERO(MachineInstr &MI,
+                                           MachineBasicBlock *BB) const;
 
   /**
    * Helper method for LowerBR_CC and LowerSELECT_CC.

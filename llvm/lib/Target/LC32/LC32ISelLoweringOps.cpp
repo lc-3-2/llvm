@@ -8,6 +8,7 @@
 
 #include "LC32ISelLowering.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32ISelLoweringOps"
@@ -36,12 +37,12 @@ static cl::opt<std::string> SignedCMPLibCallName(
     "lc_3.2-signed-cmp-libcall-name",
     cl::desc("What function to call when comparing signed integers in the "
              "presence of --lc_3.2-use-libcall-for-signed-cmp"),
-    cl::init("__cmpsi"), cl::Hidden);
+    cl::init("__cmpsi3"), cl::Hidden);
 static cl::opt<std::string> UnsignedCMPLibCallName(
     "lc_3.2-unsigned-cmp-libcall-name",
     cl::desc("What function to call when comparing unsigned integers in the "
              "presence of --lc_3.2-use-libcall-for-unsigned-cmp"),
-    cl::init("__ucmpsi"), cl::Hidden);
+    cl::init("__ucmpsi3"), cl::Hidden);
 
 const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
@@ -53,6 +54,8 @@ const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "LC32ISD::RET";
   case LC32ISD::BR_CMP_ZERO:
     return "LC32ISD::CMP_ZERO";
+  case LC32ISD::SELECT_CMP_ZERO:
+    return "LC32ISD::SELECT_CMP_ZERO";
   default:
     return nullptr;
   }
@@ -84,9 +87,21 @@ SDValue LC32TargetLowering::PerformDAGCombine(SDNode *N,
   case LC32ISD::CALL:
   case LC32ISD::RET:
   case LC32ISD::BR_CMP_ZERO:
+  case LC32ISD::SELECT_CMP_ZERO:
     return SDValue();
   default:
     llvm_unreachable("Bad opcode for custom combine");
+  }
+}
+
+MachineBasicBlock *
+LC32TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
+                                                MachineBasicBlock *BB) const {
+  switch (MI.getOpcode()) {
+  case LC32::C_SELECT_CMP_ZERO:
+    return this->emitC_SELECT_CMP_ZERO(MI, BB);
+  default:
+    llvm_unreachable("Bad opcode for custom insertion");
   }
 }
 
@@ -164,10 +179,8 @@ SDValue LC32TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue RHS = Op.getOperand(3);
   SDValue Target = Op.getOperand(4);
   SDLoc dl(Op);
-
   // Generate the comparison
   DoCMPResult cmp_res = this->DoCMP(DAG, dl, Chain, CC, LHS, RHS);
-
   // Generate the branch
   return DAG.getNode(LC32ISD::BR_CMP_ZERO, dl, Op.getValueType(), cmp_res.Chain,
                      cmp_res.NZP, cmp_res.Value, Target);
@@ -176,9 +189,92 @@ SDValue LC32TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
 SDValue LC32TargetLowering::LowerSELECT_CC(SDValue Op,
                                            SelectionDAG &DAG) const {
   // Populate variables
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue TrueV = Op.getOperand(2);
+  SDValue FalseV = Op.getOperand(3);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
   SDLoc dl(Op);
+  // Check the type
+  // This is fine since this happens after type legalization
+  assert(Op.getValueType() == MVT::i32 &&
+         "Only i32 is supported for SELECT_CC");
+  // Generate the comparison
+  DoCMPResult cmp_res = this->DoCMP(DAG, dl, DAG.getEntryNode(), CC, LHS, RHS);
+  // Generate the selection
+  return DAG.getNode(LC32ISD::SELECT_CMP_ZERO, dl, MVT::i32, cmp_res.Chain,
+                     cmp_res.NZP, cmp_res.Value, TrueV, FalseV);
+}
 
-  llvm_unreachable("Unimplemented");
+MachineBasicBlock *
+LC32TargetLowering::emitC_SELECT_CMP_ZERO(MachineInstr &MI,
+                                          MachineBasicBlock *BB) const {
+
+  // Populate variables
+  const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
+  MachineFunction *MF = BB->getParent();
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  DebugLoc dl = MI.getDebugLoc();
+
+  // We create this pattern
+  //  StartBB:
+  //    %truev = ...
+  //    %falsev = ...
+  //    C_BR_CMP_ZERO $nzp, %value, TrueBB
+  //    BR 7, FalseBB
+  //  TrueBB:
+  //    BR 7, RejoinBB
+  //  FalseBB:
+  //    BR 7, RejoinBB
+  //  RejoinBB:
+  //    %result = phi [%truev, TrueBB], [%falsev, FalseBB]
+
+  // Populate variables for the start block
+  MachineBasicBlock *start_mbb = BB;
+  // Create the new basic blocks
+  // These correspond to the same IR basic block as the original SELECT_CC
+  MachineBasicBlock *true_mbb = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *false_mbb = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *rejoin_mbb = MF->CreateMachineBasicBlock(LLVM_BB);
+  // Insert the new basic blocks
+  MachineFunction::iterator insert_point = ++BB->getIterator();
+  MF->insert(insert_point, true_mbb);
+  MF->insert(insert_point, false_mbb);
+  MF->insert(insert_point, rejoin_mbb);
+
+  // Transfer everything after the SELECT to the rejoin block
+  rejoin_mbb->splice(rejoin_mbb->begin(), start_mbb,
+                     std::next(MachineBasicBlock::iterator(MI)),
+                     start_mbb->end());
+  rejoin_mbb->transferSuccessorsAndUpdatePHIs(start_mbb);
+
+  // Do branches on the start block
+  start_mbb->addSuccessor(true_mbb);
+  start_mbb->addSuccessor(false_mbb);
+  BuildMI(start_mbb, dl, TII.get(LC32::C_BR_CMP_ZERO))
+      .addImm(MI.getOperand(1).getImm())
+      .addReg(MI.getOperand(2).getReg())
+      .addMBB(true_mbb);
+  BuildMI(start_mbb, dl, TII.get(LC32::BR)).addImm(0b111).addMBB(false_mbb);
+
+  // Handle true block
+  true_mbb->addSuccessor(rejoin_mbb);
+  BuildMI(true_mbb, dl, TII.get(LC32::BR)).addImm(0b111).addMBB(rejoin_mbb);
+  // Handle false block
+  false_mbb->addSuccessor(rejoin_mbb);
+  BuildMI(false_mbb, dl, TII.get(LC32::BR)).addImm(0b111).addMBB(rejoin_mbb);
+
+  // Handle rejoin
+  BuildMI(*rejoin_mbb, rejoin_mbb->begin(), dl, TII.get(LC32::PHI),
+          MI.getOperand(0).getReg())
+      .addReg(MI.getOperand(3).getReg())
+      .addMBB(true_mbb)
+      .addReg(MI.getOperand(4).getReg())
+      .addMBB(false_mbb);
+
+  // Delete the pseudo instruction and return
+  MI.eraseFromParent();
+  return rejoin_mbb;
 }
 
 LC32TargetLowering::DoCMPResult
