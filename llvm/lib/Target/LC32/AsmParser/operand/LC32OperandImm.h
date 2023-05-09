@@ -28,7 +28,7 @@ public:
 
   bool isImm() const override;
   bool isImm5() const override;
-  bool isAmount3() const override;
+  bool isAmount5() const override;
   bool isBOffset6() const override;
   bool isHOffset6() const override;
   bool isWOffset6() const override;
@@ -39,7 +39,7 @@ public:
   bool isConst32() const override;
 
   void addImm5Operands(MCInst &Inst, unsigned N) override;
-  void addAmount3Operands(MCInst &Inst, unsigned N) override;
+  void addAmount5Operands(MCInst &Inst, unsigned N) override;
   void addBOffset6Operands(MCInst &Inst, unsigned N) override;
   void addHOffset6Operands(MCInst &Inst, unsigned N) override;
   void addWOffset6Operands(MCInst &Inst, unsigned N) override;

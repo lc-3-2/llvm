@@ -37,15 +37,15 @@ def Imm5 : Operand<i32>, ImmLeaf<i32, [{ return isInt<5>(Imm); }]> {
 }
 
 //---
-// Used by: SHF
+// Used by: RSHFA
 
-def Amount3OperandClass : AsmOperandClass {
-  let Name = "Amount3";
+def Amount5OperandClass : AsmOperandClass {
+  let Name = "Amount5";
 }
 
-def Amount3 : Operand<i32>, ImmLeaf<i32, [{ return isUInt<3>(Imm); }]> {
+def Amount5 : Operand<i32>, ImmLeaf<i32, [{ return isUInt<5>(Imm); }]> {
   let OperandType = "OPERAND_IMMEDIATE";
-  let ParserMatchClass = Amount3OperandClass;
+  let ParserMatchClass = Amount5OperandClass;
 }
 
 //---
