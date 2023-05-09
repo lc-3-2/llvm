@@ -7,31 +7,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "LC32RegisterInfo.h"
+#include "LC32CLOpts.h"
 #include "LC32Subtarget.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 using namespace llvm;
+using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32RegisterInfo"
 
 #define GET_REGINFO_TARGET_DESC
 #include "LC32GenRegisterInfo.inc"
-
-static_assert(std::is_same<size_t, unsigned long>::value, "Bad type");
-static_assert(std::is_same<ssize_t, long>::value, "Bad type");
-static cl::opt<unsigned> MaxRepeatedAdd(
-    "lc_3.2-frame-offset-max-repeated-add",
-    cl::desc("When realizing frame offsets, the maximum number of repeated "
-             "adds to do instead of using PSEUDO.LOADCONST"),
-    cl::init(4));
-
-static cl::opt<bool> UseR4("lc_3.2-use-r4",
-                           cl::desc("Allocate R4 as a general purpose register "
-                                    "instead of as the global pointer"),
-                           cl::init(false));
-static cl::opt<bool> UseR7("lc_3.2-use-r7",
-                           cl::desc("Allow use of R7 during functions"),
-                           cl::init(false));
 
 LC32RegisterInfo::LC32RegisterInfo() : LC32GenRegisterInfo(LC32::LR) {}
 
