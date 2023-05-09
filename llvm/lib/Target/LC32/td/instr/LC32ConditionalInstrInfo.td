@@ -19,44 +19,28 @@
 // The branch itself. For conditional branches, this is emitted as part of
 // C_BR_CMP_ZERO. It's also used as-is for unconditional branches.
 
-def BR : Instruction {
-  let Namespace = "LC32";
-  let AsmString = "BR$nzp\t$target";
+let
+  Defs = [AT],
+  OutOperandList = (outs),
+  isBranch = true,
+  isTerminator = true
+in {
 
-  let Defs = [AT];
-  let OutOperandList = (outs);
-  let InOperandList = (ins NZP:$nzp, BRTarget:$target);
-  let Size = 2;
+  def BR : LC32Instruction {
+    let AsmString = "BR$nzp\t$target";
+    let InOperandList = (ins NZP:$nzp, BRTarget:$target);
 
-  let isBranch = true;
-  let isTerminator = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
+    bits<3> nzp;
+    bits<9> target;
+    let Inst{15-12} = 0b0000;
+    let Inst{11-9}  = nzp;
+    let Inst{8-0}   = target;
+  }
 
-  bits<3> nzp;
-  bits<9> target;
-
-  bits<16> Inst;
-  let Inst{15-12} = 0b0000;
-  let Inst{11-9}  = nzp;
-  let Inst{8-0}   = target;
-}
-
-def P_FARBR : Instruction {
-  let Namespace = "LC32";
-  let AsmString = "PSEUDO.FARBR$nzp\t$target";
-  let isPseudo = true;
-
-  let Defs = [AT];
-  let OutOperandList = (outs);
-  let InOperandList = (ins NZP:$nzp, Const32:$target);
-
-  let isBranch = true;
-  let isTerminator = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
+  def P_FARBR : LC32Instruction_P {
+    let AsmString = "PSEUDO.FARBR$nzp\t$target";
+    let InOperandList = (ins NZP:$nzp, Const32:$target);
+  }
 }
 
 def : Pattern<(br bb:$target), [(BR 0b111, BRTarget:$target)]>;
@@ -76,22 +60,14 @@ def N_BR_CMP_ZERO : SDNode<
   [SDNPHasChain]
 >;
 
-def C_BR_CMP_ZERO : Instruction {
-  let Namespace = "LC32";
-  let isPseudo = true;
-  let isCodeGenOnly = true;
-
+def C_BR_CMP_ZERO : LC32Instruction_C {
   let Defs = [AT];
   let OutOperandList = (outs);
   let InOperandList = (ins NZP:$nzp, GPR:$sr, BRTarget:$target);
-
   let Pattern = [(N_BR_CMP_ZERO timm:$nzp, GPR:$sr, bb:$target)];
 
   let isBranch = true;
   let isTerminator = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
 }
 
 //---
@@ -108,21 +84,12 @@ def N_SELECT_CMP_ZERO : SDNode<
   [SDNPHasChain]
 >;
 
-def C_SELECT_CMP_ZERO : Instruction {
-  let Namespace = "LC32";
-  let isPseudo = true;
-  let isCodeGenOnly = true;
-  let usesCustomInserter = true;
-
+def C_SELECT_CMP_ZERO : LC32Instruction_C {
   let Defs = [AT];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins NZP:$nzp, GPR:$sr, GPR:$truev, GPR:$falsev);
-
-  let Pattern =
-    [(set GPR:$dr, (N_SELECT_CMP_ZERO timm:$nzp, GPR:$sr, GPR:$truev, GPR:$falsev))];
+  let Pattern = [(set GPR:$dr, (N_SELECT_CMP_ZERO timm:$nzp, GPR:$sr, GPR:$truev, GPR:$falsev))];
 
   let isSelect = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
+  let usesCustomInserter = true;
 }

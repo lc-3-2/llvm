@@ -13,27 +13,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-def JMP : Instruction {
-  let Namespace = "LC32";
+def JMP : LC32Instruction {
   let AsmString = "JMP\t$baser";
 
   let OutOperandList = (outs);
   let InOperandList = (ins GPR:$baser);
-  let Size = 2;
-
   let Pattern = [(brind GPR:$baser)];
 
   let isBranch = true;
   let isIndirectBranch = true;
   let isBarrier = true;
   let isTerminator = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
 
   bits<3> baser;
-
-  bits<16> Inst;
   let Inst{15-12} = 0b1100;
   let Inst{11-9}  = 0b000;
   let Inst{8-6}   = baser;
@@ -48,25 +40,16 @@ def RET : InstAlias<"RET", (JMP LR)>;
 // See: C_RET
 def N_RET : SDNode<"LC32ISD::RET", SDTNone, [SDNPHasChain]>;
 
-def C_RET : Instruction, PseudoInstExpansion<(JMP LR)> {
-  // Pseudo-instruction for returns. This needs to be done since otherwise the
-  // compiler doesn't know where returns happen.
-
-  let Namespace = "LC32";
-  let isPseudo = true;
-  let isCodeGenOnly = true;
-
+// Pseudo-instruction for returns. This needs to be done since otherwise the
+// compiler doesn't know where returns happen.
+def C_RET : LC32Instruction_C, PseudoInstExpansion<(JMP LR)> {
   let OutOperandList = (outs);
   let InOperandList = (ins);
-
   let Pattern = [(N_RET)];
 
   let isReturn = true;
   let isBarrier = true;
   let isTerminator = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = true;
 }
 
 //---
@@ -81,25 +64,18 @@ def N_LC32_CALLSEQ_END   : SDNode<"ISD::CALLSEQ_END",   NT_LC32_CALLSEQ_END,   [
 // Use pseudo instructions to match call sequencing operations. These are
 // eliminated in LC32InstrInfo and LC32FrameLowering.
 let
-  Namespace = "LC32",
-  isPseudo = true,
-  isCodeGenOnly = true,
-
   Uses = [SP],
-  Defs = [SP],
+  Defs = [AT, SP],
   OutOperandList = (outs),
   InOperandList = (ins i32imm:$amtin, i32imm:$amtout),
-
-  mayLoad = false,
-  mayStore = false,
   hasSideEffects = true
 in {
 
-  def C_ADJCALLSTACKUP : Instruction {
+  def C_ADJCALLSTACKUP : LC32Instruction_C {
     let Pattern = [(N_LC32_CALLSEQ_START timm:$amtin, timm:$amtout)];
   }
 
-  def C_ADJCALLSTACKDOWN : Instruction {
+  def C_ADJCALLSTACKDOWN : LC32Instruction_C {
     let Pattern = [(N_LC32_CALLSEQ_END timm:$amtin, timm:$amtout)];
   }
 }
@@ -112,63 +88,45 @@ in {
 def NT_LC32_CALL : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
 def N_LC32_CALL : SDNode<"LC32ISD::CALL", NT_LC32_CALL, [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue]>;
 
-def JSRR : Instruction {
-  let Namespace = "LC32";
-  let AsmString = "JSRR\t$baser";
+let
+  OutOperandList = (outs),
+  isCall = true
+in {
 
-  let Defs = [SP, LR];
-  let OutOperandList = (outs);
-  let InOperandList = (ins GPR:$baser);
-  let Size = 2;
+  def JSRR : LC32Instruction {
+    let AsmString = "JSRR\t$baser";
 
-  let Pattern = [(N_LC32_CALL GPR:$baser)];
+    let Defs = [SP, LR];
+    let InOperandList = (ins GPR:$baser);
+    let Pattern = [(N_LC32_CALL GPR:$baser)];
 
-  let isCall = true;
-  let hasSideEffects = true;
+    bits<3> baser;
+    let Inst{15-12} = 0b0100;
+    let Inst{11}    = 0b0;
+    let Inst{10-9}  = 0b00;
+    let Inst{8-6}   = baser;
+    let Inst{5-0}   = 0b000000;
+  }
 
-  bits<3> baser;
+  let Defs = [AT, SP, LR] in {
 
-  bits<16> Inst;
-  let Inst{15-12} = 0b0100;
-  let Inst{11}    = 0b0;
-  let Inst{10-9}  = 0b00;
-  let Inst{8-6}   = baser;
-  let Inst{5-0}   = 0b000000;
-}
+    def JSR : LC32Instruction {
+      let AsmString = "JSR\t$pcoffset11";
 
-def JSR : Instruction {
-  let Namespace = "LC32";
-  let AsmString = "JSR\t$pcoffset11";
+      let InOperandList = (ins PCOffset11:$pcoffset11);
+      let Pattern = [(N_LC32_CALL SelectGlobalAddress:$pcoffset11)];
 
-  let Defs = [AT, SP, LR];
-  let OutOperandList = (outs);
-  let InOperandList = (ins PCOffset11:$pcoffset11);
-  let Size = 2;
+      bits<11> pcoffset11;
+      let Inst{15-12} = 0b0100;
+      let Inst{11}    = 0b1;
+      let Inst{10-0}  = pcoffset11;
+    }
 
-  let Pattern = [(N_LC32_CALL SelectGlobalAddress:$pcoffset11)];
-
-  let isCall = true;
-  let hasSideEffects = true;
-
-  bits<11> pcoffset11;
-
-  bits<16> Inst;
-  let Inst{15-12} = 0b0100;
-  let Inst{11}    = 0b1;
-  let Inst{10-0}  = pcoffset11;
+    def P_FARJSR : LC32Instruction_P {
+      let AsmString = "PSEUDO.FARJSR\t$addr";
+      let InOperandList = (ins Const32:$addr);
+    }
+  }
 }
 
 def : Pattern<(N_LC32_CALL SelectExternalSymbol:$addr), [(JSR PCOffset11:$addr)]>;
-
-def P_FARJSR : Instruction {
-  let Namespace = "LC32";
-  let AsmString = "PSEUDO.FARJSR\t$addr";
-  let isPseudo = true;
-
-  let Defs = [AT, SP, LR];
-  let OutOperandList = (outs);
-  let InOperandList = (ins Const32:$addr);
-
-  let isCall = true;
-  let hasSideEffects = true;
-}

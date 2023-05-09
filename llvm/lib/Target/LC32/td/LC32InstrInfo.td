@@ -27,6 +27,33 @@
 include "td/LC32OperandInfo.td"
 
 //---
+// Common classes of instructions
+
+class LC32Instruction : Instruction {
+  let Namespace = "LC32";
+  let Size = 2;
+
+  let mayLoad = false;
+  let mayStore = false;
+  let hasSideEffects = false;
+
+  bits<16> Inst;
+}
+
+class LC32Instruction_P : Instruction {
+  let Namespace = "LC32";
+  let isPseudo = true;
+
+  let mayLoad = false;
+  let mayStore = false;
+  let hasSideEffects = false;
+}
+
+class LC32Instruction_C : LC32Instruction_P {
+  let isCodeGenOnly = true;
+}
+
+//---
 // The order here is important for dependencies
 
 include "td/instr/LC32LoadConstInstrInfo.td"
@@ -36,9 +63,7 @@ include "td/instr/LC32SHFInstrInfo.td"
 include "td/instr/LC32MoveInstrInfo.td"
 
 include "td/instr/LC32MemInstrInfo.td"
-
 include "td/instr/LC32SubroutineInstrInfo.td"
-
 include "td/instr/LC32ConditionalInstrInfo.td"
 
 include "td/instr/LC32SupervisorInstrInfo.td"

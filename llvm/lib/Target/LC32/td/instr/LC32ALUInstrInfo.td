@@ -17,27 +17,16 @@
 
 multiclass ALU<string name, bits<4> opcode, SDNode node> {
 
-  let
-    Namespace = "LC32",
+  let OutOperandList = (outs GPR:$dr) in {
 
-    OutOperandList = (outs GPR:$dr),
-    Size = 2,
-
-    mayLoad = false,
-    mayStore = false,
-    hasSideEffects = false
-  in {
-
-    def r : Instruction {
+    def r : LC32Instruction {
       let AsmString = !strconcat(name, "\t$dr, $sr1, $sr2");
-      let InOperandList  = (ins GPR:$sr1, GPR:$sr2);
+      let InOperandList = (ins GPR:$sr1, GPR:$sr2);
       let Pattern = [(set GPR:$dr, (node GPR:$sr1, GPR:$sr2))];
 
       bits<3> dr;
       bits<3> sr1;
       bits<3> sr2;
-
-      bits<16> Inst;
       let Inst{15-12} = opcode;
       let Inst{11-9}  = dr;
       let Inst{8-6}   = sr1;
@@ -46,7 +35,7 @@ multiclass ALU<string name, bits<4> opcode, SDNode node> {
       let Inst{2-0}   = sr2;
     }
 
-    def i : Instruction {
+    def i : LC32Instruction {
       let AsmString = !strconcat(name, "\t$dr, $sr1, $imm5");
       let InOperandList = (ins GPR:$sr1, Imm5:$imm5);
       let Pattern = [(set GPR:$dr, (node GPR:$sr1, Imm5:$imm5))];
@@ -54,8 +43,6 @@ multiclass ALU<string name, bits<4> opcode, SDNode node> {
       bits<3> dr;
       bits<3> sr1;
       bits<5> imm5;
-
-      bits<16> Inst;
       let Inst{15-12} = opcode;
       let Inst{11-9}  = dr;
       let Inst{8-6}   = sr1;

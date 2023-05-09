@@ -19,40 +19,27 @@
 //
 //===----------------------------------------------------------------------===//
 
-def P_LOADCONSTH : Instruction {
-  let Namespace = "LC32";
-  let AsmString = "PSEUDO.LOADCONSTH\t$dr, $const16";
-  let isPseudo = true;
+let
+  OutOperandList = (outs GPR:$dr),
+  isMoveImm = true,
+  isReMaterializable = true
+in {
 
-  let OutOperandList = (outs GPR:$dr);
-  let InOperandList = (ins Const16:$const16);
+  def P_LOADCONSTH : LC32Instruction_P {
+    let AsmString = "PSEUDO.LOADCONSTH\t$dr, $const16";
 
-  let Pattern = [(set GPR:$dr, Const16:$const16)];
-  let AddedComplexity = 1;
+    let InOperandList = (ins Const16:$const16);
+    let Pattern = [(set GPR:$dr, Const16:$const16)];
+    let AddedComplexity = 1;
+  }
 
-  let isMoveImm = true;
-  let isReMaterializable = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
-}
+  def P_LOADCONSTW : LC32Instruction_P {
+    let AsmString = "PSEUDO.LOADCONSTW\t$dr, $const32";
 
-def P_LOADCONSTW : Instruction {
-  let Namespace = "LC32";
-  let AsmString = "PSEUDO.LOADCONSTW\t$dr, $const32";
-  let isPseudo = true;
-
-  let OutOperandList = (outs GPR:$dr);
-  let InOperandList = (ins Const32:$const32);
-
-  let Pattern = [(set GPR:$dr, Const32:$const32)];
-  let AddedComplexity = 0;
-
-  let isMoveImm = true;
-  let isReMaterializable = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
+    let InOperandList = (ins Const32:$const32);
+    let Pattern = [(set GPR:$dr, Const32:$const32)];
+    let AddedComplexity = 0;
+  }
 }
 
 def P_LOADCONSTB : InstAlias<

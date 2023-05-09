@@ -20,40 +20,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-def C_MOVE_ZERO : Instruction, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr, 0)> {
-  let Namespace = "LC32";
-  let isPseudo = true;
-  let isCodeGenOnly = true;
+let
+  OutOperandList = (outs GPR:$dr),
+  isMoveImm = true,
+  isAsCheapAsAMove = true,
+  isReMaterializable = true
+in {
 
-  let OutOperandList = (outs GPR:$dr);
-  let InOperandList = (ins);
+  def C_MOVE_ZERO : LC32Instruction_C, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr, 0)> {
+    let InOperandList = (ins);
+    let Pattern = [(set GPR:$dr, 0)];
+    let AddedComplexity = 2;
+  }
 
-  let Pattern = [(set GPR:$dr, 0)];
-  let AddedComplexity = 2;
-
-  let isMoveImm = true;
-  let isAsCheapAsAMove = true;
-  let isReMaterializable = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
-}
-
-def C_MOVE_IMM5 : Instruction {
-  let Namespace = "LC32";
-  let isPseudo = true;
-  let isCodeGenOnly = true;
-
-  let OutOperandList = (outs GPR:$dr);
-  let InOperandList = (ins Imm5:$imm5);
-
-  let Pattern = [(set GPR:$dr, Imm5:$imm5)];
-  let AddedComplexity = 2;
-
-  let isMoveImm = true;
-  let isAsCheapAsAMove = true;
-  let isReMaterializable = true;
-  let mayLoad = false;
-  let mayStore = false;
-  let hasSideEffects = false;
+  def C_MOVE_IMM5 : LC32Instruction_C {
+    let InOperandList = (ins Imm5:$imm5);
+    let Pattern = [(set GPR:$dr, Imm5:$imm5)];
+    let AddedComplexity = 2;
+  }
 }
