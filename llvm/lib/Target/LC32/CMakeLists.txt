@@ -16,6 +16,7 @@ tablegen(LLVM LC32GenDAGISel.inc -gen-dag-isel)
 add_public_tablegen_target(LC32CommonTableGen)
 
 add_llvm_target(LC32CodeGen
+  LC32CLOpts.cpp
   LC32TargetMachine.cpp
   LC32Subtarget.cpp
   LC32ISelDAGToDAG.cpp
