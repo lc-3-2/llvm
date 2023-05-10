@@ -153,6 +153,20 @@ static bool isRISCVBareMetal(const llvm::Triple &Triple) {
   return Triple.getEnvironmentName() == "elf";
 }
 
+static bool isLC32BareMetal(const llvm::Triple &Triple) {
+  // Mostly copied from above
+  // We don't set the environment, so we check the object format instead
+  if (!Triple.isLC32())
+    return false;
+  if (Triple.getVendor() != llvm::Triple::UnknownVendor)
+    return false;
+  if (Triple.getOS() != llvm::Triple::UnknownOS)
+    return false;
+  if (Triple.getObjectFormat() != llvm::Triple::ELF)
+    return false;
+  return true;
+}
+
 void BareMetal::findMultilibs(const Driver &D, const llvm::Triple &Triple,
                               const ArgList &Args) {
   DetectedMultilibs Result;
@@ -166,7 +180,7 @@ void BareMetal::findMultilibs(const Driver &D, const llvm::Triple &Triple,
 
 bool BareMetal::handlesTarget(const llvm::Triple &Triple) {
   return isARMBareMetal(Triple) || isAArch64BareMetal(Triple) ||
-         isRISCVBareMetal(Triple);
+         isRISCVBareMetal(Triple) || isLC32BareMetal(Triple);
 }
 
 Tool *BareMetal::buildLinker() const {
@@ -330,11 +344,24 @@ void baremetal::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   if (TC.ShouldLinkCXXStdlib(Args))
     TC.AddCXXStdlibLibArgs(Args, CmdArgs);
 
-  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
-    CmdArgs.push_back("-lc");
-    CmdArgs.push_back("-lm");
+  // On LC-3.2, we want to link only with the runtime library if possible
+  // Preserve the original behavior for the other targets
+  if (isLC32BareMetal(TC.getTriple())) {
+    if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
+      CmdArgs.push_back("-lc");
+      CmdArgs.push_back("-lm");
+    }
+    if (!Args.hasArg(options::OPT_nodefaultlibs)) {
+      TC.AddLinkRuntimeLib(Args, CmdArgs);
+    }
 
-    TC.AddLinkRuntimeLib(Args, CmdArgs);
+  } else {
+    if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
+      CmdArgs.push_back("-lc");
+      CmdArgs.push_back("-lm");
+
+      TC.AddLinkRuntimeLib(Args, CmdArgs);
+    }
   }
 
   CmdArgs.push_back("-o");
