@@ -69,4 +69,4 @@ def NOT : InstAlias<"NOT\t$dr, $sr", (XORi GPR:$dr, GPR:$sr, -1)>;
 // See: llvm/lib/CodeGen/SelectionDAG/DAGCombiner.cpp:2602
 // See: llvm/lib/CodeGen/SelectionDAG/DAGCombiner.cpp:8789
 def N_LOWERING_NOT : SDNode<"LC32ISD::LOWERING_NOT", SDTIntUnaryOp>;
-def : Pattern<(N_LOWERING_NOT GPR:$sr1), [(XORi GPR:$sr1, -1)]>;
+def : Pat<(N_LOWERING_NOT GPR:$sr1), (XORi GPR:$sr1, -1)>;

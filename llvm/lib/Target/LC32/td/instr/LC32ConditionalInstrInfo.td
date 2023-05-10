@@ -43,7 +43,7 @@ in {
   }
 }
 
-def : Pattern<(br bb:$target), [(BR 0b111, BRTarget:$target)]>;
+def : Pat<(br bb:$target), (BR 0b111, BRTarget:$target)>;
 
 //---
 // Pseudo instruction to branch based on how the input compares with zero. This

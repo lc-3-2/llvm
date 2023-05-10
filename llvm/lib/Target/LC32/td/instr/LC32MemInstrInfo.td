@@ -67,19 +67,19 @@ in {
   }
 }
 
-def : Pattern<(extloadi8 (add GPR:$baser, BOffset6:$boffset6)), [(LDB GPR:$baser, BOffset6:$boffset6)]>;
-def : Pattern<(sextloadi8 GPR:$baser), [(LDB GPR:$baser, 0)]>;
-def : Pattern<(extloadi8 GPR:$baser),  [(LDB GPR:$baser, 0)]>;
+def : Pat<(extloadi8 (add GPR:$baser, BOffset6:$boffset6)), (LDB GPR:$baser, BOffset6:$boffset6)>;
+def : Pat<(sextloadi8 GPR:$baser), (LDB GPR:$baser, 0)>;
+def : Pat<(extloadi8 GPR:$baser),  (LDB GPR:$baser, 0)>;
 
-def : Pattern<(extloadi16 (add GPR:$baser, HOffset6:$hoffset6)), [(LDH GPR:$baser, HOffset6:$hoffset6)]>;
-def : Pattern<(sextloadi16 GPR:$baser), [(LDH GPR:$baser, 0)]>;
-def : Pattern<(extloadi16 GPR:$baser),  [(LDH GPR:$baser, 0)]>;
+def : Pat<(extloadi16 (add GPR:$baser, HOffset6:$hoffset6)), (LDH GPR:$baser, HOffset6:$hoffset6)>;
+def : Pat<(sextloadi16 GPR:$baser), (LDH GPR:$baser, 0)>;
+def : Pat<(extloadi16 GPR:$baser),  (LDH GPR:$baser, 0)>;
 
-def : Pattern<(sextloadi32 (add GPR:$baser, WOffset6:$woffset6)), [(LDW GPR:$baser, WOffset6:$woffset6)]>;
-def : Pattern<(extloadi32 (add GPR:$baser, WOffset6:$woffset6)),  [(LDW GPR:$baser, WOffset6:$woffset6)]>;
-def : Pattern<(sextloadi32 GPR:$baser), [(LDW GPR:$baser, 0)]>;
-def : Pattern<(extloadi32 GPR:$baser),  [(LDW GPR:$baser, 0)]>;
-def : Pattern<(load GPR:$baser),        [(LDW GPR:$baser, 0)]>;
+def : Pat<(sextloadi32 (add GPR:$baser, WOffset6:$woffset6)), (LDW GPR:$baser, WOffset6:$woffset6)>;
+def : Pat<(extloadi32 (add GPR:$baser, WOffset6:$woffset6)),  (LDW GPR:$baser, WOffset6:$woffset6)>;
+def : Pat<(sextloadi32 GPR:$baser), (LDW GPR:$baser, 0)>;
+def : Pat<(extloadi32 GPR:$baser),  (LDW GPR:$baser, 0)>;
+def : Pat<(load GPR:$baser),        (LDW GPR:$baser, 0)>;
 
 //---
 // Stores
@@ -135,13 +135,13 @@ in {
   }
 }
 
-def : Pattern<(truncstorei8 GPR:$sr, GPR:$baser),  [(STB GPR:$sr, GPR:$baser, 0)]>;
+def : Pat<(truncstorei8 GPR:$sr, GPR:$baser), (STB GPR:$sr, GPR:$baser, 0)>;
 
-def : Pattern<(truncstorei16 GPR:$sr, GPR:$baser), [(STH GPR:$sr, GPR:$baser, 0)]>;
+def : Pat<(truncstorei16 GPR:$sr, GPR:$baser), (STH GPR:$sr, GPR:$baser, 0)>;
 
-def : Pattern<(truncstorei32 GPR:$sr, (add GPR:$baser, WOffset6:$woffset6)), [(STW GPR:$sr, GPR:$baser, WOffset6:$woffset6)]>;
-def : Pattern<(truncstorei32 GPR:$sr, GPR:$baser), [(STW GPR:$sr, GPR:$baser, 0)]>;
-def : Pattern<(store GPR:$sr, GPR:$baser),         [(STW GPR:$sr, GPR:$baser, 0)]>;
+def : Pat<(truncstorei32 GPR:$sr, (add GPR:$baser, WOffset6:$woffset6)), (STW GPR:$sr, GPR:$baser, WOffset6:$woffset6)>;
+def : Pat<(truncstorei32 GPR:$sr, GPR:$baser), (STW GPR:$sr, GPR:$baser, 0)>;
+def : Pat<(store GPR:$sr, GPR:$baser),         (STW GPR:$sr, GPR:$baser, 0)>;
 
 //---
 // Frame index manipulation
@@ -184,37 +184,37 @@ def LEA : LC32Instruction {
   let Inst{8-0}   = pcoffset9;
 }
 
-def : Pattern<(SelectExternalSymbol:$addr), [(LEA SelectExternalSymbol:$addr)]>;
-def : Pattern<(SelectConstantPool:$addr),   [(LEA SelectConstantPool:$addr)]>;
-def : Pattern<(SelectJumpTable:$addr),      [(LEA SelectJumpTable:$addr)]>;
-def : Pattern<(SelectBlockAddress:$addr),   [(LEA SelectBlockAddress:$addr)]>;
+def : Pat<(SelectExternalSymbol:$addr), (LEA SelectExternalSymbol:$addr)>;
+def : Pat<(SelectConstantPool:$addr),   (LEA SelectConstantPool:$addr)>;
+def : Pat<(SelectJumpTable:$addr),      (LEA SelectJumpTable:$addr)>;
+def : Pat<(SelectBlockAddress:$addr),   (LEA SelectBlockAddress:$addr)>;
 
 //--
 // Loads and stores with frame indices. We can optimize these, so we select
 // here. The frame index is eliminated later.
 
-def : Pattern<(load SelectFrameIndex:$fi), [(LDW SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(load (add SelectFrameIndex:$fi, WOffset6:$woffset6)), [(LDW SelectFrameIndex:$fi, WOffset6:$woffset6)]>;
+def : Pat<(load SelectFrameIndex:$fi), (LDW SelectFrameIndex:$fi, 0)>;
+def : Pat<(load (add SelectFrameIndex:$fi, WOffset6:$woffset6)), (LDW SelectFrameIndex:$fi, WOffset6:$woffset6)>;
 
-def : Pattern<(store GPR:$sr, SelectFrameIndex:$fi), [(STW GPR:$sr, SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(store GPR:$sr, (add SelectFrameIndex:$fi, WOffset6:$woffset6)), [(STW GPR:$sr, SelectFrameIndex:$fi, WOffset6:$woffset6)]>;
+def : Pat<(store GPR:$sr, SelectFrameIndex:$fi), (STW GPR:$sr, SelectFrameIndex:$fi, 0)>;
+def : Pat<(store GPR:$sr, (add SelectFrameIndex:$fi, WOffset6:$woffset6)), (STW GPR:$sr, SelectFrameIndex:$fi, WOffset6:$woffset6)>;
 
-def : Pattern<(extloadi8 SelectFrameIndex:$fi),   [(LDB SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(sextloadi8 SelectFrameIndex:$fi),  [(LDB SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(extloadi16 SelectFrameIndex:$fi),  [(LDH SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(sextloadi16 SelectFrameIndex:$fi), [(LDH SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(extloadi32 SelectFrameIndex:$fi),  [(LDW SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(sextloadi32 SelectFrameIndex:$fi), [(LDW SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(extloadi8 (add SelectFrameIndex:$fi, BOffset6:$boffset6)),   [(LDB SelectFrameIndex:$fi, BOffset6:$boffset6)]>;
-def : Pattern<(sextloadi8 (add SelectFrameIndex:$fi, BOffset6:$boffset6)),  [(LDB SelectFrameIndex:$fi, BOffset6:$boffset6)]>;
-def : Pattern<(extloadi16 (add SelectFrameIndex:$fi, HOffset6:$hoffset6)),  [(LDH SelectFrameIndex:$fi, HOffset6:$hoffset6)]>;
-def : Pattern<(sextloadi16 (add SelectFrameIndex:$fi, HOffset6:$hoffset6)), [(LDH SelectFrameIndex:$fi, HOffset6:$hoffset6)]>;
-def : Pattern<(extloadi32 (add SelectFrameIndex:$fi, WOffset6:$woffset6)),  [(LDH SelectFrameIndex:$fi, WOffset6:$woffset6)]>;
-def : Pattern<(sextloadi32 (add SelectFrameIndex:$fi, WOffset6:$woffset6)), [(LDH SelectFrameIndex:$fi, WOffset6:$woffset6)]>;
+def : Pat<(extloadi8 SelectFrameIndex:$fi),   (LDB SelectFrameIndex:$fi, 0)>;
+def : Pat<(sextloadi8 SelectFrameIndex:$fi),  (LDB SelectFrameIndex:$fi, 0)>;
+def : Pat<(extloadi16 SelectFrameIndex:$fi),  (LDH SelectFrameIndex:$fi, 0)>;
+def : Pat<(sextloadi16 SelectFrameIndex:$fi), (LDH SelectFrameIndex:$fi, 0)>;
+def : Pat<(extloadi32 SelectFrameIndex:$fi),  (LDW SelectFrameIndex:$fi, 0)>;
+def : Pat<(sextloadi32 SelectFrameIndex:$fi), (LDW SelectFrameIndex:$fi, 0)>;
+def : Pat<(extloadi8 (add SelectFrameIndex:$fi, BOffset6:$boffset6)),   (LDB SelectFrameIndex:$fi, BOffset6:$boffset6)>;
+def : Pat<(sextloadi8 (add SelectFrameIndex:$fi, BOffset6:$boffset6)),  (LDB SelectFrameIndex:$fi, BOffset6:$boffset6)>;
+def : Pat<(extloadi16 (add SelectFrameIndex:$fi, HOffset6:$hoffset6)),  (LDH SelectFrameIndex:$fi, HOffset6:$hoffset6)>;
+def : Pat<(sextloadi16 (add SelectFrameIndex:$fi, HOffset6:$hoffset6)), (LDH SelectFrameIndex:$fi, HOffset6:$hoffset6)>;
+def : Pat<(extloadi32 (add SelectFrameIndex:$fi, WOffset6:$woffset6)),  (LDW SelectFrameIndex:$fi, WOffset6:$woffset6)>;
+def : Pat<(sextloadi32 (add SelectFrameIndex:$fi, WOffset6:$woffset6)), (LDW SelectFrameIndex:$fi, WOffset6:$woffset6)>;
 
-def : Pattern<(truncstorei8 GPR:$sr, SelectFrameIndex:$fi),  [(STB GPR:$sr, SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(truncstorei16 GPR:$sr, SelectFrameIndex:$fi), [(STH GPR:$sr, SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(truncstorei32 GPR:$sr, SelectFrameIndex:$fi), [(STW GPR:$sr, SelectFrameIndex:$fi, 0)]>;
-def : Pattern<(truncstorei8 GPR:$sr, (add SelectFrameIndex:$fi, BOffset6:$boffset6)),  [(STB GPR:$sr, SelectFrameIndex:$fi, BOffset6:$boffset6)]>;
-def : Pattern<(truncstorei16 GPR:$sr, (add SelectFrameIndex:$fi, HOffset6:$hoffset6)), [(STH GPR:$sr, SelectFrameIndex:$fi, HOffset6:$hoffset6)]>;
-def : Pattern<(truncstorei32 GPR:$sr, (add SelectFrameIndex:$fi, WOffset6:$woffset6)), [(STH GPR:$sr, SelectFrameIndex:$fi, WOffset6:$woffset6)]>;
+def : Pat<(truncstorei8 GPR:$sr, SelectFrameIndex:$fi),  (STB GPR:$sr, SelectFrameIndex:$fi, 0)>;
+def : Pat<(truncstorei16 GPR:$sr, SelectFrameIndex:$fi), (STH GPR:$sr, SelectFrameIndex:$fi, 0)>;
+def : Pat<(truncstorei32 GPR:$sr, SelectFrameIndex:$fi), (STW GPR:$sr, SelectFrameIndex:$fi, 0)>;
+def : Pat<(truncstorei8 GPR:$sr, (add SelectFrameIndex:$fi, BOffset6:$boffset6)),  (STB GPR:$sr, SelectFrameIndex:$fi, BOffset6:$boffset6)>;
+def : Pat<(truncstorei16 GPR:$sr, (add SelectFrameIndex:$fi, HOffset6:$hoffset6)), (STH GPR:$sr, SelectFrameIndex:$fi, HOffset6:$hoffset6)>;
+def : Pat<(truncstorei32 GPR:$sr, (add SelectFrameIndex:$fi, WOffset6:$woffset6)), (STW GPR:$sr, SelectFrameIndex:$fi, WOffset6:$woffset6)>;

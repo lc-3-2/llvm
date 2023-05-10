@@ -129,4 +129,4 @@ in {
   }
 }
 
-def : Pattern<(N_LC32_CALL SelectExternalSymbol:$addr), [(JSR PCOffset11:$addr)]>;
+def : Pat<(N_LC32_CALL SelectExternalSymbol:$addr), (JSR PCOffset11:$addr)>;
