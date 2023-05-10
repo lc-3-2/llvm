@@ -37,6 +37,9 @@ private:
 
   void Select(SDNode *N) override;
 
+  // See: td/instr/LC32MoveInstrInfo.td
+  bool SelectRepeatedAdd(SDNode *N);
+
   // See: td/instr/LC32MemInstrInfo.td
   bool SelectFrameIndex(SDValue In, SDValue &Out);
   bool SelectGlobalAddress(SDValue In, SDValue &Out);

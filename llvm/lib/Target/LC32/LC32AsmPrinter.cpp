@@ -67,25 +67,6 @@ void LC32AsmPrinter::emitInstruction(const MachineInstr *MI) {
     return;
 
   // Lower complex pseudo instructions
-  if (MI->getOpcode() == LC32::C_MOVE_IMM5) {
-    MCInst temp_and;
-    MCInst temp_add;
-    MCOperand dr;
-    MCOperand imm5;
-    this->lowerOperand(MI->getOperand(0), dr);
-    this->lowerOperand(MI->getOperand(1), imm5);
-    temp_and.setOpcode(LC32::ANDi);
-    temp_and.addOperand(dr);
-    temp_and.addOperand(dr);
-    temp_and.addOperand(MCOperand::createImm(0));
-    temp_add.setOpcode(LC32::ADDi);
-    temp_add.addOperand(dr);
-    temp_add.addOperand(dr);
-    temp_add.addOperand(imm5);
-    this->EmitToStreamer(*this->OutStreamer, temp_and);
-    this->EmitToStreamer(*this->OutStreamer, temp_add);
-    return;
-  }
   if (MI->getOpcode() == LC32::C_BR_CMP_ZERO) {
     MCInst temp_add;
     MCInst temp_br;
