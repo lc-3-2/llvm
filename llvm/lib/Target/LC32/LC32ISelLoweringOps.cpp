@@ -257,23 +257,49 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
   assert(RHS.getValueType() == MVT::i32 &&
          "Only i32 is supported for comparison");
 
+  // Canonicalize the constant to the RHS
+  if (LHS.getOpcode() == ISD::Constant)
+    std::swap(LHS, RHS);
+  // Record if the RHS is the constant zero
+  bool is_with_zero =
+      RHS.getOpcode() == ISD::Constant && cast<ConstantSDNode>(RHS)->isZero();
+
+  // Compute nzp
+  // See: llvm/CodeGen/ISDOpcodes.h:1428
+  SDValue nzp;
+  {
+    uint8_t n = (CC & (1 << 2)) != 0 ? 0b100 : 0b000;
+    uint8_t z = (CC & (1 << 0)) != 0 ? 0b010 : 0b000;
+    uint8_t p = (CC & (1 << 1)) != 0 ? 0b001 : 0b000;
+    nzp = DAG.getTargetConstant(n | z | p, dl, MVT::i32);
+  }
+
+  // For equality with zero and for signed comparison against zero
+  // We can just pass the value as-is
+  // Fallback if this isn't the case
+  if (is_with_zero) {
+    switch (CC) {
+    case ISD::SETEQ:
+    case ISD::SETNE:
+    case ISD::SETLT:
+    case ISD::SETLE:
+    case ISD::SETGT:
+    case ISD::SETGE:
+      return DoCMPResult{Chain, nzp, LHS};
+    default:
+      break;
+    }
+  }
+
+  // We can't just compare with zero
+  // Fallback to general comparison functions
   switch (CC) {
   // For equality, we can use XOR
   case ISD::SETEQ:
-  case ISD::SETNE: {
-    // Compute the nzp
-    uint8_t nzp;
-    if (CC == ISD::SETEQ)
-      nzp = 0b010;
-    if (CC == ISD::SETNE)
-      nzp = 0b101;
+  case ISD::SETNE:
     // Return
-    return DoCMPResult{
-        Chain,
-        DAG.getTargetConstant(nzp, dl, MVT::i32),
-        DAG.getNode(ISD::XOR, dl, MVT::i32, LHS, RHS),
-    };
-  }
+    return DoCMPResult{Chain, nzp,
+                       DAG.getNode(ISD::XOR, dl, MVT::i32, LHS, RHS)};
 
   // For inequality, we either subtract or do a libcall
   case ISD::SETLT:
@@ -284,20 +310,11 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
   case ISD::SETULE:
   case ISD::SETUGT:
   case ISD::SETUGE: {
-    // Useful variables
+    // Populate variables
     // See: llvm/CodeGen/ISDOpcodes.h:1428
     SDValue new_chain = Chain;
     bool is_unsigned = (CC & (1 << 3)) != 0;
     bool is_signed = (CC & (1 << 3)) == 0;
-    // Compute nzp
-    // See: llvm/CodeGen/ISDOpcodes.h:1428
-    uint8_t nzp = 0b000;
-    {
-      uint8_t n = (CC & (1 << 2)) != 0 ? 0b100 : 0b000;
-      uint8_t z = (CC & (1 << 0)) != 0 ? 0b010 : 0b000;
-      uint8_t p = (CC & (1 << 1)) != 0 ? 0b001 : 0b000;
-      nzp = n | z | p;
-    }
 
     // Compute the value
     SDValue new_value;
@@ -344,11 +361,7 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
     }
 
     // Return
-    return DoCMPResult{
-        new_chain,
-        DAG.getTargetConstant(nzp, dl, MVT::i32),
-        new_value,
-    };
+    return DoCMPResult{new_chain, nzp, new_value};
   }
 
   default:
