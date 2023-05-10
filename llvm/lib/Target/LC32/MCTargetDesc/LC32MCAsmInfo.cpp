@@ -12,9 +12,9 @@ using namespace llvm;
 
 LC32MCAsmInfo::LC32MCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
 
-  // Pseudo instructions reach a length of 12 bytes
-  // All instructions are halfword aligned
-  this->MaxInstLength = 12;
+  // Pseudo instructions reach a length of 12 bytes, plus two for alignment
+  // All instructions are at least halfword aligned
+  this->MaxInstLength = 14;
   this->MinInstAlignment = 2;
 
   // Comments are semicolons

@@ -51,10 +51,8 @@ bool LC32DAGToDAGISel::SelectRepeatedAdd(SDNode *N) {
   assert(N->getValueType(0) == MVT::i32 && "Constants should be i32");
 
   // Check whether we should use repeated ADDs
-  // Don't match zeros, since we have an instruction for that
+  // Match zeros too, even though we have a pattern for that
   int64_t imm = cast<ConstantSDNode>(N)->getSExtValue();
-  if (imm == 0)
-    return false;
   if (imm < -16l * static_cast<int64_t>(MaxRepeatedAdd.getValue()) ||
       imm > 15l * static_cast<int64_t>(MaxRepeatedAdd.getValue()))
     return false;
