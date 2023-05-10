@@ -20,22 +20,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-let
-  OutOperandList = (outs GPR:$dr),
-  isMoveImm = true,
-  isAsCheapAsAMove = true,
-  isReMaterializable = true
-in {
+def C_MOVE_ZERO : LC32Instruction_C, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr, 0)> {
+  let OutOperandList = (outs GPR:$dr);
+  let InOperandList = (ins);
+  let Pattern = [(set GPR:$dr, 0)];
+  let AddedComplexity = 2;
 
-  def C_MOVE_ZERO : LC32Instruction_C, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr, 0)> {
-    let InOperandList = (ins);
-    let Pattern = [(set GPR:$dr, 0)];
-    let AddedComplexity = 2;
-  }
-
-  def C_MOVE_IMM5 : LC32Instruction_C {
-    let InOperandList = (ins Imm5:$imm5);
-    let Pattern = [(set GPR:$dr, Imm5:$imm5)];
-    let AddedComplexity = 2;
-  }
+  let isMoveImm = true;
+  let isAsCheapAsAMove = true;
+  let isReMaterializable = true;
 }
+
+// If a constant is small enough, do repeated additions to select it.
+// Unfortunately, there doesn't seem to be a way to tell the matcher to do this
+// automatically, even through ComplexPatterns. Thus, we do it in `Select` of
+// `ISelDAGToDAG`.
