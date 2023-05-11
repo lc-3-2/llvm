@@ -57,6 +57,29 @@ the compiler runtime. Again, either set `-nodefaultlibs` or pass `--sysroot`.
 The driver does not link with `crt0`, nor does it have a default linker script.
 You must supply both.
 
+### Options
+
+The LC-3.2 backend has several options to affect code generation. They are
+listed in `llvm/lib/Target/LC32CLOpts.cpp`, and they can be passed to `llc` with
+the `-mllvm` option in the driver.
+
+One important class of options is `--lc_3.2-use-libcall-for-cmp` and its
+friends. Usually, the backend emits `a - b > 0` when synthesizing `a > b` for
+both the signed and unsigned case. However, this can lead to overflow. Adding
+this flag makes the backend lower comparisons to libcalls wherever overflow is
+possible. By default, this is disabled since we teach students to compare via
+subtraction.
+
+Another set of options is `--lc_3.2-use-r4` and `lc_3.2-use-r7`. The compiler
+can't take advantage of the global pointer, and the calling convention has the
+link register dead throughout the entire function's execution. These options
+reclaim these registers for allocation. By default, this is disabled so as to
+not confuse the students.
+
+Finally, there is `--lc_3.2-max-repeated-add`, which controls how immediates are
+materialized. Up to a point, the backend will do repeated additions. After that,
+it will use `PSEUDO.LOADCONST*`. This option controls the threshold.
+
 
 ## Contributing
 
