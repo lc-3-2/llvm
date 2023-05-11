@@ -17,7 +17,7 @@ using namespace llvm;
 
 LC32FrameLowering::LC32FrameLowering()
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(4), 0,
-                          Align(4)) {}
+                          Align(4), false) {}
 
 void LC32FrameLowering::emitPrologue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {

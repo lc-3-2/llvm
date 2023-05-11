@@ -8,7 +8,8 @@
 //
 // This file details the calling convention for the LC-3.2. It assigns
 // everything to the stack for calls. For returns, it tries to return an i32,
-// otherwise it does sret.
+// otherwise it does sret. For by value struct passing, we align it to at least
+// an i32 because convention.
 //
 // For the return values, we only do the first one. Essentially, this amounts to
 // only assigning to the stack if the stack is currently empty.
@@ -20,6 +21,7 @@
 
 // Arguments
 def LC32CallingConv : CallingConv<[
+  CCIfByVal<CCPassByVal<4, 4>>,
   CCAssignToStack<0, 0>
 ]>;
 
