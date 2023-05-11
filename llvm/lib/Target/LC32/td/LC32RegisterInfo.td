@@ -45,4 +45,8 @@ def FP : LC32Register<"R5", 5, ["FP"]>;
 def SP : LC32Register<"R6", 6, ["SP"]>;
 def LR : LC32Register<"R7", 7, ["LR"]>;
 
-def GPR : RegisterClass<"LC32", [i32], 32, (add R0, R1, R2, AT, GP, FP, SP, LR)>;
+//---
+// Create a class of all the registers. These are in allocation order, though
+// not all of them are allocateable.
+
+def GPR : RegisterClass<"LC32", [i32], 32, (add R0, R1, R2, LR, GP, AT, FP, SP)>;
