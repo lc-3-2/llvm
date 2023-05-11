@@ -25,6 +25,7 @@ add_llvm_target(LC32CodeGen
   LC32ISelLoweringOps.cpp
   LC32FrameLowering.cpp
   LC32InstrInfo.cpp
+  LC32InstrInfoBranches.cpp
   LC32RegisterInfo.cpp
   LC32AsmPrinter.cpp
 

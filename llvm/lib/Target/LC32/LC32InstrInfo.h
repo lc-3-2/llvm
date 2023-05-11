@@ -10,6 +10,10 @@
 // specifically how they relate to code generation. It also contains the
 // `eliminateFrameIndex` method.
 //
+// Another big responsibility of this module is analyzing branches. This allows
+// LLVM to reorder basic blocks. For compartmentalization, all this
+// functionality is kept in `LC32InstrInfoBranches.cpp`.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIB_TARGET_LC32_LC32INSTRINFO_H
@@ -28,6 +32,7 @@ class LC32InstrInfo : public LC32GenInstrInfo {
 public:
   explicit LC32InstrInfo(LC32Subtarget &STI);
   const LC32RegisterInfo &getRegisterInfo() const;
+  unsigned getInstSizeInBytes(const MachineInstr &MI) const override;
 
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, Register SrcReg,
@@ -44,6 +49,19 @@ public:
   void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                    const DebugLoc &DL, MCRegister DestReg, MCRegister SrcReg,
                    bool KillSrc) const override;
+
+  bool analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                     MachineBasicBlock *&FBB,
+                     SmallVectorImpl<MachineOperand> &Cond,
+                     bool AllowModify = false) const override;
+  unsigned removeBranch(MachineBasicBlock &MBB,
+                        int *BytesRemoved = nullptr) const override;
+  unsigned insertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                        MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
+                        const DebugLoc &DL,
+                        int *BytesAdded = nullptr) const override;
+  bool
+  reverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
 
 private:
   // Modules need the register information to work with this class. Therefore,

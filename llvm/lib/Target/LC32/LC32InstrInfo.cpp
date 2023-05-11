@@ -23,6 +23,11 @@ const LC32RegisterInfo &LC32InstrInfo::getRegisterInfo() const {
   return this->RegisterInfo;
 }
 
+unsigned LC32InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
+  // TODO
+  return ~0u;
+}
+
 void LC32InstrInfo::storeRegToStackSlot(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, Register SrcReg,
     bool isKill, int FrameIndex, const TargetRegisterClass *RC,
