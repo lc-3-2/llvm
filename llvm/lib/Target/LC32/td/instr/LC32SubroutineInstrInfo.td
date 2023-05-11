@@ -65,7 +65,7 @@ def N_LC32_CALLSEQ_END   : SDNode<"ISD::CALLSEQ_END",   NT_LC32_CALLSEQ_END,   [
 // eliminated in LC32InstrInfo and LC32FrameLowering.
 let
   Uses = [SP],
-  Defs = [AT, SP],
+  Defs = [SP],
   OutOperandList = (outs),
   InOperandList = (ins i32imm:$amtin, i32imm:$amtout),
   hasSideEffects = true
