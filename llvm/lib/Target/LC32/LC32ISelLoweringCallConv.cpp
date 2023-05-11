@@ -241,7 +241,8 @@ SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
                                  Chain.getValue(0), SDValue());
 
     // Teardown the stack
-    Chain = CLI.DAG.getCALLSEQ_END(Chain.getValue(0), NumBytes, 0,
+    // Remember to pop the return value too
+    Chain = CLI.DAG.getCALLSEQ_END(Chain.getValue(0), NumBytes + 4, 0,
                                    Chain.getValue(1), CLI.DL);
     // Return the value
     Chain = CLI.DAG.getCopyFromReg(Chain.getValue(0), CLI.DL, reg_ret, MVT::i32,

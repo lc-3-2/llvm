@@ -52,6 +52,15 @@ Register LC32RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return LC32::FP;
 }
 
+bool LC32RegisterInfo::canRealignStack(const MachineFunction &MF) const {
+  return false;
+}
+
+bool LC32RegisterInfo::requiresRegisterScavenging(
+    const MachineFunction &MF) const {
+  return true;
+}
+
 bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                            int SPAdj, unsigned FIOperandNum,
                                            RegScavenger *RS) const {
