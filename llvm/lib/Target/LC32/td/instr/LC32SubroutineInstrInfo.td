@@ -50,6 +50,8 @@ def C_RET : LC32Instruction_C, PseudoInstExpansion<(JMP LR)> {
   let isReturn = true;
   let isBarrier = true;
   let isTerminator = true;
+
+  let Size = 2;
 }
 
 //---
@@ -125,6 +127,8 @@ in {
     def P_FARJSR : LC32Instruction_P {
       let AsmString = "PSEUDO.FARJSR\t$addr";
       let InOperandList = (ins Const32:$addr);
+
+      let Size = 14;
     }
   }
 }

@@ -31,6 +31,8 @@ in {
     let InOperandList = (ins Const16:$const16);
     let Pattern = [(set GPR:$dr, Const16:$const16)];
     let AddedComplexity = 1;
+
+    let Size = 8;
   }
 
   def P_LOADCONSTW : LC32Instruction_P {
@@ -39,6 +41,8 @@ in {
     let InOperandList = (ins Const32:$const32);
     let Pattern = [(set GPR:$dr, Const32:$const32)];
     let AddedComplexity = 0;
+
+    let Size = 14;
   }
 }
 

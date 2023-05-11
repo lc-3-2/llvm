@@ -8,6 +8,7 @@
 
 #include "LC32InstrInfo.h"
 #include "LC32Subtarget.h"
+#include "LC32TargetMachine.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32InstrInfo"
@@ -24,8 +25,35 @@ const LC32RegisterInfo &LC32InstrInfo::getRegisterInfo() const {
 }
 
 unsigned LC32InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
-  // TODO
-  return ~0u;
+  // This function is used by other passes to estimate the size of code blocks.
+  // It's fine if this is an overestimate, but it should not be an
+  // underestimate.
+  // See: llvm/lib/CodeGen/BranchRelaxation.cpp
+  // See: llvm/lib/CodeGen/IfConversion.cpp
+
+  const MCInstrDesc &d = MI.getDesc();
+  unsigned d_op = d.getOpcode();
+
+  // Meta instructions produce no output
+  if (d.isMetaInstruction())
+    return 0;
+
+  // Handle inline assembly
+  // This estimates every instruction to be the size specified in MCAsmInfo
+  if (d_op == TargetOpcode::INLINEASM || d_op == TargetOpcode::INLINEASM_BR) {
+    const MachineFunction &MF = *MI.getParent()->getParent();
+    return this->getInlineAsmLength(MI.getOperand(0).getSymbolName(),
+                                    *MF.getTarget().getMCAsmInfo());
+  }
+
+  // Special case for JSR
+  // It will be relaxed, so we use the relaxed size as an estimate
+  // We don't do this for BR since we have a pass that relaxes branches in the
+  // compiler, while JSR is handled in the assembler.
+  if (d_op == LC32::JSR)
+    return this->get(LC32::P_FARJSR).getSize();
+
+  return d.getSize();
 }
 
 void LC32InstrInfo::storeRegToStackSlot(

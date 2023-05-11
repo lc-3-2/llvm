@@ -15,7 +15,8 @@
 // Instructions prefixed with `P_` are pseudo instructions that disassemble to
 // multiple instructions. Instructions prefixed with `C_` are for code
 // generation. Additionally, declarations starting with `N_` are SelectionDAG
-// nodes.
+// nodes. Note that pseudo instructions still have sizes. These have to be
+// overestimates of their actual size.
 //
 // SelectionDAG nodes need to be kept in sync with the declarations in
 // LC32ISelLowering.h.

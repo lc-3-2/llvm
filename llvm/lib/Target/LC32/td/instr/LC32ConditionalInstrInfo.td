@@ -40,6 +40,8 @@ in {
   def P_FARBR : LC32Instruction_P {
     let AsmString = "PSEUDO.FARBR$nzp\t$target";
     let InOperandList = (ins NZP:$nzp, Const32:$target);
+
+    let Size = 14;
   }
 }
 
@@ -68,6 +70,8 @@ def C_BR_CMP_ZERO : LC32Instruction_C {
 
   let isBranch = true;
   let isTerminator = true;
+
+  let Size = 4;
 }
 
 //---
