@@ -12,6 +12,7 @@
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 using namespace llvm;
 using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32RegisterInfo"
@@ -42,9 +43,6 @@ BitVector LC32RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   if (!UseR7.getValue())
     ret.set(LC32::LR);
 
-  // TODO: Handle frame index elimination without AT
-  ret.set(LC32::AT);
-
   return ret;
 }
 
@@ -61,10 +59,13 @@ bool LC32RegisterInfo::requiresRegisterScavenging(
   return true;
 }
 
+bool LC32RegisterInfo::supportsBackwardScavenger() const { return true; }
+
 bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                            int SPAdj, unsigned FIOperandNum,
                                            RegScavenger *RS) const {
-
+  // Check we got a register scavenger
+  assert(RS != nullptr && "Must have a register scavenger");
   // Populate variables
   // Note that offsets are truncated to the size of memory
   MachineBasicBlock &MBB = *MI->getParent();
@@ -93,6 +94,8 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
       in_range = isShiftedInt<6, 1>(Offset);
     else if (MI->getOpcode() == LC32::LDW || MI->getOpcode() == LC32::STW)
       in_range = isShiftedInt<6, 2>(Offset);
+    else
+      llvm_unreachable("Not all cases handled");
 
     // If the offset is in range, then we're good to just use the FP
     if (in_range) {
@@ -101,9 +104,28 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
       return false;
     }
 
+    // Figure out what temporary register to use to store the address
+    Register tr;
+    if (MI->getOpcode() == LC32::LDB || MI->getOpcode() == LC32::LDH ||
+        MI->getOpcode() == LC32::LDW) {
+      // For loads, we can just reuse the destination register
+      tr = MI->getOperand(0).getReg();
+
+    } else if (MI->getOpcode() == LC32::STB || MI->getOpcode() == LC32::STH ||
+               MI->getOpcode() == LC32::STW) {
+      // For stores, need to do register scavenging
+      // See: llvm/lib/CodeGen/PrologEpilogInserter.cpp:1527
+      tr = RS->scavengeRegisterBackwards(LC32::GPRRegClass, MI, false, SPAdj,
+                                         true);
+      assert(tr != LC32::NoRegister && "Register scavenging failed");
+
+    } else {
+      llvm_unreachable("Not all cases handled");
+    }
+
     // Construct the address and load from it
-    this->genAddLargeImm(TII, MBB, MI, dl, LC32::AT, LC32::FP, Offset);
-    MI->getOperand(1).ChangeToRegister(LC32::AT, false, false, true);
+    this->genAddLargeImm(TII, MBB, MI, dl, tr, LC32::FP, Offset);
+    MI->getOperand(1).ChangeToRegister(tr, false, false, true);
     MI->getOperand(2).ChangeToImmediate(0);
     return false;
   }

@@ -41,6 +41,7 @@ public:
   bool canRealignStack(const MachineFunction &MF) const override;
   // We need the scavenger for frame indices
   bool requiresRegisterScavenging(const MachineFunction &MF) const override;
+  bool supportsBackwardScavenger() const override;
 
   bool eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
                            unsigned FIOperandNum,
