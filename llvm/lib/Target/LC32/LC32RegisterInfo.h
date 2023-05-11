@@ -35,6 +35,13 @@ public:
   // For debug information
   Register getFrameRegister(const MachineFunction &MF) const override;
 
+  // We don't support stack realignment
+  // This is checked when determining where to place the emergency spill slots.
+  // We want them near the FP.
+  bool canRealignStack(const MachineFunction &MF) const override;
+  // We need the scavenger for frame indices
+  bool requiresRegisterScavenging(const MachineFunction &MF) const override;
+
   bool eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
                            unsigned FIOperandNum,
                            RegScavenger *RS = nullptr) const override;

@@ -8,9 +8,11 @@
 
 #include "LC32FrameLowering.h"
 #include "LC32InstrInfo.h"
+#include "LC32Subtarget.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32FrameLowering"
@@ -18,6 +20,8 @@ using namespace llvm;
 LC32FrameLowering::LC32FrameLowering()
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(4), 0,
                           Align(4), false) {}
+
+bool LC32FrameLowering::hasFP(const MachineFunction &MF) const { return true; }
 
 void LC32FrameLowering::emitPrologue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
@@ -101,22 +105,46 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
   assert(this->getStackAlign() == 4 && "LC-3.2 stack should be word aligned");
   amt = alignTo(amt, this->getStackAlign());
 
-  // Differentiate on setup and teardown
-  // This is because setup can afford to do nothing if the frame size is zero.
-  // Teardown always has to add at least four.
-  if (MI->getOpcode() == TII.getCallFrameSetupOpcode()) {
-    if (amt != 0)
+  // If the amount is zero, we don't have to do anything
+  // The amt above should include the return value if we need to pop it
+  if (amt != 0) {
+    // Handle setup and teardown
+    if (MI->getOpcode() == TII.getCallFrameSetupOpcode()) {
       TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, -amt);
-
-  } else if (MI->getOpcode() == TII.getCallFrameDestroyOpcode()) {
-    TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, amt + 4);
-
-  } else {
-    llvm_unreachable("Tried to eliminate bad instruction");
+    } else if (MI->getOpcode() == TII.getCallFrameDestroyOpcode()) {
+      TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, amt);
+    } else {
+      llvm_unreachable("Tried to eliminate bad instruction");
+    }
   }
 
   // Remember to erase the original pseudo
   return MBB.erase(MI);
 }
 
-bool LC32FrameLowering::hasFP(const MachineFunction &MF) const { return true; }
+void LC32FrameLowering::processFunctionBeforeFrameFinalized(
+    MachineFunction &MF, RegScavenger *RS) const {
+  // Check that we actually got a register scavenger
+  assert(RS != nullptr && "Must have a register scavenger");
+  // Populate variables
+  const LC32RegisterInfo *RI =
+      MF.getSubtarget<LC32Subtarget>().getRegisterInfo();
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+
+  // Count the number of scavenging slots we need:
+  // 1. if the stack frame is too large. This is an underestimate, so compensate
+  // 2. if branches can be out of range
+  // FIXME: We always assume (2) is
+  unsigned num_scav = 0;
+  if (!isInt<6 - 1>(MFI.estimateStackSize(MF)))
+    num_scav++;
+  if (true)
+    num_scav++;
+
+  // Create the scavenging indicies
+  for (unsigned i = 0; i < num_scav; i++) {
+    RS->addScavengingFrameIndex(
+        MFI.CreateStackObject(RI->getSpillSize(LC32::GPRRegClass),
+                              RI->getSpillAlign(LC32::GPRRegClass), false));
+  }
+}

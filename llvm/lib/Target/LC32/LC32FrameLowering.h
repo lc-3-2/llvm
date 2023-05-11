@@ -21,6 +21,7 @@ namespace llvm {
 class LC32FrameLowering : public TargetFrameLowering {
 public:
   LC32FrameLowering();
+  bool hasFP(const MachineFunction &MF) const override;
 
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
@@ -31,7 +32,9 @@ public:
   eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI) const override;
 
-  bool hasFP(const MachineFunction &MF) const override;
+  // Handle scavenger setup
+  void processFunctionBeforeFrameFinalized(
+      MachineFunction &MF, RegScavenger *RS = nullptr) const override;
 };
 
 } // namespace llvm
