@@ -55,7 +55,7 @@ public:
    * This is a very common task, so we factor out the code into a function. It
    * generates instructions to add a large constant to a source register and put
    * the result in a destination register. It either generates repeated
-   * additions, or it uses the AT as a staging area.
+   * additions, or it uses a virtual register as a staging area
    *
    * Even though this is logically private, it has to be public since
    * LC32FrameLowering uses it.
@@ -63,16 +63,16 @@ public:
    * @param [in] dr The register to add into
    * @param [in] sr The register to add from
    * @param [in] imm The value to add
-   * @param [in] alias Allow sr and dr to alias, at the expense of using AT
+   * @param [in] alias Allow sr and dr to alias, at the expense of using a vreg
    * @param [in] dr_flags The liveliness state of the destination register once
    *  the code is done. Should be either `Define` or `Dead`.
    * @param [in] sr_flags The liveliness state of the source register
    * @see MaxRepeatedAdd
    */
-  void genAddLargeImm(const LC32InstrInfo &TII, MachineBasicBlock &MBB,
-                      MachineBasicBlock::iterator MBBI, DebugLoc &dl,
-                      Register dr, Register sr, int64_t imm, bool alias = false,
-                      unsigned dr_flags = RegState::Define,
+  void genAddLargeImm(const LC32InstrInfo &TII, MachineRegisterInfo &MRI,
+                      MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                      DebugLoc &dl, Register dr, Register sr, int64_t imm,
+                      bool alias = false, unsigned dr_flags = RegState::Define,
                       unsigned sr_flags = 0u) const;
 };
 

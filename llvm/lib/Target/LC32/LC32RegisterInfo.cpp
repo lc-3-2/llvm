@@ -127,7 +127,7 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     }
 
     // Construct the address and load from it
-    this->genAddLargeImm(TII, MBB, MI, dl, tr, LC32::FP, Offset);
+    this->genAddLargeImm(TII, MRI, MBB, MI, dl, tr, LC32::FP, Offset);
     MI->getOperand(1).ChangeToRegister(tr, false, false, true);
     MI->getOperand(2).ChangeToImmediate(0);
     return false;
@@ -138,8 +138,9 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   if (MI->getOpcode() == LC32::C_LEA_FRAMEINDEX) {
     assert(FIOperandNum == 1 && "Bad frame index operand index");
 
-    this->genAddLargeImm(TII, MBB, MI, dl, MI->getOperand(0).getReg(), LC32::FP,
-                         Offset, false, getRegState(MI->getOperand(0)));
+    this->genAddLargeImm(TII, MRI, MBB, MI, dl, MI->getOperand(0).getReg(),
+                         LC32::FP, Offset, false,
+                         getRegState(MI->getOperand(0)));
     MBB.erase(MI);
     return false;
   }
@@ -148,7 +149,7 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 }
 
 void LC32RegisterInfo::genAddLargeImm(
-    const LC32InstrInfo &TII, MachineBasicBlock &MBB,
+    const LC32InstrInfo &TII, MachineRegisterInfo &MRI, MachineBasicBlock &MBB,
     MachineBasicBlock::iterator MBBI, DebugLoc &dl, Register dr, Register sr,
     int64_t imm, bool alias, unsigned dr_flags, unsigned sr_flags) const {
 
@@ -194,16 +195,15 @@ void LC32RegisterInfo::genAddLargeImm(
   // Otherwise, use a staging register
   // Start by calculating which instruction to use
   auto instr = isInt<16>(imm) ? LC32::P_LOADCONSTH : LC32::P_LOADCONSTW;
-  // Load the offset into either dr or AT, depending on whether the operands
+  // Load the offset into either dr or a vreg, depending on whether the operands
   // alias
-  Register stage = alias ? LC32::AT : dr;
-  BuildMI(MBB, MBBI, dl, TII.get(instr), stage)
-      .addImm(static_cast<int32_t>(imm));
+  Register tr = alias ? MRI.createVirtualRegister(&LC32::GPRRegClass) : dr;
+  BuildMI(MBB, MBBI, dl, TII.get(instr), tr).addImm(static_cast<int32_t>(imm));
   // Do the add
   BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDr))
       .addReg(dr, dr_flags)
       .addReg(sr, sr_flags)
-      .addReg(stage, RegState::Kill);
+      .addReg(tr, RegState::Kill);
   // Done
   return;
 }
