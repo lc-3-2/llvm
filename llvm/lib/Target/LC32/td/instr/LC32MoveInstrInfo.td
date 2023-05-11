@@ -29,6 +29,8 @@ def C_MOVE_ZERO : LC32Instruction_C, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr,
   let isMoveImm = true;
   let isAsCheapAsAMove = true;
   let isReMaterializable = true;
+
+  let Size = 2;
 }
 
 // If a constant is small enough, do repeated additions to select it.

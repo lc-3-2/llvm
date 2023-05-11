@@ -123,13 +123,33 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
   return MBB.erase(MI);
 }
 
+static unsigned EstimateFunctionSize(const MachineFunction &MF,
+                                     const LC32InstrInfo &TII) {
+  // See: RISCVFrameLowering.cpp
+  unsigned ret = 0;
+  for (auto &MBB : MF) {
+    for (auto &MI : MBB) {
+      // Special case for branches. They will almost certainly be expanded
+      // later, so over-estimate their size for the purposes of register
+      // scavenging.
+      if (MI.getOpcode() == LC32::BR)
+        ret += 18;
+
+      // Otherwise, handle normally
+      ret += TII.getInstSizeInBytes(MI);
+    }
+  }
+  return ret;
+}
+
 void LC32FrameLowering::processFunctionBeforeFrameFinalized(
     MachineFunction &MF, RegScavenger *RS) const {
   // Check that we actually got a register scavenger
   assert(RS != nullptr && "Must have a register scavenger");
   // Populate variables
-  const LC32RegisterInfo *RI =
+  const LC32RegisterInfo *TRI =
       MF.getSubtarget<LC32Subtarget>().getRegisterInfo();
+  const LC32InstrInfo *TII = MF.getSubtarget<LC32Subtarget>().getInstrInfo();
   MachineFrameInfo &MFI = MF.getFrameInfo();
 
   // Count the number of scavenging slots we need:
@@ -138,12 +158,13 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   unsigned num_scav = 0;
   if (!isInt<6 - 1>(MFI.estimateStackSize(MF)))
     num_scav++;
-  // FIXME: Implement 2
+  if (!isInt<10 - 1>(EstimateFunctionSize(MF, *TII)))
+    num_scav++;
 
   // Create the scavenging indicies
   for (unsigned i = 0; i < num_scav; i++) {
     RS->addScavengingFrameIndex(
-        MFI.CreateStackObject(RI->getSpillSize(LC32::GPRRegClass),
-                              RI->getSpillAlign(LC32::GPRRegClass), false));
+        MFI.CreateStackObject(TRI->getSpillSize(LC32::GPRRegClass),
+                              TRI->getSpillAlign(LC32::GPRRegClass), false));
   }
 }
