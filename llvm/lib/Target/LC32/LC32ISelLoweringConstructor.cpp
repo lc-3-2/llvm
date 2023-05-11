@@ -40,14 +40,10 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
 
   // Setup how we should extend loads
   // Not all loads have corresponding instructions
-  for (const auto &vt : {MVT::i1, MVT::i4}) {
-    this->setLoadExtAction(ISD::EXTLOAD, MVT::i32, vt, Promote);
-    this->setLoadExtAction(ISD::SEXTLOAD, MVT::i32, vt, Promote);
-    this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, vt, Promote);
-  }
-  for (const auto &vt : {MVT::i8, MVT::i16}) {
-    this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, vt, Expand);
-  }
+  this->setLoadExtAction(ISD::EXTLOAD, MVT::i32, {MVT::i1, MVT::i4}, Promote);
+  this->setLoadExtAction(ISD::SEXTLOAD, MVT::i32, {MVT::i1, MVT::i4}, Promote);
+  this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, {MVT::i1, MVT::i4}, Promote);
+  this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, {MVT::i8, MVT::i16}, Expand);
 
   // SUB and OR need custom lowering so we don't go into an infinite loop
   this->setOperationAction(ISD::SUB, MVT::i32, Custom);
@@ -84,13 +80,22 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   this->setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Expand);
 
   // Extension doesn't have custom instructions
-  for (const auto &vt : {MVT::i1, MVT::i4, MVT::i8, MVT::i16}) {
-    this->setOperationAction(ISD::SIGN_EXTEND, vt, Expand);
-    this->setOperationAction(ISD::ZERO_EXTEND, vt, Expand);
-    this->setOperationAction(ISD::ANY_EXTEND, vt, Expand);
-    this->setOperationAction(ISD::TRUNCATE, vt, Expand);
-    this->setOperationAction(ISD::SIGN_EXTEND_INREG, vt, Expand);
-  }
+  this->setOperationAction(ISD::SIGN_EXTEND,
+                           {MVT::i1, MVT::i4, MVT::i8, MVT::i16}, Expand);
+  this->setOperationAction(ISD::ZERO_EXTEND,
+                           {MVT::i1, MVT::i4, MVT::i8, MVT::i16}, Expand);
+  this->setOperationAction(ISD::ANY_EXTEND,
+                           {MVT::i1, MVT::i4, MVT::i8, MVT::i16}, Expand);
+  this->setOperationAction(ISD::TRUNCATE, {MVT::i1, MVT::i4, MVT::i8, MVT::i16},
+                           Expand);
+  this->setOperationAction(ISD::SIGN_EXTEND_INREG,
+                           {MVT::i1, MVT::i4, MVT::i8, MVT::i16}, Expand);
+
+  // Expand stack management instructions
+  // This is needed for stack realignment since we don't support it natively
+  this->setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
+  this->setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
+  this->setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
 
   // Expand complex conditionals
   this->setOperationAction(ISD::BR_JT, MVT::Other, Expand);
