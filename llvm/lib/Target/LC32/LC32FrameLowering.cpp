@@ -110,9 +110,11 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
   if (amt != 0) {
     // Handle setup and teardown
     if (MI->getOpcode() == TII.getCallFrameSetupOpcode()) {
-      TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, -amt);
+      TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, -amt, true,
+                         RegState::Define, RegState::Kill);
     } else if (MI->getOpcode() == TII.getCallFrameDestroyOpcode()) {
-      TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, amt);
+      TRI.genAddLargeImm(TII, MBB, MI, dl, LC32::SP, LC32::SP, amt, true,
+                         RegState::Define, RegState::Kill);
     } else {
       llvm_unreachable("Tried to eliminate bad instruction");
     }

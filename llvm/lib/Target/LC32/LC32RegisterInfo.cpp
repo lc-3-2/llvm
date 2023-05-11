@@ -153,12 +153,12 @@ void LC32RegisterInfo::genAddLargeImm(
     int64_t imm, bool alias, unsigned dr_flags, unsigned sr_flags) const {
 
   if (alias)
-    // Check that the source and the destination don't alias
-    assert(sr != dr && "Source and destination may not alias");
-  else
     // Check that AT isn't used
     // It may be defined
     assert(sr != LC32::AT && "May not use AT");
+  else
+    // Check that the source and the destination don't alias
+    assert(sr != dr && "Source and destination may not alias");
 
   // If the immediate is zero, just ADDi
   if (imm == 0) {
