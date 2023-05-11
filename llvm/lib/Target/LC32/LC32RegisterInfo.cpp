@@ -59,17 +59,21 @@ bool LC32RegisterInfo::requiresRegisterScavenging(
   return true;
 }
 
+bool LC32RegisterInfo::requiresFrameIndexScavenging(
+    const MachineFunction &MF) const {
+  return true;
+}
+
 bool LC32RegisterInfo::supportsBackwardScavenger() const { return true; }
 
 bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                            int SPAdj, unsigned FIOperandNum,
                                            RegScavenger *RS) const {
-  // Check we got a register scavenger
-  assert(RS != nullptr && "Must have a register scavenger");
   // Populate variables
   // Note that offsets are truncated to the size of memory
   MachineBasicBlock &MBB = *MI->getParent();
   MachineFunction &MF = *MBB.getParent();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
   DebugLoc dl = MI->getDebugLoc();
   const LC32InstrInfo &TII =
       *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -113,11 +117,10 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 
     } else if (MI->getOpcode() == LC32::STB || MI->getOpcode() == LC32::STH ||
                MI->getOpcode() == LC32::STW) {
-      // For stores, need to do register scavenging
-      // See: llvm/lib/CodeGen/PrologEpilogInserter.cpp:1527
-      tr = RS->scavengeRegisterBackwards(LC32::GPRRegClass, MI, false, SPAdj,
-                                         true);
-      assert(tr != LC32::NoRegister && "Register scavenging failed");
+      // For stores, use a virtual register
+      // PEI will eliminate this since we told it too
+      // See: llvm/lib/CodeGen/PrologEpilogInserter.cpp:281
+      tr = MRI.createVirtualRegister(&LC32::GPRRegClass);
 
     } else {
       llvm_unreachable("Not all cases handled");
