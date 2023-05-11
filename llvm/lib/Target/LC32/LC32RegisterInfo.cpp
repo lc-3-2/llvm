@@ -75,8 +75,6 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   MachineFunction &MF = *MBB.getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
   DebugLoc dl = MI->getDebugLoc();
-  const LC32InstrInfo &TII =
-      *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
   int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
   int32_t Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
   assert(SPAdj == 0 && "We don't use SPAdj");
@@ -127,7 +125,7 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     }
 
     // Construct the address and load from it
-    this->genAddLargeImm(TII, MRI, MBB, MI, dl, tr, LC32::FP, Offset);
+    this->genAddLargeImm(MI, dl, tr, LC32::FP, Offset);
     MI->getOperand(1).ChangeToRegister(tr, false, false, true);
     MI->getOperand(2).ChangeToImmediate(0);
     return false;
@@ -138,9 +136,8 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   if (MI->getOpcode() == LC32::C_LEA_FRAMEINDEX) {
     assert(FIOperandNum == 1 && "Bad frame index operand index");
 
-    this->genAddLargeImm(TII, MRI, MBB, MI, dl, MI->getOperand(0).getReg(),
-                         LC32::FP, Offset, false,
-                         getRegState(MI->getOperand(0)));
+    this->genAddLargeImm(MI, dl, MI->getOperand(0).getReg(), LC32::FP, Offset,
+                         false, getRegState(MI->getOperand(0)));
     MBB.erase(MI);
     return false;
   }
@@ -148,10 +145,18 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   llvm_unreachable("Bad instruction with frame index");
 }
 
-void LC32RegisterInfo::genAddLargeImm(
-    const LC32InstrInfo &TII, MachineRegisterInfo &MRI, MachineBasicBlock &MBB,
-    MachineBasicBlock::iterator MBBI, DebugLoc &dl, Register dr, Register sr,
-    int64_t imm, bool alias, unsigned dr_flags, unsigned sr_flags) const {
+void LC32RegisterInfo::genAddLargeImm(MachineBasicBlock::iterator MBBI,
+                                      DebugLoc &dl, Register dr, Register sr,
+                                      int64_t imm, bool alias,
+                                      unsigned dr_flags,
+                                      unsigned sr_flags) const {
+
+  // Populate variables
+  MachineBasicBlock &MBB = *MBBI->getParent();
+  MachineFunction &MF = *MBB.getParent();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  const LC32InstrInfo &TII =
+      *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
 
   if (alias)
     // Check that AT isn't used

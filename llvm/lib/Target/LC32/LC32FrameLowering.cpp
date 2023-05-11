@@ -30,7 +30,6 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   // that
   assert(&MF.front() == &MBB && "Shrink-wrapping not supported");
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  MachineRegisterInfo &MRI = MF.getRegInfo();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const LC32InstrInfo &TII =
@@ -57,8 +56,7 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
       .addImm(-16);
 
   // Build the stack pointer
-  TRI.genAddLargeImm(TII, MRI, MBB, MBBI, dl, LC32::SP, LC32::FP,
-                     -MFI.getStackSize());
+  TRI.genAddLargeImm(MBBI, dl, LC32::SP, LC32::FP, -MFI.getStackSize());
 }
 
 void LC32FrameLowering::emitEpilogue(MachineFunction &MF,
@@ -88,7 +86,6 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
     MachineFunction &MF, MachineBasicBlock &MBB,
     MachineBasicBlock::iterator MI) const {
   // Populate variables
-  MachineRegisterInfo &MRI = MF.getRegInfo();
   DebugLoc dl = MI->getDebugLoc();
   const LC32InstrInfo &TII =
       *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -112,10 +109,10 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
   if (amt != 0) {
     // Handle setup and teardown
     if (MI->getOpcode() == TII.getCallFrameSetupOpcode()) {
-      TRI.genAddLargeImm(TII, MRI, MBB, MI, dl, LC32::SP, LC32::SP, -amt, true,
+      TRI.genAddLargeImm(MI, dl, LC32::SP, LC32::SP, -amt, true,
                          RegState::Define, RegState::Kill);
     } else if (MI->getOpcode() == TII.getCallFrameDestroyOpcode()) {
-      TRI.genAddLargeImm(TII, MRI, MBB, MI, dl, LC32::SP, LC32::SP, amt, true,
+      TRI.genAddLargeImm(MI, dl, LC32::SP, LC32::SP, amt, true,
                          RegState::Define, RegState::Kill);
     } else {
       llvm_unreachable("Tried to eliminate bad instruction");
@@ -138,12 +135,10 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // Count the number of scavenging slots we need:
   // 1. if the stack frame is too large. This is an underestimate, so compensate
   // 2. if branches can be out of range
-  // FIXME: We always assume (2) is
   unsigned num_scav = 0;
   if (!isInt<6 - 1>(MFI.estimateStackSize(MF)))
     num_scav++;
-  if (true)
-    num_scav++;
+  // FIXME: Implement 2
 
   // Create the scavenging indicies
   for (unsigned i = 0; i < num_scav; i++) {
