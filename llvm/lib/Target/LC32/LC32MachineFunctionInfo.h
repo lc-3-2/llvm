@@ -37,6 +37,14 @@ public:
    * varargs are used.
    */
   int VarArgsFI;
+
+  /**
+   * The address of the pointer used for sret
+   *
+   * This is populated on call to the function, and it is put onto the return
+   * address stack in lieu of a return value for functions that are sret.
+   */
+  Register SRetAddrReg;
 };
 
 } // namespace llvm

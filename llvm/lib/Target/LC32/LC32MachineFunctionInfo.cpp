@@ -14,7 +14,7 @@ LC32MachineFunctionInfo::LC32MachineFunctionInfo() = default;
 
 LC32MachineFunctionInfo::LC32MachineFunctionInfo(const Function &F,
                                                  const TargetSubtargetInfo *STI)
-    : VarArgsFI(0) {}
+    : VarArgsFI(0), SRetAddrReg(0) {}
 
 MachineFunctionInfo *LC32MachineFunctionInfo::clone(
     BumpPtrAllocator &Allocator, MachineFunction &DestMF,
