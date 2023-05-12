@@ -113,4 +113,13 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   // We also have to handle ISD::BR, but we handle that in TableGen
   this->setOperationAction(ISD::BR_CC, MVT::i32, Custom);
   this->setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
+
+  // Wrap address operands
+  // See td/instr/LC32MemInstrInfo.td
+  this->setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  this->setOperationAction(ISD::ExternalSymbol, MVT::i32, Custom);
+  this->setOperationAction(ISD::ConstantPool, MVT::i32, Custom);
+  this->setOperationAction(ISD::JumpTable, MVT::i32, Custom);
+  this->setOperationAction(ISD::BlockAddress, MVT::i32, Custom);
+  this->setOperationAction(ISD::FrameIndex, MVT::i32, Custom);
 }

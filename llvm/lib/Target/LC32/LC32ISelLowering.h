@@ -65,6 +65,10 @@ enum {
   // Operand 3: Value if true
   // Operand 4: Value if false
   SELECT_CMP_ZERO,
+
+  // Output 0: Address
+  // Operand 0: Address
+  ADDR_WRAPPER,
 };
 } // namespace LC32ISD
 
@@ -112,6 +116,7 @@ private:
                     SmallVectorImpl<SDValue> &InVals) const override;
 
   // See: LC32ISelLoweringOps.cpp
+  SDValue LowerAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSUB(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;

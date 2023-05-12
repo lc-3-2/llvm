@@ -67,16 +67,28 @@ in {
   }
 }
 
-def : Pat<(extloadi8 (add GPR:$baser, BOffset6:$boffset6)), (LDB GPR:$baser, BOffset6:$boffset6)>;
+def : Pat<
+  (extloadi8 (add GPR:$baser, BOffset6:$boffset6)),
+  (LDB GPR:$baser, BOffset6:$boffset6)
+>;
 def : Pat<(sextloadi8 GPR:$baser), (LDB GPR:$baser, 0)>;
 def : Pat<(extloadi8 GPR:$baser),  (LDB GPR:$baser, 0)>;
 
-def : Pat<(extloadi16 (add GPR:$baser, HOffset6:$hoffset6)), (LDH GPR:$baser, HOffset6:$hoffset6)>;
+def : Pat<
+  (extloadi16 (add GPR:$baser, HOffset6:$hoffset6)),
+  (LDH GPR:$baser, HOffset6:$hoffset6)
+>;
 def : Pat<(sextloadi16 GPR:$baser), (LDH GPR:$baser, 0)>;
 def : Pat<(extloadi16 GPR:$baser),  (LDH GPR:$baser, 0)>;
 
-def : Pat<(sextloadi32 (add GPR:$baser, WOffset6:$woffset6)), (LDW GPR:$baser, WOffset6:$woffset6)>;
-def : Pat<(extloadi32 (add GPR:$baser, WOffset6:$woffset6)),  (LDW GPR:$baser, WOffset6:$woffset6)>;
+def : Pat<
+  (sextloadi32 (add GPR:$baser, WOffset6:$woffset6)),
+  (LDW GPR:$baser, WOffset6:$woffset6)
+>;
+def : Pat<
+  (extloadi32 (add GPR:$baser, WOffset6:$woffset6)),
+  (LDW GPR:$baser, WOffset6:$woffset6)
+>;
 def : Pat<(sextloadi32 GPR:$baser), (LDW GPR:$baser, 0)>;
 def : Pat<(extloadi32 GPR:$baser),  (LDW GPR:$baser, 0)>;
 def : Pat<(load GPR:$baser),        (LDW GPR:$baser, 0)>;
@@ -139,82 +151,120 @@ def : Pat<(truncstorei8 GPR:$sr, GPR:$baser), (STB GPR:$sr, GPR:$baser, 0)>;
 
 def : Pat<(truncstorei16 GPR:$sr, GPR:$baser), (STH GPR:$sr, GPR:$baser, 0)>;
 
-def : Pat<(truncstorei32 GPR:$sr, (add GPR:$baser, WOffset6:$woffset6)), (STW GPR:$sr, GPR:$baser, WOffset6:$woffset6)>;
+def : Pat<
+  (truncstorei32 GPR:$sr, (add GPR:$baser, WOffset6:$woffset6)),
+  (STW GPR:$sr, GPR:$baser, WOffset6:$woffset6)
+>;
 def : Pat<(truncstorei32 GPR:$sr, GPR:$baser), (STW GPR:$sr, GPR:$baser, 0)>;
 def : Pat<(store GPR:$sr, GPR:$baser),         (STW GPR:$sr, GPR:$baser, 0)>;
 
 //---
-// Frame index manipulation
-
-// Custom function to turn frame indicies into target frame indicies
-def SelectFrameIndex : ComplexPattern<i32, 1, "SelectFrameIndex", [frameindex]>;
-
-// For when we can't eliminate the frame index via a load. This computes the
-// address we store to. This is lowered when we eliminate frame indices,
-// instead of in the AsmPrinter like most of the other pseudo instructions.
-def C_LEA_FRAMEINDEX : LC32Instruction_C {
-  let OutOperandList = (outs GPR:$dr);
-  let InOperandList = (ins i32imm:$fi);
-  let Pattern = [(set GPR:$dr, SelectFrameIndex:$fi)];
-
-  let isReMaterializable = true;
-}
-
-//---
 // Address manipulation
+//
+// Addresses can't be selected when they are the top-most node. If you try, the
+// matcher just uses the result as the source, which is not what we want.
+// Therefore, we take the approach of most backends and create a wrapper node
+// around addresses. Logically they just pass the value through, but we can use
+// them as the root for selection.
+//
+// These wrappers are constructed in ISelLowering - we do Custom expansion. We
+// also add LEA to load from these wrappers, as well as an instruction to load
+// the address of a frame index. The former can be relaxed to PSEUDO.LOADCONSTW,
+// and the latter is lowered along with frame indicies.
 
-// Custom functions to turn addresses into their target variant
-def SelectGlobalAddress  : ComplexPattern<iPTR, 1, "SelectGlobalAddress",  [globaladdr]>;
-def SelectExternalSymbol : ComplexPattern<iPTR, 1, "SelectExternalSymbol", [externalsym]>;
-def SelectConstantPool   : ComplexPattern<iPTR, 1, "SelectConstantPool",   [constpool]>;
-def SelectJumpTable      : ComplexPattern<iPTR, 1, "SelectJumpTable",      [jumptable]>;
-def SelectBlockAddress   : ComplexPattern<iPTR, 1, "SelectBlockAddress",   [blockaddress]>;
+def NT_ADDR_WRAPPER : SDTypeProfile<1, 1, [
+  SDTCisPtrTy<0>, SDTCisPtrTy<1>, SDTCisSameAs<0, 1>
+]>;
+def N_ADDR_WRAPPER : SDNode<"LC32ISD::ADDR_WRAPPER", NT_ADDR_WRAPPER>;
 
-def LEA : LC32Instruction {
-  let AsmString = "LEA\t$dr, $pcoffset9";
+let
+  OutOperandList = (outs GPR:$dr),
+  isReMaterializable = true
+in {
 
-  let OutOperandList = (outs GPR:$dr);
-  let InOperandList = (ins PCOffset9:$pcoffset9);
-  let Pattern = [(set GPR:$dr, SelectGlobalAddress:$pcoffset9)];
+  def C_LEA_FRAMEINDEX : LC32Instruction_C {
+    let InOperandList = (ins i32imm:$fi);
+    let Pattern = [(set GPR:$dr, (N_ADDR_WRAPPER tframeindex:$fi))];
+  }
 
-  bits<3> dr;
-  bits<9> pcoffset9;
-  let Inst{15-12} = 0b1110;
-  let Inst{11-9}  = dr;
-  let Inst{8-0}   = pcoffset9;
+  def LEA : LC32Instruction {
+    let AsmString = "LEA\t$dr, $pcoffset9";
+
+    let InOperandList = (ins PCOffset9:$pcoffset9);
+    let Pattern = [(set GPR:$dr, (N_ADDR_WRAPPER tglobaladdr:$pcoffset9))];
+
+    bits<3> dr;
+    bits<9> pcoffset9;
+    let Inst{15-12} = 0b1110;
+    let Inst{11-9}  = dr;
+    let Inst{8-0}   = pcoffset9;
+  }
 }
 
-def : Pat<(SelectExternalSymbol:$addr), (LEA SelectExternalSymbol:$addr)>;
-def : Pat<(SelectConstantPool:$addr),   (LEA SelectConstantPool:$addr)>;
-def : Pat<(SelectJumpTable:$addr),      (LEA SelectJumpTable:$addr)>;
-def : Pat<(SelectBlockAddress:$addr),   (LEA SelectBlockAddress:$addr)>;
+def : Pat<(N_ADDR_WRAPPER texternalsym:$addr),  (LEA PCOffset9:$addr)>;
+def : Pat<(N_ADDR_WRAPPER tconstpool:$addr),    (LEA PCOffset9:$addr)>;
+def : Pat<(N_ADDR_WRAPPER tjumptable:$addr),    (LEA PCOffset9:$addr)>;
+def : Pat<(N_ADDR_WRAPPER tblockaddress:$addr), (LEA PCOffset9:$addr)>;
 
 //--
 // Loads and stores with frame indices. We can optimize these, so we select
 // here. The frame index is eliminated later.
 
-def : Pat<(load SelectFrameIndex:$fi), (LDW SelectFrameIndex:$fi, 0)>;
-def : Pat<(load (add SelectFrameIndex:$fi, WOffset6:$woffset6)), (LDW SelectFrameIndex:$fi, WOffset6:$woffset6)>;
+def : Pat<(load (N_ADDR_WRAPPER tframeindex:$fi)), (LDW tframeindex:$fi, 0)>;
+def : Pat<
+  (load (add (N_ADDR_WRAPPER tframeindex:$fi), WOffset6:$woffset6)),
+  (LDW tframeindex:$fi, WOffset6:$woffset6)
+>;
 
-def : Pat<(store GPR:$sr, SelectFrameIndex:$fi), (STW GPR:$sr, SelectFrameIndex:$fi, 0)>;
-def : Pat<(store GPR:$sr, (add SelectFrameIndex:$fi, WOffset6:$woffset6)), (STW GPR:$sr, SelectFrameIndex:$fi, WOffset6:$woffset6)>;
+def : Pat<(store GPR:$sr, (N_ADDR_WRAPPER tframeindex:$fi)), (STW GPR:$sr, tframeindex:$fi, 0)>;
+def : Pat<
+  (store GPR:$sr, (add (N_ADDR_WRAPPER tframeindex:$fi), WOffset6:$woffset6)),
+  (STW GPR:$sr, tframeindex:$fi, WOffset6:$woffset6)
+>;
 
-def : Pat<(extloadi8 SelectFrameIndex:$fi),   (LDB SelectFrameIndex:$fi, 0)>;
-def : Pat<(sextloadi8 SelectFrameIndex:$fi),  (LDB SelectFrameIndex:$fi, 0)>;
-def : Pat<(extloadi16 SelectFrameIndex:$fi),  (LDH SelectFrameIndex:$fi, 0)>;
-def : Pat<(sextloadi16 SelectFrameIndex:$fi), (LDH SelectFrameIndex:$fi, 0)>;
-def : Pat<(extloadi32 SelectFrameIndex:$fi),  (LDW SelectFrameIndex:$fi, 0)>;
-def : Pat<(sextloadi32 SelectFrameIndex:$fi), (LDW SelectFrameIndex:$fi, 0)>;
-def : Pat<(extloadi8 (add SelectFrameIndex:$fi, BOffset6:$boffset6)),   (LDB SelectFrameIndex:$fi, BOffset6:$boffset6)>;
-def : Pat<(sextloadi8 (add SelectFrameIndex:$fi, BOffset6:$boffset6)),  (LDB SelectFrameIndex:$fi, BOffset6:$boffset6)>;
-def : Pat<(extloadi16 (add SelectFrameIndex:$fi, HOffset6:$hoffset6)),  (LDH SelectFrameIndex:$fi, HOffset6:$hoffset6)>;
-def : Pat<(sextloadi16 (add SelectFrameIndex:$fi, HOffset6:$hoffset6)), (LDH SelectFrameIndex:$fi, HOffset6:$hoffset6)>;
-def : Pat<(extloadi32 (add SelectFrameIndex:$fi, WOffset6:$woffset6)),  (LDW SelectFrameIndex:$fi, WOffset6:$woffset6)>;
-def : Pat<(sextloadi32 (add SelectFrameIndex:$fi, WOffset6:$woffset6)), (LDW SelectFrameIndex:$fi, WOffset6:$woffset6)>;
+def : Pat<(extloadi8 (N_ADDR_WRAPPER tframeindex:$fi)),   (LDB tframeindex:$fi, 0)>;
+def : Pat<(sextloadi8 (N_ADDR_WRAPPER tframeindex:$fi)),  (LDB tframeindex:$fi, 0)>;
+def : Pat<(extloadi16 (N_ADDR_WRAPPER tframeindex:$fi)),  (LDH tframeindex:$fi, 0)>;
+def : Pat<(sextloadi16 (N_ADDR_WRAPPER tframeindex:$fi)), (LDH tframeindex:$fi, 0)>;
+def : Pat<(extloadi32 (N_ADDR_WRAPPER tframeindex:$fi)),  (LDW tframeindex:$fi, 0)>;
+def : Pat<(sextloadi32 (N_ADDR_WRAPPER tframeindex:$fi)), (LDW tframeindex:$fi, 0)>;
+def : Pat<
+  (extloadi8 (add (N_ADDR_WRAPPER tframeindex:$fi), BOffset6:$boffset6)),
+  (LDB tframeindex:$fi, BOffset6:$boffset6)
+>;
+def : Pat<
+  (sextloadi8 (add (N_ADDR_WRAPPER tframeindex:$fi), BOffset6:$boffset6)),
+  (LDB tframeindex:$fi, BOffset6:$boffset6)
+>;
+def : Pat<
+  (extloadi16 (add (N_ADDR_WRAPPER tframeindex:$fi), HOffset6:$hoffset6)),
+  (LDH tframeindex:$fi, HOffset6:$hoffset6)
+>;
+def : Pat<
+  (sextloadi16 (add (N_ADDR_WRAPPER tframeindex:$fi), HOffset6:$hoffset6)),
+  (LDH tframeindex:$fi, HOffset6:$hoffset6)
+>;
+def : Pat<
+  (extloadi32 (add (N_ADDR_WRAPPER tframeindex:$fi), WOffset6:$woffset6)),
+  (LDW tframeindex:$fi, WOffset6:$woffset6)
+>;
+def : Pat<
+  (sextloadi32 (add (N_ADDR_WRAPPER tframeindex:$fi), WOffset6:$woffset6)),
+  (LDW tframeindex:$fi, WOffset6:$woffset6)
+>;
 
-def : Pat<(truncstorei8 GPR:$sr, SelectFrameIndex:$fi),  (STB GPR:$sr, SelectFrameIndex:$fi, 0)>;
-def : Pat<(truncstorei16 GPR:$sr, SelectFrameIndex:$fi), (STH GPR:$sr, SelectFrameIndex:$fi, 0)>;
-def : Pat<(truncstorei32 GPR:$sr, SelectFrameIndex:$fi), (STW GPR:$sr, SelectFrameIndex:$fi, 0)>;
-def : Pat<(truncstorei8 GPR:$sr, (add SelectFrameIndex:$fi, BOffset6:$boffset6)),  (STB GPR:$sr, SelectFrameIndex:$fi, BOffset6:$boffset6)>;
-def : Pat<(truncstorei16 GPR:$sr, (add SelectFrameIndex:$fi, HOffset6:$hoffset6)), (STH GPR:$sr, SelectFrameIndex:$fi, HOffset6:$hoffset6)>;
-def : Pat<(truncstorei32 GPR:$sr, (add SelectFrameIndex:$fi, WOffset6:$woffset6)), (STW GPR:$sr, SelectFrameIndex:$fi, WOffset6:$woffset6)>;
+def : Pat<(truncstorei8 GPR:$sr, (N_ADDR_WRAPPER tframeindex:$fi)),  (STB GPR:$sr, tframeindex:$fi, 0)>;
+def : Pat<(truncstorei16 GPR:$sr, (N_ADDR_WRAPPER tframeindex:$fi)), (STH GPR:$sr, tframeindex:$fi, 0)>;
+def : Pat<(truncstorei32 GPR:$sr, (N_ADDR_WRAPPER tframeindex:$fi)), (STW GPR:$sr, tframeindex:$fi, 0)>;
+def : Pat<
+  (truncstorei8 GPR:$sr, (add (N_ADDR_WRAPPER tframeindex:$fi), BOffset6:$boffset6)),
+  (STB GPR:$sr, tframeindex:$fi, BOffset6:$boffset6)
+>;
+def : Pat<
+  (truncstorei16 GPR:$sr, (add (N_ADDR_WRAPPER tframeindex:$fi), HOffset6:$hoffset6)),
+  (STH GPR:$sr, tframeindex:$fi, HOffset6:$hoffset6)
+>;
+def : Pat<
+  (truncstorei32 GPR:$sr, (add (N_ADDR_WRAPPER tframeindex:$fi), WOffset6:$woffset6)),
+  (STW GPR:$sr, tframeindex:$fi, WOffset6:$woffset6)
+>;

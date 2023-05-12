@@ -116,7 +116,7 @@ in {
       let AsmString = "JSR\t$pcoffset11";
 
       let InOperandList = (ins PCOffset11:$pcoffset11);
-      let Pattern = [(N_LC32_CALL SelectGlobalAddress:$pcoffset11)];
+      let Pattern = [(N_LC32_CALL (N_ADDR_WRAPPER tglobaladdr:$pcoffset11))];
 
       bits<11> pcoffset11;
       let Inst{15-12} = 0b0100;
@@ -133,4 +133,4 @@ in {
   }
 }
 
-def : Pat<(N_LC32_CALL SelectExternalSymbol:$addr), (JSR PCOffset11:$addr)>;
+def : Pat<(N_LC32_CALL (N_ADDR_WRAPPER texternalsym:$addr)), (JSR PCOffset11:$addr)>;
