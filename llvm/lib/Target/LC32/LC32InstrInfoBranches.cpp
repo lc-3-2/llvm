@@ -9,7 +9,7 @@
 #include "LC32InstrInfo.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 using namespace llvm;
-#define DEBUG_TYPE "LC32InstrInfo"
+#define DEBUG_TYPE "LC32InstrInfoBranches"
 
 bool LC32InstrInfo::analyzeBranch(MachineBasicBlock &MBB,
                                   MachineBasicBlock *&TBB,
