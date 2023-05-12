@@ -281,7 +281,7 @@ SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
 
     // Teardown the stack
     // Remember to pop the return value too
-    Chain = CLI.DAG.getCALLSEQ_END(Chain.getValue(0), NumBytes + 4, 0,
+    Chain = CLI.DAG.getCALLSEQ_END(Chain.getValue(0), NumBytes, 4,
                                    Chain.getValue(1), CLI.DL);
     // Return the value
     Chain = CLI.DAG.getCopyFromReg(Chain.getValue(0), CLI.DL, reg_ret, MVT::i32,
@@ -293,7 +293,7 @@ SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
     // This function either returns void or is sret
     // Either way, just return
     assert(RVLocs.empty() && "Should be void or have demoted to sret");
-    return CLI.DAG.getCALLSEQ_END(Chain, NumBytes + 4, 0, Chain.getValue(1),
+    return CLI.DAG.getCALLSEQ_END(Chain, NumBytes, 4, Chain.getValue(1),
                                   CLI.DL);
   }
 }

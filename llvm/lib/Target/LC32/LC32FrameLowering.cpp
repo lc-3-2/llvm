@@ -98,8 +98,20 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
           MI->getOpcode() == TII.getCallFrameDestroyOpcode()) &&
          "Bad type of instruction to eliminate");
 
+  // Get the second parameter to this instruction
+  // For call frame setups, this is the amount that was set up prior to the
+  // chain, which should always be zero for us. For teardowns, this could be
+  // zero or four depending on whether we made a call.
+  uint64_t internal_amt = MI->getOperand(1).getImm();
+  if (MI->getOpcode() == TII.getCallFrameSetupOpcode())
+    assert(internal_amt == 0 &&
+           "Internal amount should be zero for frame setup");
+  if (MI->getOpcode() == TII.getCallFrameDestroyOpcode())
+    assert((internal_amt == 0 || internal_amt == 4) &&
+           "Internal amount should be zero or four for frame destroy");
+
   // Get the size associated with this pseudo
-  uint64_t amt = TII.getFrameSize(*MI);
+  uint64_t amt = TII.getFrameSize(*MI) + internal_amt;
   // Align to four bytes
   assert(this->getStackAlign() == 4 && "LC-3.2 stack should be word aligned");
   amt = alignTo(amt, this->getStackAlign());
