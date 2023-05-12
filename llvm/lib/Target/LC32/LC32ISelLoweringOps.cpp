@@ -28,6 +28,8 @@ const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "LC32ISD::CMP_ZERO";
   case LC32ISD::SELECT_CMP_ZERO:
     return "LC32ISD::SELECT_CMP_ZERO";
+  case LC32ISD::ADDR_WRAPPER:
+    return "LC32ISD::ADDR_WRAPPER";
   default:
     return nullptr;
   }
@@ -36,6 +38,13 @@ const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
 SDValue LC32TargetLowering::LowerOperation(SDValue Op,
                                            SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
+  case ISD::GlobalAddress:
+  case ISD::ExternalSymbol:
+  case ISD::ConstantPool:
+  case ISD::JumpTable:
+  case ISD::BlockAddress:
+  case ISD::FrameIndex:
+    return this->LowerAddress(Op, DAG);
   case ISD::SUB:
     return this->LowerSUB(Op, DAG);
   case ISD::OR:
@@ -62,6 +71,7 @@ SDValue LC32TargetLowering::PerformDAGCombine(SDNode *N,
   case LC32ISD::RET:
   case LC32ISD::BR_CMP_ZERO:
   case LC32ISD::SELECT_CMP_ZERO:
+  case LC32ISD::ADDR_WRAPPER:
     return SDValue();
   default:
     llvm_unreachable("Bad opcode for custom combine");
@@ -77,6 +87,51 @@ LC32TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   default:
     llvm_unreachable("Bad opcode for custom insertion");
   }
+}
+
+SDValue LC32TargetLowering::LowerAddress(SDValue Op, SelectionDAG &DAG) const {
+  // Populate variables and check constraints
+  SDLoc dl(Op);
+  assert(Op.getValueType() == MVT::i32 && "Addresses should be i32");
+
+  // Get the transformed address
+  // They have to go from X to TargetX
+  SDValue target_addr;
+  switch (Op.getOpcode()) {
+  case ISD::GlobalAddress:
+    target_addr = DAG.getTargetGlobalAddress(
+        cast<GlobalAddressSDNode>(Op)->getGlobal(), dl, MVT::i32,
+        cast<GlobalAddressSDNode>(Op)->getOffset());
+    break;
+  case ISD::ExternalSymbol:
+    target_addr = DAG.getTargetExternalSymbol(
+        cast<ExternalSymbolSDNode>(Op)->getSymbol(), MVT::i32);
+    break;
+  case ISD::ConstantPool:
+    target_addr = DAG.getTargetConstantPool(
+        cast<ConstantPoolSDNode>(Op)->getConstVal(), MVT::i32,
+        cast<ConstantPoolSDNode>(Op)->getAlign(),
+        cast<ConstantPoolSDNode>(Op)->getOffset());
+    break;
+  case ISD::JumpTable:
+    target_addr =
+        DAG.getTargetJumpTable(cast<JumpTableSDNode>(Op)->getIndex(), MVT::i32);
+    break;
+  case ISD::BlockAddress:
+    target_addr = DAG.getTargetBlockAddress(
+        cast<BlockAddressSDNode>(Op)->getBlockAddress(), MVT::i32,
+        cast<BlockAddressSDNode>(Op)->getOffset());
+    break;
+  case ISD::FrameIndex:
+    target_addr = DAG.getTargetFrameIndex(
+        cast<FrameIndexSDNode>(Op)->getIndex(), MVT::i32);
+    break;
+  default:
+    llvm_unreachable("Unhandled address type");
+  }
+
+  // Wrap the result
+  return DAG.getNode(LC32ISD::ADDR_WRAPPER, dl, MVT::i32, target_addr);
 }
 
 SDValue LC32TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) const {

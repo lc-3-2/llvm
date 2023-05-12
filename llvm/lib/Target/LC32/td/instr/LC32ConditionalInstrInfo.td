@@ -68,10 +68,9 @@ def C_BR_UNCOND : LC32Instruction_C, PseudoInstExpansion<(BR 0b111, BRTarget:$ta
 // is how we encode conditional branches, and we separated it out in the
 // AsmPrinter.
 
-def NT_BR_CMP_ZERO : SDTypeProfile<
-  0, 3,
-  [SDTCisVT<0, i32>, SDTCisVT<1, i32>, SDTCisVT<2, OtherVT>]
->;
+def NT_BR_CMP_ZERO : SDTypeProfile<0, 3, [
+  SDTCisVT<0, i32>, SDTCisVT<1, i32>, SDTCisVT<2, OtherVT>
+]>;
 def N_BR_CMP_ZERO : SDNode<
   "LC32ISD::BR_CMP_ZERO",
   NT_BR_CMP_ZERO,
@@ -94,10 +93,12 @@ def C_BR_CMP_ZERO : LC32Instruction_C {
 // Pseudo instructon for selecting based on how the input compares with zero.
 // This is lowered with a custom inserter, and it desugars to branches.
 
-def NT_SELECT_CMP_ZERO : SDTypeProfile<
-  1, 4,
-  [SDTCisVT<0, i32>, SDTCisVT<1, i32>, SDTCisVT<2, i32>, SDTCisVT<3, i32>, SDTCisVT<4, i32>]
->;
+def NT_SELECT_CMP_ZERO : SDTypeProfile<1, 4, [
+  SDTCisVT<0, i32>,
+  SDTCisVT<1, i32>, SDTCisVT<2, i32>,
+  SDTCisVT<3, i32>, SDTCisVT<4, i32>,
+  SDTCisSameAs<0, 3>, SDTCisSameAs<0, 4>, SDTCisSameAs<3, 4>
+]>;
 def N_SELECT_CMP_ZERO : SDNode<
   "LC32ISD::SELECT_CMP_ZERO",
   NT_SELECT_CMP_ZERO,
