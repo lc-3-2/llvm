@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LC32ISelLowering.h"
+#include "LC32MachineFunctionInfo.h"
 #include "LC32RegisterInfo.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -33,11 +34,20 @@ SDValue LC32TargetLowering::LowerFormalArguments(
   // Populate variables
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo &MFI = MF.getFrameInfo();
+  LC32MachineFunctionInfo *MFnI = MF.getInfo<LC32MachineFunctionInfo>();
 
   // Initialize the CCState
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, MF, ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Ins, LC32CallingConv);
+
+  // If this function is variadic, create a frame index corresponding to the
+  // first variadic argument. This will be read by the code that lowers
+  // `vastart`.
+  if (isVarArg)
+    // Note the offset from the frame pointer
+    MFnI->VarArgsFI =
+        MFI.CreateFixedObject(1, 16 + CCInfo.getNextStackOffset(), true);
 
   // Create frame indicies for each of the arguments
   // See: MSP430ISelLowering.cpp, LanaiISelLowering.cpp

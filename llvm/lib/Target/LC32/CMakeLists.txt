@@ -27,6 +27,7 @@ add_llvm_target(LC32CodeGen
   LC32InstrInfo.cpp
   LC32InstrInfoBranches.cpp
   LC32RegisterInfo.cpp
+  LC32MachineFunctionInfo.cpp
   LC32AsmPrinter.cpp
 
   LINK_COMPONENTS

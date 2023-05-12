@@ -34,6 +34,9 @@ public:
 
   TargetLoweringObjectFile *getObjFileLowering() const override;
   const LC32Subtarget *getSubtargetImpl(const Function &F) const override;
+  MachineFunctionInfo *
+  createMachineFunctionInfo(BumpPtrAllocator &Allocator, const Function &F,
+                            const TargetSubtargetInfo *STI) const override;
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
 private:

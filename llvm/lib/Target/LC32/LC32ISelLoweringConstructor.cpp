@@ -97,6 +97,12 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   this->setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   this->setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
 
+  // Expand VAArgs wherever possible, otherwise custom
+  this->setOperationAction(ISD::VASTART, MVT::Other, Custom);
+  this->setOperationAction(ISD::VAARG, MVT::Other, Expand);
+  this->setOperationAction(ISD::VAEND, MVT::Other, Expand);
+  this->setOperationAction(ISD::VACOPY, MVT::Other, Expand);
+
   // Expand complex conditionals
   this->setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   this->setOperationAction(ISD::BRCOND, MVT::Other, Expand);
