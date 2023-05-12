@@ -52,6 +52,9 @@ unsigned LC32InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   // compiler, while JSR is handled in the assembler.
   if (d_op == LC32::JSR)
     return this->get(LC32::P_FARJSR).getSize();
+  // Same for LEA
+  if (d_op == LC32::LEA)
+    return this->get(LC32::P_LOADCONSTW).getSize();
 
   return d.getSize();
 }

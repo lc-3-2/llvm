@@ -133,10 +133,12 @@ static unsigned EstimateFunctionSize(const MachineFunction &MF,
       // later, so over-estimate their size for the purposes of register
       // scavenging.
       if (MI.getOpcode() == LC32::BR)
+        ret += 16;
+      else if (MI.getOpcode() == LC32::C_BR_CMP_ZERO)
         ret += 18;
-
       // Otherwise, handle normally
-      ret += TII.getInstSizeInBytes(MI);
+      else
+        ret += TII.getInstSizeInBytes(MI);
     }
   }
   return ret;
@@ -154,7 +156,8 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
 
   // Count the number of scavenging slots we need:
   // 1. if the stack frame is too large. This is an underestimate, so compensate
-  // 2. if branches can be out of range
+  // 2. if branches can be out of range. This is an overestimate, but we still
+  //    make contingency space.
   unsigned num_scav = 0;
   if (!isInt<6 - 1>(MFI.estimateStackSize(MF)))
     num_scav++;
