@@ -26,15 +26,16 @@ LC32TargetInfo::LC32TargetInfo(const llvm::Triple &Triple,
   this->HasFPReturn = false;
 
   // Set the data layout
-  this->resetDataLayout("e"        // Little endian
-                        "-S32"     // Stack is word aligned
-                        "-p:32:32" // Pointers are words and are word aligned
-                        "-i32:32"  // Words are word aligned
-                        "-i16:16"  // Halfwords are halfword aligned
-                        "-i8:8"    // Bytes are byte aligned
-                        "-a:32"    // Aggregates are word aligned
-                        "-n32"     // Integers are 32-bit
-                        "-m:e"     // ELF-style name mangling
+  this->resetDataLayout(
+      "e"        // Little endian
+      "-S32"     // Stack is word aligned
+      "-p:32:32" // Pointers are words and are word aligned
+      "-i32:32"  // Words are word aligned
+      "-i16:16"  // Halfwords are halfword aligned
+      "-i8:8"    // Bytes are byte aligned
+      "-a:8:32"  // Aggregates have to be byte-aligned, but prefer word aligned
+      "-n32"     // Integers are 32-bit
+      "-m:e"     // ELF-style name mangling
   );
 }
 

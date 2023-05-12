@@ -30,7 +30,8 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
          "-i32:32"  // Words are word aligned
          "-i16:16"  // Halfwords are halfword aligned
          "-i8:8"    // Bytes are byte aligned
-         "-a:32"    // Aggregates are word aligned
+         "-a:8:32"  // Aggregates have to be byte-aligned, but prefer word
+                    // aligned
          "-n32"     // Integers are 32-bit
          "-m:e"     // ELF-style name mangling
       ;
