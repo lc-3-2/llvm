@@ -51,6 +51,7 @@ SDValue LC32TargetLowering::LowerFormalArguments(
 
   // Create frame indicies for each of the arguments
   // See: MSP430ISelLowering.cpp, LanaiISelLowering.cpp
+  bool saw_sret = false;
   for (size_t i = 0; i < ArgLocs.size(); i++) {
     const CCValAssign &va = ArgLocs[i];
     assert(i < Ins.size() && "Ins array not big enough");
@@ -77,6 +78,21 @@ SDValue LC32TargetLowering::LowerFormalArguments(
       InVals.push_back(DAG.getLoad(
           va.getLocVT(), dl, Chain, DAG.getFrameIndex(FI, MVT::i32),
           MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI)));
+    }
+
+    // If this operand is to be the pointer for sret, copy it to a register and
+    // save it to be returned
+    if (Ins[i].Flags.isSRet()) {
+      // We can only have one sret
+      assert(!saw_sret && "Can only have one sret argument");
+      assert(MFnI->SRetAddrReg == 0 && "SRetAddrReg already set");
+      saw_sret = true;
+      // Create a register to store the return address
+      MFnI->SRetAddrReg =
+          MF.getRegInfo().createVirtualRegister(&LC32::GPRRegClass);
+      // Copy to the register
+      Chain = DAG.getCopyToReg(DAG.getEntryNode(), dl, MFnI->SRetAddrReg,
+                               InVals[i]);
     }
   }
 
@@ -106,6 +122,7 @@ LC32TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   // Populate variables
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo &MFI = MF.getFrameInfo();
+  LC32MachineFunctionInfo *MFnI = MF.getInfo<LC32MachineFunctionInfo>();
 
   // Initialize CCState
   SmallVector<CCValAssign, 16> RVLocs;
@@ -135,11 +152,23 @@ LC32TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
         Align(4));
 
   } else {
-    assert(RVLocs.empty() && "Should have demoted to sret");
+    // This function either returns void or is sret
+    assert(RVLocs.empty() && "Should be void or have demoted to sret");
+    // If it returns sret, store the pointer onto the stack in place of the
+    // return value
+    if (MF.getFunction().hasStructRetAttr()) {
+      assert(MFnI->SRetAddrReg != 0 && "Should've set register for sret");
+      // Copy from the register and store it on the stack
+      SDValue v = DAG.getCopyFromReg(Chain, dl, MFnI->SRetAddrReg, MVT::i32);
+      int FI = MFI.CreateFixedObject(4, 12, false);
+      Chain = DAG.getStore(
+          Chain, dl, v, DAG.getFrameIndex(FI, MVT::i32),
+          MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
+          Align(4));
+    }
   }
 
-  SmallVector<SDValue, 4> RetOps(1, Chain);
-  return DAG.getNode(LC32ISD::RET, dl, MVT::Other, RetOps);
+  return DAG.getNode(LC32ISD::RET, dl, MVT::Other, Chain);
 }
 
 // Usually: LowerCall, LowerCCCCallTo, and LowerCallResult
@@ -261,9 +290,9 @@ SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
     return Chain.getValue(1);
 
   } else {
-    // Demoted to sret. Just return
-    // Alternatively, the function returns void
-    assert(RVLocs.empty() && "Should have demoted to sret");
+    // This function either returns void or is sret
+    // Either way, just return
+    assert(RVLocs.empty() && "Should be void or have demoted to sret");
     return CLI.DAG.getCALLSEQ_END(Chain, NumBytes + 4, 0, Chain.getValue(1),
                                   CLI.DL);
   }
