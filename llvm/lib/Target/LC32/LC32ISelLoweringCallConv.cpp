@@ -264,7 +264,7 @@ SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
     // Demoted to sret. Just return
     // Alternatively, the function returns void
     assert(RVLocs.empty() && "Should have demoted to sret");
-    return CLI.DAG.getCALLSEQ_END(Chain, NumBytes, 0, Chain.getValue(1),
+    return CLI.DAG.getCALLSEQ_END(Chain, NumBytes + 4, 0, Chain.getValue(1),
                                   CLI.DL);
   }
 }
