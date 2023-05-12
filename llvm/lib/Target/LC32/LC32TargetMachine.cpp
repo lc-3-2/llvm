@@ -8,6 +8,7 @@
 
 #include "LC32TargetMachine.h"
 #include "LC32ISelDAGToDAG.h"
+#include "LC32MachineFunctionInfo.h"
 #include "TargetInfo/LC32TargetInfo.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
@@ -58,6 +59,13 @@ TargetLoweringObjectFile *LC32TargetMachine::getObjFileLowering() const {
 const LC32Subtarget *
 LC32TargetMachine::getSubtargetImpl(const Function &F) const {
   return &Subtarget;
+}
+
+MachineFunctionInfo *LC32TargetMachine::createMachineFunctionInfo(
+    BumpPtrAllocator &Allocator, const Function &F,
+    const TargetSubtargetInfo *STI) const {
+  return LC32MachineFunctionInfo::create<LC32MachineFunctionInfo>(Allocator, F,
+                                                                  STI);
 }
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32Target() {

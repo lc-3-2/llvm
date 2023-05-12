@@ -8,6 +8,7 @@
 
 #include "LC32CLOpts.h"
 #include "LC32ISelLowering.h"
+#include "LC32MachineFunctionInfo.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -43,6 +44,8 @@ SDValue LC32TargetLowering::LowerOperation(SDValue Op,
     return this->LowerBR_CC(Op, DAG);
   case ISD::SELECT_CC:
     return this->LowerSELECT_CC(Op, DAG);
+  case ISD::VASTART:
+    return this->LowerVASTART(Op, DAG);
   default:
     llvm_unreachable("Bad opcode for custom lowering");
   }
@@ -175,6 +178,26 @@ SDValue LC32TargetLowering::LowerSELECT_CC(SDValue Op,
   // Generate the selection
   return DAG.getNode(LC32ISD::SELECT_CMP_ZERO, dl, MVT::i32, cmp_res.Chain,
                      cmp_res.NZP, cmp_res.Value, TrueV, FalseV);
+}
+
+SDValue LC32TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
+  // Populate variables
+  SDValue Chain = Op.getOperand(0);
+  SDValue Dst = Op.getOperand(1);
+  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  MachineFunction &MF = DAG.getMachineFunction();
+  LC32MachineFunctionInfo *MFnI = MF.getInfo<LC32MachineFunctionInfo>();
+  SDLoc dl(Op);
+
+  // Check types
+  assert(Dst.getValueType() == MVT::i32 && "Pointers should be i32");
+
+  // Get the frame index of the first vararg
+  assert(MFnI->VarArgsFI < 0 && "Function not variadic");
+  SDValue FI = DAG.getFrameIndex(MFnI->VarArgsFI, Dst.getValueType());
+
+  // Store the frame index to the destination
+  return DAG.getStore(Chain, dl, FI, Dst, MachinePointerInfo(SV));
 }
 
 MachineBasicBlock *
