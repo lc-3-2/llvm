@@ -144,11 +144,10 @@ void LC32AsmPrinter::lowerOperand(MachineOperand MO, MCOperand &MCOp) {
 
   // Lower constant pool references
   case MachineOperand::MO_ConstantPoolIndex:
-    // Compute the name
+    // Compute the name. The name must conform to what LLVM expects.
     raw_svector_ostream(symbol_name)
-        << this->getDataLayout().getPrivateGlobalPrefix()
-        << "ConstantPoolIndex_" << this->getFunctionNumber() << '_'
-        << MO.getIndex();
+        << this->getDataLayout().getPrivateGlobalPrefix() << "CPI"
+        << this->getFunctionNumber() << '_' << MO.getIndex();
     // Return
     MCOp = this->lowerSymbolOperand(
         MO, this->OutContext.getOrCreateSymbol(symbol_name));
@@ -156,9 +155,9 @@ void LC32AsmPrinter::lowerOperand(MachineOperand MO, MCOperand &MCOp) {
 
   // Lower jump table references
   case MachineOperand::MO_JumpTableIndex:
-    // Compute the name
+    // Compute the name. The name must conform to what LLVM expects.
     raw_svector_ostream(symbol_name)
-        << this->getDataLayout().getPrivateGlobalPrefix() << "JumpTableIndex_"
+        << this->getDataLayout().getPrivateGlobalPrefix() << "JTI"
         << this->getFunctionNumber() << '_' << MO.getIndex();
     // Return
     MCOp = this->lowerSymbolOperand(
