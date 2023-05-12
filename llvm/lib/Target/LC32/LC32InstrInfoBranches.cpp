@@ -43,24 +43,20 @@ bool LC32InstrInfo::analyzeBranch(MachineBasicBlock &MBB,
       return true;
 
     // Check the instruction has an expected opcode
-    // FARBR shouldn't exist at this point
+    // BR and FARBR shouldn't exist at this point
+    assert(i->getOpcode() != LC32::BR && "BR generated");
     assert(i->getOpcode() != LC32::P_FARBR && "FARBR generated");
-    assert(
-        (i->getOpcode() == LC32::BR || i->getOpcode() == LC32::C_BR_CMP_ZERO) &&
-        "Bad terminator");
-
-    // Get NZP
-    int64_t nzp = i->getOperand(0).getImm();
+    assert((i->getOpcode() == LC32::C_BR_UNCOND ||
+            i->getOpcode() == LC32::C_BR_CMP_ZERO) &&
+           "Bad terminator");
 
     // Handle unconditional branches. This sets TBB to the branch destination
     // and continues. If the preceeding instruction is conditional, it can refer
     // to TBB.
-    if (nzp == 0b111) {
-      // Only BR should be unconditional
-      assert(i->getOpcode() == LC32::BR && "Bad opcode for unconditional");
+    if (i->getOpcode() == LC32::C_BR_UNCOND) {
 
       // Set TBB as needed
-      TBB = i->getOperand(1).getMBB();
+      TBB = i->getOperand(0).getMBB();
       FBB = nullptr;
       // Reset conditions
       // Even though we may have seen conditional branches after this, we can't
@@ -82,13 +78,10 @@ bool LC32InstrInfo::analyzeBranch(MachineBasicBlock &MBB,
       continue;
     }
 
-    // Handle conditional branches. This can be wither BR or C_BR_CMP_ZERO. In
-    // either case, only handle one.
-    if (nzp != 0b111) {
-      // Shouldn't have conditional BR at this point
-      assert(i->getOpcode() == LC32::C_BR_CMP_ZERO &&
-             "Bad opcode for conditional");
-      // Check NZP is good
+    // Handle conditional branches.
+    if (i->getOpcode() == LC32::C_BR_CMP_ZERO) {
+      // Get NZP and check its good
+      int64_t nzp = i->getOperand(0).getImm();
       assert(nzp >= 0b000 && nzp <= 0b111 && "Bad nzp");
       assert(nzp != 0b000 && "NOP generated");
 
@@ -107,6 +100,8 @@ bool LC32InstrInfo::analyzeBranch(MachineBasicBlock &MBB,
       // Check we don't have a conditional above this
       continue;
     }
+
+    llvm_unreachable("Unhandled opcode");
   }
 
   // We may have seen branches - TBB and FBB should be set by now
@@ -134,9 +129,9 @@ unsigned LC32InstrInfo::removeBranch(MachineBasicBlock &MBB,
       break;
 
     // Check the opcodes
-    assert(
-        (i->getOpcode() == LC32::BR || i->getOpcode() == LC32::C_BR_CMP_ZERO) &&
-        "Bad terminator");
+    assert((i->getOpcode() == LC32::C_BR_UNCOND ||
+            i->getOpcode() == LC32::C_BR_CMP_ZERO) &&
+           "Bad terminator");
 
     // Update statistics
     count++;
@@ -176,7 +171,7 @@ unsigned LC32InstrInfo::insertBranch(
 
     // Create the instruction
     MachineInstr *mi =
-        BuildMI(&MBB, DL, this->get(LC32::BR)).addImm(0b111).addMBB(TBB);
+        BuildMI(&MBB, DL, this->get(LC32::C_BR_UNCOND)).addMBB(TBB);
     // Update stats
     count++;
     bytes += this->getInstSizeInBytes(*mi);
@@ -195,7 +190,7 @@ unsigned LC32InstrInfo::insertBranch(
 
     // Second branch if needed, and update stats
     if (FBB != nullptr) {
-      mi = BuildMI(&MBB, DL, this->get(LC32::BR)).addImm(0b111).addMBB(FBB);
+      mi = BuildMI(&MBB, DL, this->get(LC32::C_BR_UNCOND)).addMBB(FBB);
       count++;
       bytes += this->getInstSizeInBytes(*mi);
     }

@@ -17,7 +17,7 @@
 
 //---
 // The branch itself. For conditional branches, this is emitted as part of
-// C_BR_CMP_ZERO. It's also used as-is for unconditional branches.
+// C_BR_CMP_ZERO. For unconditional branches, we use C_BR_UNCOND.
 
 let
   Defs = [AT],
@@ -45,7 +45,23 @@ in {
   }
 }
 
-def : Pat<(br bb:$target), (BR 0b111, BRTarget:$target)>;
+//---
+// Unconditional branches have a pseudo instruction that lowers directly to BR.
+// We need that layer of indirection since LLVM requires a barrier at the end of
+// each block, and since BR is not always a terminator.
+
+def C_BR_UNCOND : LC32Instruction_C, PseudoInstExpansion<(BR 0b111, BRTarget:$target)> {
+  let Defs = [AT];
+  let OutOperandList = (outs);
+  let InOperandList = (ins BRTarget:$target);
+  let Pattern = [(br bb:$target)];
+
+  let isBranch = true;
+  let isTerminator = true;
+  let isBarrier = true;
+
+  let Size = 2;
+}
 
 //---
 // Pseudo instruction to branch based on how the input compares with zero. This

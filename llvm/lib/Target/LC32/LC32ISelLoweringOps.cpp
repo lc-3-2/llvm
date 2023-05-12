@@ -249,14 +249,14 @@ LC32TargetLowering::emitC_SELECT_CMP_ZERO(MachineInstr &MI,
       .addImm(MI.getOperand(1).getImm())
       .addReg(MI.getOperand(2).getReg())
       .addMBB(true_mbb);
-  BuildMI(start_mbb, dl, TII.get(LC32::BR)).addImm(0b111).addMBB(false_mbb);
+  BuildMI(start_mbb, dl, TII.get(LC32::C_BR_UNCOND)).addMBB(false_mbb);
 
   // Handle true block
   true_mbb->addSuccessor(rejoin_mbb);
-  BuildMI(true_mbb, dl, TII.get(LC32::BR)).addImm(0b111).addMBB(rejoin_mbb);
+  BuildMI(true_mbb, dl, TII.get(LC32::C_BR_UNCOND)).addMBB(rejoin_mbb);
   // Handle false block
   false_mbb->addSuccessor(rejoin_mbb);
-  BuildMI(false_mbb, dl, TII.get(LC32::BR)).addImm(0b111).addMBB(rejoin_mbb);
+  BuildMI(false_mbb, dl, TII.get(LC32::C_BR_UNCOND)).addMBB(rejoin_mbb);
 
   // Handle rejoin
   BuildMI(*rejoin_mbb, rejoin_mbb->begin(), dl, TII.get(LC32::PHI),
@@ -295,6 +295,8 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
     uint8_t z = (CC & (1 << 0)) != 0 ? 0b010 : 0b000;
     uint8_t p = (CC & (1 << 1)) != 0 ? 0b001 : 0b000;
     nzp = DAG.getTargetConstant(n | z | p, dl, MVT::i32);
+    assert((n | z | p) != 0b000 && "ISD::SETFALSE(2) encountered");
+    assert((n | z | p) != 0b111 && "ISD::SETTRUE(2) encountered");
   }
 
   // For equality with zero and for signed comparison against zero
