@@ -12,7 +12,8 @@
 //
 // Another big responsibility of this module is analyzing branches. This allows
 // LLVM to reorder basic blocks. For compartmentalization, all this
-// functionality is kept in `LC32InstrInfoBranches.cpp`.
+// functionality is kept in `LC32InstrInfoBranches.cpp`. The rest is in
+// `LC32InstrInfoImpl.cpp`.
 //
 //===----------------------------------------------------------------------===//
 
