@@ -65,18 +65,21 @@ SDValue LC32TargetLowering::LowerFormalArguments(
       int FI = MFI.CreateFixedObject(Ins[i].Flags.getByValSize(),
                                      16 + va.getLocMemOffset(), true);
 
-      InVals.push_back(DAG.getFrameIndex(FI, va.getLocVT()));
+      InVals.push_back(DAG.getFrameIndex(FI, MVT::i32));
 
     } else {
       // Compute the size of the object
-      unsigned obj_size = va.getLocVT().getSizeInBits() / 8;
+      // Notice that we use LocVT here. For i8 and i16, the LocVT is i32 - the
+      // size of the register storing the argument. This is because LLVM uses
+      // the LocVT with the calling convention to compute offsets.
+      assert(va.getLocVT() == MVT::i32 && "LC-3.2 only has i32 registers");
 
       // Get the frame index
       // Note the offset from the frame pointer
-      int FI = MFI.CreateFixedObject(obj_size, 16 + va.getLocMemOffset(), true);
+      int FI = MFI.CreateFixedObject(4, 16 + va.getLocMemOffset(), true);
 
       InVals.push_back(DAG.getLoad(
-          va.getLocVT(), dl, Chain, DAG.getFrameIndex(FI, MVT::i32),
+          MVT::i32, dl, Chain, DAG.getFrameIndex(FI, MVT::i32),
           MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI)));
     }
 
@@ -140,9 +143,12 @@ LC32TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     assert(va.isMemLoc() && "LC-3.2 can only return on the stack");
     assert(va.getLocMemOffset() == 0 && "LC-3.2 has only one return value");
 
-    // Make sure object size is what we expect
+    // Make sure object size is what we expect. We should have it be i32 since
+    // those are the only registers we have. I.e. that is our LocVT.
     assert(va.getValVT().getSizeInBits() == 32 &&
            "LC-3.2 only supports words as returns");
+    assert(va.getLocInfo() == CCValAssign::Full &&
+           "LC-3.2 returns should not require extension");
 
     // Get the frame index and store
     int FI = MFI.CreateFixedObject(4, 12, false);
@@ -206,7 +212,7 @@ SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
     CCValAssign &va = ArgLocs[i];
     SDValue &arg = CLI.OutVals[i];
 
-    // We shouldn't requie extension
+    // We shouldn't require extension because we only have 32-bit registers
     assert(va.isMemLoc() && "LC-3.2 arguments should be on the stack");
     assert(va.getLocInfo() == CCValAssign::Full &&
            "LC-3.2 arguments should not require extension");
