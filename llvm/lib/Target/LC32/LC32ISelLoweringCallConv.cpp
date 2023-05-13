@@ -45,9 +45,10 @@ SDValue LC32TargetLowering::LowerFormalArguments(
   // first variadic argument. This will be read by the code that lowers
   // `vastart`.
   if (isVarArg)
-    // Note the offset from the frame pointer
+    // Note the offset from the frame pointer. Remember that frame index offsets
+    // are from the stack pointer on function entry.
     MFnI->VarArgsFI =
-        MFI.CreateFixedObject(1, 16 + CCInfo.getNextStackOffset(), true);
+        MFI.CreateFixedObject(1, CCInfo.getNextStackOffset(), true);
 
   // Create frame indicies for each of the arguments
   // See: MSP430ISelLowering.cpp, LanaiISelLowering.cpp
@@ -61,9 +62,10 @@ SDValue LC32TargetLowering::LowerFormalArguments(
     // In this case, the operand is in memory, with no need to load
     if (Ins[i].Flags.isByVal()) {
       // Get the frame index
-      // Note the offset from the frame pointer
+      // Note the offset from the frame pointer. Remember that frame index
+      // offsets are from the stack pointer on function entry.
       int FI = MFI.CreateFixedObject(Ins[i].Flags.getByValSize(),
-                                     16 + va.getLocMemOffset(), true);
+                                     va.getLocMemOffset(), true);
 
       InVals.push_back(DAG.getFrameIndex(FI, MVT::i32));
 
@@ -75,8 +77,9 @@ SDValue LC32TargetLowering::LowerFormalArguments(
       assert(va.getLocVT() == MVT::i32 && "LC-3.2 only has i32 registers");
 
       // Get the frame index
-      // Note the offset from the frame pointer
-      int FI = MFI.CreateFixedObject(4, 16 + va.getLocMemOffset(), true);
+      // Note the offset from the frame pointer. Remember that frame index
+      // offsets are from the stack pointer on function entry.
+      int FI = MFI.CreateFixedObject(4, va.getLocMemOffset(), true);
 
       InVals.push_back(DAG.getLoad(
           MVT::i32, dl, Chain, DAG.getFrameIndex(FI, MVT::i32),
@@ -151,7 +154,9 @@ LC32TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
            "LC-3.2 returns should not require extension");
 
     // Get the frame index and store
-    int FI = MFI.CreateFixedObject(4, 12, false);
+    // Note the offset from the frame pointer. Remember that frame index offsets
+    // are from the stack pointer on function entry.
+    int FI = MFI.CreateFixedObject(4, -4, false);
     Chain = DAG.getStore(
         Chain, dl, OutVals[0], DAG.getFrameIndex(FI, MVT::i32),
         MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
@@ -165,8 +170,10 @@ LC32TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     if (MF.getFunction().hasStructRetAttr()) {
       assert(MFnI->SRetAddrReg != 0 && "Should've set register for sret");
       // Copy from the register and store it on the stack
+      // Note the offset from the frame pointer. Remember that frame index
+      // offsets are from the stack pointer on function entry.
       SDValue v = DAG.getCopyFromReg(Chain, dl, MFnI->SRetAddrReg, MVT::i32);
-      int FI = MFI.CreateFixedObject(4, 12, false);
+      int FI = MFI.CreateFixedObject(4, -4, false);
       Chain = DAG.getStore(
           Chain, dl, v, DAG.getFrameIndex(FI, MVT::i32),
           MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
@@ -227,7 +234,8 @@ SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
         CLI.DAG.getConstant(va.getLocMemOffset(), CLI.DL, MVT::i32));
 
     // Do the store
-    // May have to convert to memcpy if passing struct by value
+    // May have to convert to memcpy if passing struct by value. Make sure this
+    // is always inlined, otherwise we get nested call frame operations.
     SDValue arg_store;
     ISD::ArgFlagsTy flgs = CLI.Outs[i].Flags;
     if (flgs.isByVal()) {
