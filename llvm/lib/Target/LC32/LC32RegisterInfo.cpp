@@ -159,7 +159,7 @@ void LC32RegisterInfo::genAddLargeImm(MachineBasicBlock::iterator MBBI,
       *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
 
   // Check aliasing
-  if(!alias)
+  if (!alias)
     assert(sr != dr && "Source and destination may not alias");
 
   // If the immediate is zero, just ADDi
