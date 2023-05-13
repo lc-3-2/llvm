@@ -92,13 +92,13 @@ def N_LC32_CALL : SDNode<"LC32ISD::CALL", NT_LC32_CALL, [SDNPHasChain, SDNPOutGl
 
 let
   OutOperandList = (outs),
+  Defs = [R0, R1, R2, AT, GP, SP, LR],
   isCall = true
 in {
 
   def JSRR : LC32Instruction {
     let AsmString = "JSRR\t$baser";
 
-    let Defs = [SP, LR];
     let InOperandList = (ins GPR:$baser);
     let Pattern = [(N_LC32_CALL GPR:$baser)];
 
@@ -110,26 +110,23 @@ in {
     let Inst{5-0}   = 0b000000;
   }
 
-  let Defs = [AT, SP, LR] in {
+  def JSR : LC32Instruction {
+    let AsmString = "JSR\t$pcoffset11";
 
-    def JSR : LC32Instruction {
-      let AsmString = "JSR\t$pcoffset11";
+    let InOperandList = (ins PCOffset11:$pcoffset11);
+    let Pattern = [(N_LC32_CALL (N_ADDR_WRAPPER tglobaladdr:$pcoffset11))];
 
-      let InOperandList = (ins PCOffset11:$pcoffset11);
-      let Pattern = [(N_LC32_CALL (N_ADDR_WRAPPER tglobaladdr:$pcoffset11))];
+    bits<11> pcoffset11;
+    let Inst{15-12} = 0b0100;
+    let Inst{11}    = 0b1;
+    let Inst{10-0}  = pcoffset11;
+  }
 
-      bits<11> pcoffset11;
-      let Inst{15-12} = 0b0100;
-      let Inst{11}    = 0b1;
-      let Inst{10-0}  = pcoffset11;
-    }
+  def P_FARJSR : LC32Instruction_P {
+    let AsmString = "PSEUDO.FARJSR\t$addr";
+    let InOperandList = (ins Const32:$addr);
 
-    def P_FARJSR : LC32Instruction_P {
-      let AsmString = "PSEUDO.FARJSR\t$addr";
-      let InOperandList = (ins Const32:$addr);
-
-      let Size = 14;
-    }
+    let Size = 14;
   }
 }
 
