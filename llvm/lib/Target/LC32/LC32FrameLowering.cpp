@@ -18,7 +18,7 @@ using namespace llvm;
 #define DEBUG_TYPE "LC32FrameLowering"
 
 LC32FrameLowering::LC32FrameLowering()
-    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(4), 0,
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(4), -12,
                           Align(4), false) {}
 
 bool LC32FrameLowering::hasFP(const MachineFunction &MF) const { return true; }
@@ -36,9 +36,10 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
       *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
   const LC32RegisterInfo &TRI = TII.getRegisterInfo();
 
-  // Compute the offset for the frame pointer
-  // Note that this does not affect the offsets of the frame indicies
-  MFI.setOffsetAdjustment(-MFI.getStackSize() - 16);
+  // This is relative from the end of the fixed variables section and in the
+  // "wrong" direction. It is used when computing frame offsets via
+  // getFrameIndexReference.
+  MFI.setOffsetAdjustment(-static_cast<int64_t>(MFI.getStackSize()) + 4l);
 
   // Save LR and FP
   BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
@@ -51,12 +52,16 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
       .addImm(-12);
 
   // Compute FP
+  // Remember, we always have one word for local variables
   BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi), LC32::FP)
       .addReg(LC32::SP, RegState::Kill)
       .addImm(-16);
 
   // Build the stack pointer
-  TRI.genAddLargeImm(MBBI, dl, LC32::SP, LC32::FP, -MFI.getStackSize());
+  // Remember, we always have one word for local variables
+  TRI.genAddLargeImm(
+      MBBI, dl, LC32::SP, LC32::FP,
+      std::min(-static_cast<int64_t>(MFI.getStackSize()) + 4l, 0l));
 }
 
 void LC32FrameLowering::emitEpilogue(MachineFunction &MF,

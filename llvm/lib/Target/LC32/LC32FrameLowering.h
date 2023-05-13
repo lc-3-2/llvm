@@ -9,6 +9,12 @@
 // This module handles the stack frame. It handles the prologue and epilogue,
 // and manages the frame pointer.
 //
+// Because of the relatively weird setup for the LC-3.2 callframe, we made frame
+// offsets relative to the stack pointer on function entry. LLVM works with that
+// internally, and we convert to FP offsets when we eliminate frame indicies.
+// This is why the local variable space starts at -12, and why the return value
+// is at -4. These get converted to +4 and +12 respectively.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIB_TARGET_LC32_LC32FRAMELOWERING_H

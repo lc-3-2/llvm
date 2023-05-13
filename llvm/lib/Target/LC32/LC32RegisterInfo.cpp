@@ -38,6 +38,9 @@ BitVector LC32RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   ret.set(LC32::SP);
 
   // Set global pointer and link register
+  // Note that using LR causes the machine code to fail validation. LLVM expects
+  // it to be defined before we STW it in the function prologue. This should be
+  // fine
   if (!UseR4.getValue())
     ret.set(LC32::GP);
   if (!UseR7.getValue())
@@ -74,10 +77,22 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   MachineBasicBlock &MBB = *MI->getParent();
   MachineFunction &MF = *MBB.getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   DebugLoc dl = MI->getDebugLoc();
-  int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
-  int32_t Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
+  int FI = MI->getOperand(FIOperandNum).getIndex();
   assert(SPAdj == 0 && "We don't use SPAdj");
+
+  // Compute the offset for the frame index
+  // Remember, these offsets are relative to the stack pointer on function
+  // entry. Therefore, we should correct by adding 16. We actually get another
+  // function to do the computation for us, and check it gives the right result.
+  Register Base;
+  StackOffset StackOffset = TFI->getFrameIndexReference(MF, FI, Base);
+  assert(Base == LC32::FP && "R5 should be used to access stack slots");
+  assert(StackOffset.getScalable() == 0 && "Unexpected value for the offset");
+  assert(StackOffset.getFixed() == MF.getFrameInfo().getObjectOffset(FI) + 16 &&
+         "Unexpected value for the offset");
+  int32_t Offset = StackOffset.getFixed();
 
   // Handle loads and stores
   if (MI->getOpcode() == LC32::LDB || MI->getOpcode() == LC32::STB ||
