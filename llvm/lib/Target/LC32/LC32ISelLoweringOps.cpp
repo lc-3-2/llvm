@@ -196,6 +196,11 @@ SDValue LC32TargetLowering::visitLOWERING_NOT(SDNode *N,
       isAllOnesConstant(N->getOperand(0).getNode()->getOperand(1))) {
     return N->getOperand(0).getNode()->getOperand(0);
   }
+  // fold (N_LOWERING_NOT (N_LOWERING_NOT x)) -> x
+  if (N->getOperand(0).getNode() != nullptr &&
+      N->getOperand(0).getOpcode() == LC32ISD::LOWERING_NOT) {
+    return N->getOperand(0).getNode()->getOperand(0);
+  }
   // Can't combine here
   return SDValue();
 }
