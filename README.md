@@ -70,7 +70,7 @@ this flag makes the backend lower comparisons to libcalls wherever overflow is
 possible. By default, this is disabled since we teach students to compare via
 subtraction.
 
-Another set of options is `--lc_3.2-use-r4` and `lc_3.2-use-r7`. The compiler
+Another set of options is `--lc_3.2-use-r4` and `--lc_3.2-use-r7`. The compiler
 can't take advantage of the global pointer, and the calling convention has the
 link register dead throughout the entire function's execution. These options
 reclaim these registers for allocation. By default, this is disabled so as to
