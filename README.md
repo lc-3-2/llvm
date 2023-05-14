@@ -80,6 +80,11 @@ Finally, there is `--lc_3.2-max-repeated-add`, which controls how immediates are
 materialized. Up to a point, the backend will do repeated additions. After that,
 it will use `PSEUDO.LOADCONST*`. This option controls the threshold.
 
+When compiling with the driver, there are some considerations for linking.
+First, there is no default linker script or C runtime. You have to provide
+those. Second and more importantly, the linker will try to find `-lc`, `-lm`,
+and `-lclang_rt.builtins-lc_3.2`. The first two can be suppressed with
+`-nostdlib`, and all three can be suppressed with `-nodefaultlibs`.
 
 ## Contributing
 
