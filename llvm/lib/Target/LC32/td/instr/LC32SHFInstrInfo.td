@@ -52,3 +52,9 @@ def RSHFAi : LC32Instruction {
   let Inst{5}     = 0b1;
   let Inst{4-0}   = amount5;
 }
+
+//---
+// For left-shift by one, we can do that with an ADDs. It is theoretically
+// possible to do this for any amount, but it might not be profitable.
+
+def : Pat<(shl GPR:$sr, 1), (ADDr GPR:$sr, GPR:$sr)>;
