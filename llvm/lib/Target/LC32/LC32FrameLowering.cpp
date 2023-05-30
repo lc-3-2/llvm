@@ -148,7 +148,6 @@ static unsigned EstimateFunctionSize(const MachineFunction &MF,
     for (auto &MI : MBB) {
       // We shouldn't have raw branches at this point
       assert(MI.getOpcode() != LC32::BR && "BR generated");
-      assert(MI.getOpcode() != LC32::P_FARBR && "FARBR generated");
       // Special case for branches. They will almost certainly be expanded
       // later, so over-estimate their size for the purposes of register
       // scavenging.
