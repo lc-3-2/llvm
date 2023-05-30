@@ -180,8 +180,9 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   unsigned num_scav = 0;
   if (!isInt<6 - 1>(MFI.estimateStackSize(MF)))
     num_scav++;
-  if (!isInt<10 - 1>(EstimateFunctionSize(MF, *TII)))
-    num_scav++;
+  // TODO: Do 2. if we do branch relaxation
+  //if (!isInt<10 - 1>(EstimateFunctionSize(MF, *TII)))
+  //  num_scav++;
 
   // Create the scavenging indicies
   for (unsigned i = 0; i < num_scav; i++) {
