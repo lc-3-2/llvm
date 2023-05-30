@@ -27,8 +27,9 @@ SDValue LC32TargetLowering::LowerFormalArguments(
     const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &dl,
     SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
 
-  // We only support the one convention
-  if (CallConv != CallingConv::C)
+  // We generate the same code for fastcalls and for normal calls
+  // Fastcalls are generated for static functions on higher optimizations
+  if (CallConv != CallingConv::C && CallConv != CallingConv::Fast)
     report_fatal_error("Unsupported CallConv");
 
   // Populate variables
@@ -188,8 +189,9 @@ LC32TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
 SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
                                       SmallVectorImpl<SDValue> &InVals) const {
 
-  // We only support the one convention
-  if (CLI.CallConv != CallingConv::C)
+  // We generate the same code for fastcalls and for normal calls
+  // Fastcalls are generated for static functions on higher optimizations
+  if (CLI.CallConv != CallingConv::C && CLI.CallConv != CallingConv::Fast)
     report_fatal_error("Unsupported CallConv");
   // We don't do tail calls
   CLI.IsTailCall = false;
