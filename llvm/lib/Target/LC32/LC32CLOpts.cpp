@@ -20,7 +20,7 @@ cl::opt<bool> llvm::lc32::clopts::UseCMPLibCall(
     "lc_3.2-use-libcall-for-cmp",
     cl::desc("Set --lc_3.2-use-libcall-for-signed-cmp and "
              "--lc_3.2-use-libcall-for-unsigned-cmp"),
-    cl::init(false), cl::callback([&](const bool &v) {
+    cl::init(false), cl::callback([](const bool &v) {
       UseSignedCMPLibCall = v;
       UseUnsignedCMPLibCall = v;
     }));
