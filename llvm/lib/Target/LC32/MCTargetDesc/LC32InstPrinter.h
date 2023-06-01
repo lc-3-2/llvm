@@ -52,7 +52,7 @@ private:
   void printShiftedSignedImmOperand(const MCInst *MI, unsigned OpNo,
                                     raw_ostream &O,
                                     const char *Modifier = nullptr);
-  template <unsigned N>
+  template <unsigned N, unsigned S>
   void printPCOffset(const MCInst *MI, unsigned OpNo, raw_ostream &O,
                      const char *Modifier = nullptr);
   void printNZP(const MCInst *MI, unsigned OpNo, raw_ostream &O,

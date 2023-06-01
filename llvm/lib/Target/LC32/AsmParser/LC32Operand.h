@@ -61,7 +61,8 @@ public:
   virtual bool isBOffset6() const { return false; }
   virtual bool isHOffset6() const { return false; }
   virtual bool isWOffset6() const { return false; }
-  virtual bool isPCOffset9() const { return false; }
+  virtual bool isPCOffset9BR() const { return false; }
+  virtual bool isPCOffset9LEA() const { return false; }
   virtual bool isPCOffset11() const { return false; }
   virtual bool isTrapVect8() const { return false; }
   virtual bool isConst16() const { return false; }
@@ -89,7 +90,10 @@ public:
   virtual void addWOffset6Operands(MCInst &Inst, unsigned N) {
     llvm_unreachable("Bad type");
   }
-  virtual void addPCOffset9Operands(MCInst &Inst, unsigned N) {
+  virtual void addPCOffset9BROperands(MCInst &Inst, unsigned N) {
+    llvm_unreachable("Bad type");
+  }
+  virtual void addPCOffset9LEAOperands(MCInst &Inst, unsigned N) {
     llvm_unreachable("Bad type");
   }
   virtual void addPCOffset11Operands(MCInst &Inst, unsigned N) {

@@ -28,11 +28,13 @@ public:
   void print(raw_ostream &OS) const override;
 
   bool isImm() const override;
-  bool isPCOffset9() const override;
+  bool isPCOffset9BR() const override;
+  bool isPCOffset9LEA() const override;
   bool isPCOffset11() const override;
   bool isConst32() const override;
 
-  void addPCOffset9Operands(MCInst &Inst, unsigned N) override;
+  void addPCOffset9BROperands(MCInst &Inst, unsigned N) override;
+  void addPCOffset9LEAOperands(MCInst &Inst, unsigned N) override;
   void addPCOffset11Operands(MCInst &Inst, unsigned N) override;
   void addConst32Operands(MCInst &Inst, unsigned N) override;
 

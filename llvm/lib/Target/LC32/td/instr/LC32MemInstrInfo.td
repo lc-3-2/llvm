@@ -190,7 +190,7 @@ in {
   def LEA : LC32Instruction {
     let AsmString = "LEA\t$dr, $pcoffset9";
 
-    let InOperandList = (ins PCOffset9:$pcoffset9);
+    let InOperandList = (ins PCOffset9LEA:$pcoffset9);
     let Pattern = [(set GPR:$dr, (N_ADDR_WRAPPER tglobaladdr:$pcoffset9))];
 
     bits<3> dr;
@@ -201,10 +201,10 @@ in {
   }
 }
 
-def : Pat<(N_ADDR_WRAPPER texternalsym:$addr),  (LEA PCOffset9:$addr)>;
-def : Pat<(N_ADDR_WRAPPER tconstpool:$addr),    (LEA PCOffset9:$addr)>;
-def : Pat<(N_ADDR_WRAPPER tjumptable:$addr),    (LEA PCOffset9:$addr)>;
-def : Pat<(N_ADDR_WRAPPER tblockaddress:$addr), (LEA PCOffset9:$addr)>;
+def : Pat<(N_ADDR_WRAPPER texternalsym:$addr),  (LEA PCOffset9LEA:$addr)>;
+def : Pat<(N_ADDR_WRAPPER tconstpool:$addr),    (LEA PCOffset9LEA:$addr)>;
+def : Pat<(N_ADDR_WRAPPER tjumptable:$addr),    (LEA PCOffset9LEA:$addr)>;
+def : Pat<(N_ADDR_WRAPPER tblockaddress:$addr), (LEA PCOffset9LEA:$addr)>;
 
 //--
 // Loads and stores with frame indices. We can optimize these, so we select

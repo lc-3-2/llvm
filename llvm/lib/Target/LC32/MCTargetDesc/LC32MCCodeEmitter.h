@@ -50,7 +50,7 @@ private:
   uint64_t getShiftedSignedImmOpValue(const MCInst &MI, unsigned OpNo,
                                       SmallVectorImpl<MCFixup> &Fixups,
                                       const MCSubtargetInfo &STI) const;
-  template <unsigned N>
+  template <unsigned N, unsigned S>
   uint64_t getPCOffsetValue(const MCInst &MI, unsigned OpNo,
                             SmallVectorImpl<MCFixup> &Fixups,
                             const MCSubtargetInfo &STI) const;

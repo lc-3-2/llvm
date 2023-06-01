@@ -99,7 +99,7 @@ void LC32InstPrinter::printShiftedSignedImmOperand(const MCInst *MI,
   O << '#' << (op.getImm() >> S);
 }
 
-template <unsigned N>
+template <unsigned N, unsigned S>
 void LC32InstPrinter::printPCOffset(const MCInst *MI, unsigned OpNo,
                                     raw_ostream &O, const char *Modifier) {
   // Get the operand
@@ -112,11 +112,11 @@ void LC32InstPrinter::printPCOffset(const MCInst *MI, unsigned OpNo,
     // Check operand has right form
     // Get around commas breaking assert
     {
-      bool is_correct = isShiftedInt<N, 1>(offset_imm);
+      bool is_correct = isShiftedInt<N, S>(offset_imm);
       assert(is_correct && "Bad value for immediate");
     }
     // Print
-    O << '#' << (offset_imm >> 1);
+    O << '#' << (offset_imm >> S);
     return;
   }
 

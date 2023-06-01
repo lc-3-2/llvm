@@ -48,16 +48,16 @@ static DecodeStatus DecodeShiftedSignedImm(MCInst &MI, uint64_t Imm,
   return DecodeStatus::Success;
 }
 
-template <unsigned N>
+template <unsigned N, unsigned S>
 static DecodeStatus DecodePCOffset(MCInst &MI, uint64_t Imm, uint64_t Address,
                                    const MCDisassembler *Decoder) {
   // Check if this is an address we know
   bool sym_worked =
-      Decoder->tryAddingSymbolicOperand(MI, Address + (Imm << 1) + 2, Address,
+      Decoder->tryAddingSymbolicOperand(MI, Address + (Imm << S) + 2, Address,
                                         MI.getOpcode() == LC32::BR, 0, 2, 2);
   // Otherwise, create an immediate
   if (!sym_worked)
-    MI.addOperand(MCOperand::createImm(SignExtend64<N + 1>((Imm << 1) + 2)));
+    MI.addOperand(MCOperand::createImm(SignExtend64<N + S>((Imm << S) + 2)));
   // Done
   return DecodeStatus::Success;
 }
