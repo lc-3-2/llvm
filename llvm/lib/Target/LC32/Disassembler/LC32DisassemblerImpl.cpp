@@ -57,7 +57,7 @@ static DecodeStatus DecodePCOffset(MCInst &MI, uint64_t Imm, uint64_t Address,
                                         MI.getOpcode() == LC32::BR, 0, 2, 2);
   // Otherwise, create an immediate
   if (!sym_worked)
-    MI.addOperand(MCOperand::createImm(SignExtend64<N + S>((Imm << S) + 2)));
+    MI.addOperand(MCOperand::createImm(SignExtend64<N + S>((Imm << S)) + 2));
   // Done
   return DecodeStatus::Success;
 }
