@@ -24,11 +24,16 @@ void LC32OperandExpr::print(raw_ostream &OS) const {
 }
 
 bool LC32OperandExpr::isImm() const { return true; }
-bool LC32OperandExpr::isPCOffset9() const { return true; }
+bool LC32OperandExpr::isPCOffset9BR() const { return true; }
+bool LC32OperandExpr::isPCOffset9LEA() const { return true; }
 bool LC32OperandExpr::isPCOffset11() const { return true; }
 bool LC32OperandExpr::isConst32() const { return true; }
 
-void LC32OperandExpr::addPCOffset9Operands(MCInst &Inst, unsigned N) {
+void LC32OperandExpr::addPCOffset9BROperands(MCInst &Inst, unsigned N) {
+  assert(N == 1 && "Invalid number of operands!");
+  Inst.addOperand(MCOperand::createExpr(this->Expr));
+}
+void LC32OperandExpr::addPCOffset9LEAOperands(MCInst &Inst, unsigned N) {
   assert(N == 1 && "Invalid number of operands!");
   Inst.addOperand(MCOperand::createExpr(this->Expr));
 }

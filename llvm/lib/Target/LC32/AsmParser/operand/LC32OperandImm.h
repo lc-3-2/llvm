@@ -32,7 +32,8 @@ public:
   bool isBOffset6() const override;
   bool isHOffset6() const override;
   bool isWOffset6() const override;
-  bool isPCOffset9() const override;
+  bool isPCOffset9BR() const override;
+  bool isPCOffset9LEA() const override;
   bool isPCOffset11() const override;
   bool isTrapVect8() const override;
   bool isConst16() const override;
@@ -43,7 +44,8 @@ public:
   void addBOffset6Operands(MCInst &Inst, unsigned N) override;
   void addHOffset6Operands(MCInst &Inst, unsigned N) override;
   void addWOffset6Operands(MCInst &Inst, unsigned N) override;
-  void addPCOffset9Operands(MCInst &Inst, unsigned N) override;
+  void addPCOffset9BROperands(MCInst &Inst, unsigned N) override;
+  void addPCOffset9LEAOperands(MCInst &Inst, unsigned N) override;
   void addPCOffset11Operands(MCInst &Inst, unsigned N) override;
   void addTrapVect8Operands(MCInst &Inst, unsigned N) override;
   void addConst16Operands(MCInst &Inst, unsigned N) override;

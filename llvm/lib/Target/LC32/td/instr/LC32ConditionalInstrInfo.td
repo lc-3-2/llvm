@@ -28,7 +28,7 @@ in {
 
   def BR : LC32Instruction {
     let AsmString = "BR$nzp\t$target";
-    let InOperandList = (ins NZP:$nzp, BRTarget:$target);
+    let InOperandList = (ins NZP:$nzp, PCOffset9BR:$target);
 
     bits<3> nzp;
     bits<9> target;
@@ -50,10 +50,10 @@ in {
 // We need that layer of indirection since LLVM requires a barrier at the end of
 // each block, and since BR is not always a terminator.
 
-def C_BR_UNCOND : LC32Instruction_C, PseudoInstExpansion<(BR 0b111, BRTarget:$target)> {
+def C_BR_UNCOND : LC32Instruction_C, PseudoInstExpansion<(BR 0b111, PCOffset9BR:$target)> {
   let Defs = [AT];
   let OutOperandList = (outs);
-  let InOperandList = (ins BRTarget:$target);
+  let InOperandList = (ins PCOffset9BR:$target);
   let Pattern = [(br bb:$target)];
 
   let isBranch = true;
@@ -80,7 +80,7 @@ def N_BR_CMP_ZERO : SDNode<
 def C_BR_CMP_ZERO : LC32Instruction_C {
   let Defs = [AT];
   let OutOperandList = (outs);
-  let InOperandList = (ins NZP:$nzp, GPR:$sr, BRTarget:$target);
+  let InOperandList = (ins NZP:$nzp, GPR:$sr, PCOffset9BR:$target);
   let Pattern = [(N_BR_CMP_ZERO timm:$nzp, GPR:$sr, bb:$target)];
 
   let isBranch = true;

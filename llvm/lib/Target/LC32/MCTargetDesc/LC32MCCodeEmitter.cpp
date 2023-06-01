@@ -36,7 +36,7 @@ void LC32MCCodeEmitter::encodeInstruction(const MCInst &Inst, raw_ostream &OS,
     uint64_t imm16 =
         this->getMachineOpValue(Inst, Inst.getOperand(1), Fixups, STI);
     // Construct encodings
-    uint16_t lea_enc = 0xe002 | (dr << 9);
+    uint16_t lea_enc = 0xe004 | (dr << 9);
     uint16_t ldh_enc = 0x6000 | (dr << 9) | (dr << 6);
     uint16_t br_enc = 0x0e01;
     // Write
@@ -55,7 +55,7 @@ void LC32MCCodeEmitter::encodeInstruction(const MCInst &Inst, raw_ostream &OS,
     uint64_t imm32 =
         this->getMachineOpValue(Inst, Inst.getOperand(1), Fixups, STI);
     // Construct encodings
-    uint16_t lea_enc = 0xe003 | (dr << 9);
+    uint16_t lea_enc = 0xe006 | (dr << 9);
     uint16_t ldw_enc = 0xa000 | (dr << 9) | (dr << 6);
     uint16_t br_enc = 0x0e03;
     uint16_t trap_enc = 0xf0ff;
@@ -73,7 +73,7 @@ void LC32MCCodeEmitter::encodeInstruction(const MCInst &Inst, raw_ostream &OS,
     uint64_t addr =
         this->getMachineOpValue(Inst, Inst.getOperand(0), Fixups, STI);
     // Construct encodings
-    uint16_t lea_enc = 0xe603;
+    uint16_t lea_enc = 0xe606;
     uint16_t ldw_enc = 0xa6c0;
     uint16_t jsrr_enc = 0x40c0;
     uint16_t br_enc = 0x0e02;
@@ -92,7 +92,7 @@ void LC32MCCodeEmitter::encodeInstruction(const MCInst &Inst, raw_ostream &OS,
       uint64_t addr =
           this->getMachineOpValue(Inst, Inst.getOperand(1), Fixups, STI);
       // Construct the encodings
-      uint16_t lea_enc = 0xe603;
+      uint16_t lea_enc = 0xe606;
       uint16_t ldw_enc = 0xa6c0;
       uint16_t jmp_enc = 0xc0c0;
       uint16_t trap_enc = 0xf0ff;
@@ -111,7 +111,7 @@ void LC32MCCodeEmitter::encodeInstruction(const MCInst &Inst, raw_ostream &OS,
           this->getMachineOpValue(Inst, Inst.getOperand(1), Fixups, STI);
       // Construct the encodings
       uint16_t br_enc = 0x0005 | (cc_neg << 9);
-      uint16_t lea_enc = 0xe603;
+      uint16_t lea_enc = 0xe606;
       uint16_t ldw_enc = 0xa6c0;
       uint16_t jmp_enc = 0xc0c0;
       // Write
@@ -176,11 +176,12 @@ uint64_t LC32MCCodeEmitter::getShiftedSignedImmOpValue(
   return op.getImm() >> S;
 }
 
-template <unsigned N>
+template <unsigned N, unsigned S>
 uint64_t LC32MCCodeEmitter::getPCOffsetValue(const MCInst &MI, unsigned OpNo,
                                              SmallVectorImpl<MCFixup> &Fixups,
                                              const MCSubtargetInfo &STI) const {
   static_assert(N == 9 || N == 11, "Bad PCOffset bitcount");
+  static_assert(S == 0 || S == 1, "Bad PCOffset shift");
 
   // Get the operand
   const MCOperand &op = MI.getOperand(OpNo);
@@ -192,18 +193,19 @@ uint64_t LC32MCCodeEmitter::getPCOffsetValue(const MCInst &MI, unsigned OpNo,
     // Check operand has right form
     // Get around commas breaking assert
     {
-      bool is_correct = isShiftedInt<N, 1>(offset_imm);
+      bool is_correct = isShiftedInt<N, S>(offset_imm);
       assert(is_correct && "Bad value for immediate");
     }
     // Return
-    return offset_imm >> 1;
+    return offset_imm >> S;
   }
 
   // Expression case
   if (op.isExpr()) {
     // Compute and add fixup
-    auto tfk =
-        N == 9 ? lc32::Fixups::TFK_PCOffset9 : lc32::Fixups::TFK_PCOffset11;
+    auto tfk = N == 9 ? (S == 1 ? lc32::Fixups::TFK_PCOffset9BR
+                                : lc32::Fixups::TFK_PCOffset9LEA)
+                      : lc32::Fixups::TFK_PCOffset11;
     Fixups.push_back(MCFixup::create(
         0, op.getExpr(), static_cast<MCFixupKind>(tfk), MI.getLoc()));
     // Stub value

@@ -23,8 +23,12 @@ namespace llvm::lc32 {
 
 // Must match LC32AsmBackend.cpp
 enum Fixups {
-  TFK_PCOffset9 = FirstTargetFixupKind,
-  TFK_PCOffset11,
+  // Fixup for JSR
+  TFK_PCOffset11 = FirstTargetFixupKind,
+
+  // Fixups for both variants of PCOffset9
+  TFK_PCOffset9BR,
+  TFK_PCOffset9LEA,
 
   // Mark the end of the array
   // Also compute the count

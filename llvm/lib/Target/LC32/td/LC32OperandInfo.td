@@ -86,17 +86,32 @@ def WOffset6 : Operand<i32>, ImmLeaf<i32, [{ return isShiftedInt<6,2>(Imm); }]> 
 
 //---
 // Used by: LEA, BR, JSR
+//
+// Note that PCOffset9 has two variants. The one used by BR is shifted left by
+// one, while the one used by LEA isn't. Also, the BR variant is OtherVT since
+// that is the type for basic blocks.
 
-def PCOffset9OperandClass : AsmOperandClass {
-  let Name = "PCOffset9";
+def PCOffset9BROperandClass : AsmOperandClass {
+  let Name = "PCOffset9BR";
 }
 
-def PCOffset9 : Operand<iPTR> {
+def PCOffset9BR : Operand<OtherVT> {
+  let ParserMatchClass = PCOffset9BROperandClass;
+  let PrintMethod = "printPCOffset<9,1>";
+  let EncoderMethod = "getPCOffsetValue<9,1>";
+  let DecoderMethod = "DecodePCOffset<9,1>";
+}
+
+def PCOffset9LEAOperandClass : AsmOperandClass {
+  let Name = "PCOffset9LEA";
+}
+
+def PCOffset9LEA : Operand<iPTR> {
   let OperandType = "OPERAND_IMMEDIATE";
-  let ParserMatchClass = PCOffset9OperandClass;
-  let PrintMethod = "printPCOffset<9>";
-  let EncoderMethod = "getPCOffsetValue<9>";
-  let DecoderMethod = "DecodePCOffset<9>";
+  let ParserMatchClass = PCOffset9LEAOperandClass;
+  let PrintMethod = "printPCOffset<9,0>";
+  let EncoderMethod = "getPCOffsetValue<9,0>";
+  let DecoderMethod = "DecodePCOffset<9,0>";
 }
 
 def PCOffset11OperandClass : AsmOperandClass {
@@ -106,25 +121,16 @@ def PCOffset11OperandClass : AsmOperandClass {
 def PCOffset11 : Operand<iPTR> {
   let OperandType = "OPERAND_IMMEDIATE";
   let ParserMatchClass = PCOffset11OperandClass;
-  let PrintMethod = "printPCOffset<11>";
-  let EncoderMethod = "getPCOffsetValue<11>";
-  let DecoderMethod = "DecodePCOffset<11>";
+  let PrintMethod = "printPCOffset<11,1>";
+  let EncoderMethod = "getPCOffsetValue<11,1>";
+  let DecoderMethod = "DecodePCOffset<11,1>";
 }
 
 //---
 // Used by: BR
 //
-// We need the BRTarget since basic blocks have type OtherVT.
-//
 // Internally, the NZP fields are are Imm, encoded with bits. For instance, `n`
 // would be encoded as `0b100`. They have to be i32 since that's what's legal.
-
-def BRTarget : Operand<OtherVT> {
-  let ParserMatchClass = PCOffset9OperandClass;
-  let PrintMethod = "printPCOffset<9>";
-  let EncoderMethod = "getPCOffsetValue<9>";
-  let DecoderMethod = "DecodePCOffset<9>";
-}
 
 def NZPOperandClass : AsmOperandClass {
   let Name = "NZP";

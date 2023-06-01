@@ -70,8 +70,9 @@ LC32AsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
   // Needed since we have to return a reference
   // Must match LC32FixupKinds.h
   const static MCFixupKindInfo Infos[] = {
-      {"TFK_PCOffset9", 0, 9, MCFixupKindInfo::FKF_IsPCRel},
       {"TFK_PCOffset11", 0, 11, MCFixupKindInfo::FKF_IsPCRel},
+      {"TFK_PCOffset9BR", 0, 9, MCFixupKindInfo::FKF_IsPCRel},
+      {"TFK_PCOffset9LEA", 0, 9, MCFixupKindInfo::FKF_IsPCRel},
   };
   static_assert(std::size(Infos) == NumTargetFixupKinds,
                 "Not all fixup kinds added to Infos array");
@@ -118,23 +119,42 @@ uint64_t LC32AsmBackend::adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   unsigned Kind = Fixup.getKind();
   switch (Kind) {
 
-  case TFK_PCOffset9:
   case TFK_PCOffset11: {
     // Check that the preconditions are met
     if ((Value & 0x1) != 0)
-      Ctx.reportError(Fixup.getLoc(), "PCOffset not halfword aligned");
-    if (Kind == TFK_PCOffset9 && !isShiftedInt<9, 1>(Value - 2))
-      Ctx.reportError(Fixup.getLoc(), "PCOffset9 out of range");
-    if (Kind == TFK_PCOffset11 && !isShiftedInt<11, 1>(Value - 2))
+      Ctx.reportError(Fixup.getLoc(), "PCOffset11 not halfword aligned");
+    if (!isShiftedInt<11, 1>(Value - 2))
       Ctx.reportError(Fixup.getLoc(), "PCOffset11 out of range");
     // Compute the offset and return
     int64_t Offset = Value;
     Offset -= 2;
     Offset >>= 1;
-    if (Kind == TFK_PCOffset9)
-      Offset &= 0x1ff;
-    if (Kind == TFK_PCOffset11)
-      Offset &= 0x7ff;
+    Offset &= 0x7ff;
+    return Offset;
+  }
+
+  case TFK_PCOffset9BR: {
+    // Check that the preconditions are met
+    if ((Value & 0x1) != 0)
+      Ctx.reportError(Fixup.getLoc(), "PCOffset9BR not halfword aligned");
+    if (!isShiftedInt<9, 1>(Value - 2))
+      Ctx.reportError(Fixup.getLoc(), "PCOffset9BR out of range");
+    // Compute the offset and return
+    int64_t Offset = Value;
+    Offset -= 2;
+    Offset >>= 1;
+    Offset &= 0x1ff;
+    return Offset;
+  }
+
+  case TFK_PCOffset9LEA: {
+    // Check that the preconditions are met
+    if (!isShiftedInt<9, 0>(Value - 2))
+      Ctx.reportError(Fixup.getLoc(), "PCOffset9LEA out of range");
+    // Compute the offset and return
+    int64_t Offset = Value;
+    Offset -= 2;
+    Offset &= 0x1ff;
     return Offset;
   }
 
@@ -160,10 +180,12 @@ bool LC32AsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                                           const MCAsmLayout &Layout) const {
   unsigned Kind = Fixup.getKind();
   switch (Kind) {
-  case TFK_PCOffset9:
-    return !isShiftedInt<9, 1>(Value - 2);
   case TFK_PCOffset11:
     return !isShiftedInt<11, 1>(Value - 2);
+  case TFK_PCOffset9BR:
+    return !isShiftedInt<9, 1>(Value - 2);
+  case TFK_PCOffset9LEA:
+    return !isShiftedInt<9, 0>(Value - 2);
   default:
     return false;
   }
