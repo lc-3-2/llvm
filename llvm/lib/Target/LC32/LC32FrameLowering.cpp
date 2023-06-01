@@ -142,6 +142,7 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
 
 static unsigned EstimateFunctionSize(const MachineFunction &MF,
                                      const LC32InstrInfo &TII) {
+  // Used by processFunctionBeforeFrameFinalized IF we use branch relaxation
   // See: RISCVFrameLowering.cpp
   unsigned ret = 0;
   for (auto &MBB : MF) {
@@ -177,10 +178,12 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // 1. if the stack frame is too large. This is an underestimate, so compensate
   // 2. if branches can be out of range. This is an overestimate, but we still
   //    make contingency space.
+
+  // Do 1.
   unsigned num_scav = 0;
   if (!isInt<6 - 1>(MFI.estimateStackSize(MF)))
     num_scav++;
-  // TODO: Do 2. if we do branch relaxation
+  // Do 2. IF we do branch relaxation
   //if (!isInt<10 - 1>(EstimateFunctionSize(MF, *TII)))
   //  num_scav++;
 
