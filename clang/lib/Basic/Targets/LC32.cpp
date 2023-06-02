@@ -23,7 +23,6 @@ LC32TargetInfo::LC32TargetInfo(const llvm::Triple &Triple,
   this->TLSSupported = false;
   this->VLASupported = false;
   this->HasLongDouble = false;
-  this->HasFPReturn = false;
 
   // Set the data layout
   this->resetDataLayout(
