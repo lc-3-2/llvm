@@ -166,10 +166,15 @@ LC32TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   } else {
     // This function either returns void or is sret
     assert(RVLocs.empty() && "Should be void or have demoted to sret");
+    // Assert sret -> reg
+    assert((!MF.getFunction().hasStructRetAttr() || MFnI->SRetAddrReg != 0) &&
+           "Should have set sret register");
     // If it returns sret, store the pointer onto the stack in place of the
-    // return value
-    if (MF.getFunction().hasStructRetAttr()) {
-      assert(MFnI->SRetAddrReg != 0 && "Should've set register for sret");
+    // return value. Note that we can't just check whether the LLVM function
+    // returns via struct. This is because doubles and i64s can cause struct
+    // returns too. Therefore, check if we set a struct return address in
+    // LowerFormalArguments.
+    if (MFnI->SRetAddrReg != 0) {
       // Copy from the register and store it on the stack
       // Note the offset from the frame pointer. Remember that frame index
       // offsets are from the stack pointer on function entry.
