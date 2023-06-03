@@ -2,15 +2,15 @@
   description = "LLVM Development and Build Environment";
 
   inputs = {
-    nixpkgs-2211.url = "github:NixOS/nixpkgs/release-22.11";
+    nixpkgs-23-05.url = "github:NixOS/nixpkgs/release-23.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs-2211, systems, flake-utils }@inputs :
+  outputs = { self, nixpkgs-23-05, systems, flake-utils }@inputs :
     flake-utils.lib.eachSystem ["x86_64-linux"] (system:
     let
       name = "llvm-lc-3.2-dev";
-      pkgs = nixpkgs-2211.legacyPackages.${system};
+      pkgs = nixpkgs-23-05.legacyPackages.${system};
       inherit (pkgs) stdenv;
 
       buildInputs = [
