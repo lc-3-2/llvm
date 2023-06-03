@@ -41,7 +41,6 @@ LC32TargetInfo::LC32TargetInfo(const llvm::Triple &Triple,
 void LC32TargetInfo::getTargetDefines(const LangOptions &Opts,
                                       MacroBuilder &Builder) const {
   // See: MSP430.cpp
-  Builder.defineMacro("LC_3_2");
   Builder.defineMacro("__LC_3_2__");
   Builder.defineMacro("__ELF__");
 }
