@@ -67,6 +67,11 @@ endif()
 option(COMPILER_RT_BUILTINS_HIDE_SYMBOLS
   "Do not export any symbols from the static library." ON)
 
+option(COMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS
+  "Pass -ffunction-sections when building builtins" OFF)
+option(COMPILER_RT_BUILTINS_PASS_DATA_SECTIONS
+  "Pass -ffunction-sections when building builtins" OFF)
+
 # TODO: Need to add a mechanism for logging errors when builtin source files are
 # added to a sub-directory and not this CMakeLists file.
 set(GENERIC_SOURCES
@@ -773,6 +778,14 @@ else ()
 
   if(COMPILER_RT_BUILTINS_HIDE_SYMBOLS)
     append_list_if(COMPILER_RT_HAS_VISIBILITY_HIDDEN_FLAG VISIBILITY_HIDDEN BUILTIN_DEFS)
+  endif()
+
+  # Facilitate linker garbage collection if possible
+  if(COMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS)
+    append_list_if(COMPILER_RT_HAS_FFUNCTION_SECTIONS_FLAG -ffunction-sections BUILTIN_CFLAGS)
+  endif()
+  if(COMPILER_RT_BUILTINS_PASS_DATA_SECTIONS)
+    append_list_if(COMPILER_RT_HAS_FDATA_SECTIONS_FLAG -fdata-sections BUILTIN_CFLAGS)
   endif()
 
   if(COMPILER_RT_DISABLE_AARCH64_FMV)

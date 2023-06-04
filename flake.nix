@@ -46,7 +46,9 @@
               -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="LC32" \
               -DLLVM_DEFAULT_TARGET_TRIPLE="lc_3.2-unknown-unknown" \
               -DCOMPILER_RT_BAREMETAL_BUILD=ON \
-              -DCOMPILER_RT_EXCLUDE_PERSONALITY=ON
+              -DCOMPILER_RT_EXCLUDE_PERSONALITY=ON \
+              -DCOMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS=ON \
+              -DCOMPILER_RT_BUILTINS_PASS_DATA_SECTIONS=ON
           '';
 
           buildPhase = ''
