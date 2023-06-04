@@ -740,6 +740,7 @@ set(ve_SOURCES
   ${GENERIC_SOURCES})
 
 set(lc_3.2_SOURCES
+  lc_3.2/abort.c
   ${GENERIC_SOURCES})
 
 add_custom_target(builtins)
