@@ -21,8 +21,10 @@ To build this project, check out the repository and navigate into it. Create a
 $ cmake -G Ninja \
   -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL_DIR} \
   -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_ASSERTIONS=ON \
-  -DLLVM_ENABLE_PROJECTS="clang;lld" -DLLVM_ENABLE_RUNTIMES="" \
+  -DLLVM_ENABLE_PROJECTS="clang;lld" -DLLVM_ENABLE_RUNTIMES="compiler-rt" \
   -DLLVM_TARGETS_TO_BUILD="" -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="LC32" \
+  -DLLVM_DEFAULT_TARGET_TRIPLE="lc_3.2-unknown-unknown" \
+  -DCOMPILER_RT_BAREMETAL_BUILD=ON \
   ../llvm/
 ```
 Make sure to set `CMAKE_INSTALL_PREFIX` to the installation directory. Also
