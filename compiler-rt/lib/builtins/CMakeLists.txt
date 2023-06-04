@@ -232,6 +232,10 @@ option(COMPILER_RT_EXCLUDE_ATOMIC_BUILTIN
   "Skip the atomic builtin (these should normally be provided by a shared library)"
   On)
 
+option(COMPILER_RT_EXCLUDE_PERSONALITY
+  "Skip the personality function (these should normally be provided by a shared library)"
+  Off)
+
 if(NOT FUCHSIA AND NOT COMPILER_RT_BAREMETAL_BUILD)
   set(GENERIC_SOURCES
     ${GENERIC_SOURCES}
@@ -260,7 +264,7 @@ if(APPLE)
   )
 endif()
 
-if (HAVE_UNWIND_H)
+if (HAVE_UNWIND_H AND NOT COMPILER_RT_EXCLUDE_PERSONALITY)
   set(GENERIC_SOURCES
     ${GENERIC_SOURCES}
     gcc_personality_v0.c
