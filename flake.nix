@@ -40,9 +40,12 @@
               -DCMAKE_INSTALL_PREFIX=$out \
               -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON \
               -DLLVM_PARALLEL_LINK_JOBS=1 \
-              -DLLVM_ENABLE_PROJECTS="clang;lld" -DLLVM_ENABLE_RUNTIMES="" \
+              -DLLVM_ENABLE_PROJECTS="clang;lld" \
+              -DLLVM_ENABLE_RUNTIMES="compiler-rt" \
               -DLLVM_TARGETS_TO_BUILD="X86;RISCV;MSP430;Lanai" \
-              -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="LC32"
+              -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="LC32" \
+              -DLLVM_DEFAULT_TARGET_TRIPLE="lc_3.2-unknown-unknown" \
+              -DCOMPILER_RT_BAREMETAL_BUILD=ON
           '';
 
           buildPhase = ''
