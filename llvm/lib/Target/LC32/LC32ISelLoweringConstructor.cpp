@@ -45,6 +45,11 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, {MVT::i1, MVT::i4}, Promote);
   this->setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, {MVT::i8, MVT::i16}, Expand);
 
+  // Allow some traps
+  // Normally these are expanded to abort()
+  this->setOperationAction(ISD::TRAP, MVT::Other, Legal);
+  this->setOperationAction(ISD::DEBUGTRAP, MVT::Other, Legal);
+
   // SUB and OR need custom lowering so we don't go into an infinite loop
   this->setOperationAction(ISD::SUB, MVT::i32, Custom);
   this->setOperationAction(ISD::OR, MVT::i32, Custom);
