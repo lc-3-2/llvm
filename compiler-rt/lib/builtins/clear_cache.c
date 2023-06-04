@@ -197,6 +197,8 @@ void __clear_cache(void *start, void *end) {
   sysarch(RISCV_SYNC_ICACHE, &arg);
 #elif defined(__ve__)
   __asm__ volatile("fencec 2");
+#elif defined(__LC_3_2__)
+  // No caches on the LC-3.2
 #else
 #if __APPLE__
   // On Darwin, sys_icache_invalidate() provides this functionality
