@@ -45,7 +45,8 @@
               -DLLVM_TARGETS_TO_BUILD="X86;RISCV;MSP430;Lanai" \
               -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="LC32" \
               -DLLVM_DEFAULT_TARGET_TRIPLE="lc_3.2-unknown-unknown" \
-              -DCOMPILER_RT_BAREMETAL_BUILD=ON
+              -DCOMPILER_RT_BAREMETAL_BUILD=ON \
+              -DCOMPILER_RT_EXCLUDE_PERSONALITY=ON
           '';
 
           buildPhase = ''

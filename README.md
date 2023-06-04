@@ -25,6 +25,7 @@ $ cmake -G Ninja \
   -DLLVM_TARGETS_TO_BUILD="" -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="LC32" \
   -DLLVM_DEFAULT_TARGET_TRIPLE="lc_3.2-unknown-unknown" \
   -DCOMPILER_RT_BAREMETAL_BUILD=ON \
+  -DCOMPILER_RT_EXCLUDE_PERSONALITY=ON \
   ../llvm/
 ```
 Make sure to set `CMAKE_INSTALL_PREFIX` to the installation directory. Also
