@@ -35,17 +35,6 @@ cl::opt<bool> llvm::lc32::clopts::UseUnsignedCMPLibCall(
              "overflow instead of just subtracting"),
     cl::init(false));
 
-cl::opt<std::string> llvm::lc32::clopts::SignedCMPLibCallName(
-    "lc_3.2-signed-cmp-libcall-name",
-    cl::desc("What function to call when comparing signed integers in the "
-             "presence of --lc_3.2-use-libcall-for-signed-cmp"),
-    cl::init("__cmpsi3"), cl::Hidden);
-cl::opt<std::string> llvm::lc32::clopts::UnsignedCMPLibCallName(
-    "lc_3.2-unsigned-cmp-libcall-name",
-    cl::desc("What function to call when comparing unsigned integers in the "
-             "presence of --lc_3.2-use-libcall-for-unsigned-cmp"),
-    cl::init("__ucmpsi3"), cl::Hidden);
-
 cl::opt<unsigned> llvm::lc32::clopts::MaxRepeatedAdd(
     "lc_3.2-max-repeated-add",
     cl::desc("When realizing constants, the maximum number of repeated "

@@ -412,9 +412,9 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
       // Compute the name of the function to call
       const char *callee_name;
       if (is_signed)
-        callee_name = SignedCMPLibCallName.getValue().c_str();
+        callee_name = "__cmpsi3";
       if (is_unsigned)
-        callee_name = UnsignedCMPLibCallName.getValue().c_str();
+        callee_name = "__ucmpsi3";
       // Get the symbol associated with that name
       SDValue callee = DAG.getExternalSymbol(
           callee_name, this->getPointerTy(DAG.getDataLayout()));
