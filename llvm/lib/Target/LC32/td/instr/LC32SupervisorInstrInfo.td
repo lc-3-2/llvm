@@ -20,8 +20,6 @@ def TRAP : LC32Instruction {
   let InOperandList = (ins TrapVect8:$trapvect8);
 
   let isTrap = true;
-  let mayLoad = true;
-  let mayStore = true;
   let hasSideEffects = true;
 
   bits<8> trapvect8;
@@ -35,7 +33,11 @@ def OUT   : InstAlias<"OUT",   (TRAP 0x21)>;
 def PUTS  : InstAlias<"PUTS",  (TRAP 0x22)>;
 def IN    : InstAlias<"IN",    (TRAP 0x23)>;
 def HALT  : InstAlias<"HALT",  (TRAP 0x25)>;
+def BREAK : InstAlias<"BREAK", (TRAP 0xff)>;
 def CRASH : InstAlias<"CRASH", (TRAP 0xff)>;
+
+def : Pat<(trap),      (TRAP 0xff)>;
+def : Pat<(debugtrap), (TRAP 0xfe)>;
 
 def RTI : LC32Instruction {
   let AsmString = "RTI";
