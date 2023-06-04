@@ -92,7 +92,7 @@ def N_LC32_CALL : SDNode<"LC32ISD::CALL", NT_LC32_CALL, [SDNPHasChain, SDNPOutGl
 
 let
   OutOperandList = (outs),
-  Defs = [R0, R1, R2, AT, GP, SP, LR],
+  Defs = [R0, R1, R2, AT, SP, LR],
   isCall = true
 in {
 
