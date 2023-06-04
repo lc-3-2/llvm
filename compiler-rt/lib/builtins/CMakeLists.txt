@@ -854,6 +854,15 @@ else ()
         set(deps_aarch64 lse_builtin_symlinks)
       endif()
 
+      # Add extra compiler flags for LC-3.2. Specifically:
+      # * Use libcalls for comparison
+      # * Use R4 and R7
+      if(arch STREQUAL "lc_3.2")
+        list(APPEND BUILTIN_CFLAGS_${arch} "SHELL:-mllvm --lc_3.2-use-libcall-for-cmp")
+        list(APPEND BUILTIN_CFLAGS_${arch} "SHELL:-mllvm --lc_3.2-use-r4")
+        list(APPEND BUILTIN_CFLAGS_${arch} "SHELL:-mllvm --lc_3.2-use-r7")
+      endif()
+
       add_compiler_rt_runtime(clang_rt.builtins
                               STATIC
                               ARCHS ${arch}
