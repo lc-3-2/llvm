@@ -54,6 +54,9 @@ bool LC32MCAsmInfo::isValidUnquotedName(StringRef Name) const {
   ret &= Name.upper() != "R5";
   ret &= Name.upper() != "R6";
   ret &= Name.upper() != "R7";
+  ret &= Name.upper() != "AR";
+  ret &= Name.upper() != "XR";
+  ret &= Name.upper() != "YR";
   ret &= Name.upper() != "AT";
   ret &= Name.upper() != "GP";
   ret &= Name.upper() != "FP";

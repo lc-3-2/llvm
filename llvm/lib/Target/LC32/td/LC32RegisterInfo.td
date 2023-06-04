@@ -36,9 +36,9 @@ class LC32Register<
 
 // If these register names change, make sure to update the code in
 // MCTargetDesc/LC32MCAsmInfo.cpp
-def R0 : LC32Register<"R0", 0>;
-def R1 : LC32Register<"R1", 1>;
-def R2 : LC32Register<"R2", 2>;
+def R0 : LC32Register<"R0", 0, ["AR"]>;
+def R1 : LC32Register<"R1", 1, ["XR"]>;
+def R2 : LC32Register<"R2", 2, ["YR"]>;
 def AT : LC32Register<"R3", 3, ["AT"]>;
 def GP : LC32Register<"R4", 4, ["GP"]>;
 def FP : LC32Register<"R5", 5, ["FP"]>;
