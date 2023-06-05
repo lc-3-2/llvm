@@ -12,9 +12,14 @@
 // calls. The list of library calls is in llvm/IR/RuntimeLibcalls.def.
 //
 // Because of the sheer size of this module, it is split over multiple files.
-// LC32ISelLoweringConstructor.cpp houses the constructor.
-// LC32ISelLoweringCallConv.cpp handles calling convention lowering. Finally,
-// LC32ISelLoweringOps.cpp handles operations that have to be lowered custom.
+// For the required stuff, LC32ISelLoweringConstructor.cpp houses the
+// constructor. LC32ISelLoweringCallConv.cpp handles calling convention
+// lowering. Finally, LC32ISelLoweringOps.cpp handles operations that have to be
+// lowered custom.
+//
+// There is also optional stuff. LC32ISelLoweringInlineAsm.cpp handles
+// constraints for inline assembly. The inline assembly was mostly copied from
+// AVR.
 //
 // See: CCState
 //
@@ -130,6 +135,20 @@ private:
   // See: LC32ISelLoweringOps.cpp
   MachineBasicBlock *emitC_SELECT_CMP_ZERO(MachineInstr &MI,
                                            MachineBasicBlock *BB) const;
+
+  // See LC32ISelLoweringInlineAsm.cpp
+  ConstraintType getConstraintType(StringRef Constraint) const override;
+  ConstraintWeight
+  getSingleConstraintMatchWeight(AsmOperandInfo &info,
+                                 const char *constraint) const override;
+  std::pair<unsigned, const TargetRegisterClass *>
+  getRegForInlineAsmConstraint(const TargetRegisterInfo *RI,
+                               StringRef Constraint, MVT VT) const override;
+  void LowerAsmOperandForConstraint(SDValue Op, std::string &Constraint,
+                                    std::vector<SDValue> &Ops,
+                                    SelectionDAG &DAG) const override;
+  Register getRegisterByName(const char *RegName, LLT Ty,
+                             const MachineFunction &MF) const override;
 
   /**
    * Helper method for LowerBR_CC and LowerSELECT_CC.

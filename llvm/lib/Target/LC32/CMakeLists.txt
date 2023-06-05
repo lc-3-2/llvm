@@ -23,6 +23,7 @@ add_llvm_target(LC32CodeGen
   LC32ISelLoweringConstructor.cpp
   LC32ISelLoweringCallConv.cpp
   LC32ISelLoweringOps.cpp
+  LC32ISelLoweringInlineAsm.cpp
   LC32FrameLowering.cpp
   LC32InstrInfoImpl.cpp
   LC32InstrInfoBranches.cpp
