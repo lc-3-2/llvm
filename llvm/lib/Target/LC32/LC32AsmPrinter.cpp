@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LC32InstrInfo.h"
+#include "MCTargetDesc/LC32InstPrinter.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "TargetInfo/LC32TargetInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -30,6 +31,10 @@ class LC32AsmPrinter : public AsmPrinter {
 public:
   LC32AsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer);
   void emitInstruction(const MachineInstr *MI) override;
+
+  // For inline assembly
+  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                       const char *ExtraCode, raw_ostream &O) override;
 
 private:
   // TableGen
@@ -102,6 +107,29 @@ void LC32AsmPrinter::emitInstruction(const MachineInstr *MI) {
       temp_instr.addOperand(temp_mcop);
   }
   this->EmitToStreamer(*this->OutStreamer, temp_instr);
+}
+
+bool LC32AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                     const char *ExtraCode, raw_ostream &O) {
+  // We do not expect any extra modifiers, so fail if we get them
+  if (ExtraCode && ExtraCode[0])
+    return true;
+
+  // Get the operand
+  const MachineOperand &mo = MI->getOperand(OpNo);
+  // Print it
+  // We only expect registers and immediates since we don't have constraints for
+  // anything else
+  switch (mo.getType()) {
+  default:
+    llvm_unreachable("Unimplemented operand type");
+  case MachineOperand::MO_Register:
+    O << LC32InstPrinter::getRegisterName(mo.getReg());
+    return false;
+  case MachineOperand::MO_Immediate:
+    O << '#' << mo.getImm();
+    return false;
+  }
 }
 
 void LC32AsmPrinter::lowerOperand(MachineOperand MO, MCOperand &MCOp) {

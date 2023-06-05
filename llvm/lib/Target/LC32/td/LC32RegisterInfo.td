@@ -35,7 +35,9 @@ class LC32Register<
 }
 
 // If these register names change, make sure to update the code in
-// MCTargetDesc/LC32MCAsmInfo.cpp
+// * MCTargetDesc/LC32MCAsmInfo.cpp
+// * LC32ISelLoweringInlineAsm.cpp
+// Also make sure to update the registers in clang.
 def R0 : LC32Register<"R0", 0, ["AR"]>;
 def R1 : LC32Register<"R1", 1, ["XR"]>;
 def R2 : LC32Register<"R2", 2, ["YR"]>;

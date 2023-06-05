@@ -46,15 +46,23 @@ void LC32TargetInfo::getTargetDefines(const LangOptions &Opts,
 }
 
 ArrayRef<const char *> LC32TargetInfo::getGCCRegNames() const {
-  static const char *GCC_REG_NAMES[] = {"R0", "R1", "R2", "R3",
-                                        "R4", "R5", "R6", "R7"};
+  // The names given here should match the defs given in LC32RegisterInfo.td.
+  // Note that it's the def that has to match, not the name.
+  static const char *GCC_REG_NAMES[] = {"R0", "R1", "R2", "AT",
+                                        "GP", "FP", "SP", "LR"};
   return ArrayRef<const char *>(GCC_REG_NAMES);
 }
 
 ArrayRef<TargetInfo::GCCRegAlias> LC32TargetInfo::getGCCRegAliases() const {
   static const TargetInfo::GCCRegAlias GCC_REG_ALIASES[] = {
-      {{"AR"}, "R0"}, {{"XR"}, "R1"}, {{"YR"}, "R2"}, {{"AT"}, "R3"},
-      {{"GP"}, "R4"}, {{"FP"}, "R5"}, {{"SP"}, "R6"}, {{"LR"}, "R7"}};
+      {{"AR", "r0", "ar"}, "R0"},
+      {{"XR", "r1", "xr"}, "R1"},
+      {{"YR", "r2", "yr"}, "R2"},
+      {{"R3", "r3", "at"}, "AT"},
+      {{"R4", "r4", "gp"}, "GP"},
+      {{"R5", "r5", "fp"}, "FP"},
+      {{"R6", "r6", "sp"}, "SP"},
+      {{"R7", "r7", "lr"}, "LR"}};
   return ArrayRef<TargetInfo::GCCRegAlias>(GCC_REG_ALIASES);
 }
 
@@ -70,5 +78,29 @@ const char *LC32TargetInfo::getClobbers() const { return ""; }
 
 bool LC32TargetInfo::validateAsmConstraint(
     const char *&Name, TargetInfo::ConstraintInfo &info) const {
-  return false;
+  // See: AVR.h
+
+  // It seems like only one-character constraints are allowed
+  if (StringRef(Name).size() > 1)
+    return false;
+
+  switch (*Name) {
+  default:
+    return false;
+  case 'r': // Any register
+  case 'a': // R0
+  case 'x': // R1
+  case 'y': // R2
+    info.setAllowsRegister();
+    return true;
+  case 'I': // imm5
+    info.setRequiresImmediate(-16, 15);
+    return true;
+  case 'N': // amount5
+    info.setRequiresImmediate(0, 31);
+    return true;
+  case 'O': // offset6
+    info.setRequiresImmediate(-32, 31);
+    return true;
+  }
 }
