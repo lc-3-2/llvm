@@ -81,9 +81,13 @@ link register dead throughout the entire function's execution. These options
 reclaim these registers for allocation. By default, this is disabled so as to
 not confuse the students.
 
-Finally, there is `--lc_3.2-max-repeated-add`, which controls how immediates are
-materialized. Up to a point, the backend will do repeated additions. After that,
-it will use `PSEUDO.LOADCONST*`. This option controls the threshold.
+Finally, there are the arithmetic options. The flag `--lc_3.2-max-repeated-add`
+controls how immediates are materialized. Up to a point, the backend will do
+repeated additions. After that, it will use `PSEUDO.LOADCONST*`. This flag
+controls the threshold. The flag `--lc_3.2-max-const-mul-hamming-weight`
+similarly controls how multiplications by constants are materialized. Up to a
+point, the backend will do shifts and adds, and after that it will use the
+libcall. Again, this flag controls the threshold.
 
 When compiling with the driver, there are some considerations for linking.
 First, there is no default linker script or C runtime. You have to provide
