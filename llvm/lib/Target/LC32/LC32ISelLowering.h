@@ -19,7 +19,8 @@
 //
 // There is also optional stuff. LC32ISelLoweringInlineAsm.cpp handles
 // constraints for inline assembly. The inline assembly was mostly copied from
-// AVR.
+// AVR. LC32ISelLoweringConstructor.cpp also houses functions that control how
+// the optimizer lowers code.
 //
 // See: CCState
 //
@@ -150,11 +151,37 @@ private:
   Register getRegisterByName(const char *RegName, LLT Ty,
                              const MachineFunction &MF) const override;
 
+  // See: LC32ISelLoweringConstructor.cpp
+  bool useSoftFloat() const override;
+  bool isSelectSupported(SelectSupportKind kind) const override;
+  bool reduceSelectOfFPConstantLoads(EVT CmpOpVT) const override;
+  bool preferZeroCompareBranch() const override;
+  bool hasBitPreservingFPLogic(EVT VT) const override;
+  bool convertSetCCLogicToBitwiseLogic(EVT VT) const override;
+  bool hasAndNotCompare(SDValue Y) const override;
+  bool hasAndNot(SDValue X) const override;
+  bool shouldFoldMaskToVariableShiftPair(SDValue X) const override;
+  bool shouldFoldConstantShiftPairToMask(const SDNode *N,
+                                         CombineLevel Level) const override;
+  bool shouldTransformSignedTruncationCheck(EVT XVT,
+                                            unsigned KeptBits) const override;
+  bool convertSelectOfConstantsToMath(EVT VT) const override;
+  bool decomposeMulByConstant(LLVMContext &Context, EVT VT,
+                              SDValue C) const override;
+  bool isMulAddWithConstProfitable(SDValue AddNode,
+                                   SDValue ConstNode) const override;
+  bool isLegalICmpImmediate(int64_t Value) const override;
+  bool isLegalAddImmediate(int64_t Value) const override;
+
+  bool isDesirableToCommuteWithShift(const SDNode *N,
+                                     CombineLevel Level) const override;
+  bool isDesirableToTransformToIntegerOp(unsigned Opc, EVT VT) const override;
+
   /**
    * Helper method for LowerBR_CC and LowerSELECT_CC.
    *
-   * Both those operations need to be lowered to a comparison against zero. This
-   * emits a structure with the results.
+   * Both those operations need to be lowered to a comparison against zero.
+   * This emits a structure with the results.
    */
   struct DoCMPResult {
     SDValue Chain; //< The new chain

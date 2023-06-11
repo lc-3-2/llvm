@@ -40,6 +40,11 @@ cl::opt<unsigned> llvm::lc32::clopts::MaxRepeatedAdd(
     cl::desc("When realizing constants, the maximum number of repeated "
              "ADDs to do instead of using PSEUDO.LOADCONST"),
     cl::init(4));
+cl::opt<unsigned> llvm::lc32::clopts::MaxConstMulHammingWeight(
+    "lc_3.2-max-const-mul-hamming-weight",
+    cl::desc("When performing multiplications by constants, how many bits "
+             "the constant can have before it is profitable to just libcall"),
+    cl::init(3));
 
 cl::opt<bool>
     llvm::lc32::clopts::UseR4("lc_3.2-use-r4",

@@ -25,6 +25,7 @@ extern llvm::cl::opt<bool> UseSignedCMPLibCall;
 extern llvm::cl::opt<bool> UseUnsignedCMPLibCall;
 
 extern llvm::cl::opt<unsigned> MaxRepeatedAdd;
+extern llvm::cl::opt<unsigned> MaxConstMulHammingWeight;
 
 extern llvm::cl::opt<bool> UseR4;
 extern llvm::cl::opt<bool> UseR7;
