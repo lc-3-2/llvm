@@ -29,8 +29,12 @@ ADD checksums /tmp/checksums
 ADD scripts /tmp/scripts
 
 # Checkout the source code.
+# This requires authentication since the repository is private. There should be
+# a secret called GIT_CREDENTIAL, which is a bash script that acts as a
+# credential manager for GIT.
 ARG checkout_args
-RUN /tmp/scripts/checkout.sh ${checkout_args}
+RUN git config --global credential.helper "/bin/bash /run/secrets/GIT_CREDENTIAL"
+RUN --mount=type=secret,id=GIT_CREDENTIAL /tmp/scripts/checkout.sh ${checkout_args}
 # Run the build. Results of the build will be available at /tmp/clang-install/.
 ARG buildscript_args
 RUN /tmp/scripts/build_install_llvm.sh --to /tmp/clang-install ${buildscript_args}

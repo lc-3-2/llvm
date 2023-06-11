@@ -1,0 +1,12 @@
+# This is the credential helper that will be used inside the Docker container to
+# authenticate with GitHub at build-time. This is needed since the repository is
+# private. It should be a bash script that works as specified in the Git docs.
+#
+# See: https://git-scm.com/docs/git-credential
+#
+# Example:
+# ```bash
+# echo username=ammrat13
+# echo password=github_pat_XXXX...
+# ```
+git-credential.sh
