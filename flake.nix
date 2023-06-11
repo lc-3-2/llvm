@@ -13,17 +13,19 @@
       pkgs = nixpkgs-23-05.legacyPackages.${system};
       inherit (pkgs) stdenv;
 
+      # See: https://github.com/NixOS/nixpkgs/tree/4ecab3273592f27479a583fb6d975d4aba3486fe/pkgs/development/compilers/llvm/16
       buildInputs = [
-        pkgs.python311
-        pkgs.zlib
-        pkgs.gnupg
+        pkgs.libxml2
+        pkgs.libffi
       ];
       nativeBuildInputs = [
         pkgs.cmake
         pkgs.ninja
-        pkgs.subversion
-        pkgs.git
-        pkgs.gdb
+        pkgs.python311
+      ];
+      propagatedBuildInputs = [
+        pkgs.ncurses
+        pkgs.zlib
       ];
     in {
 
@@ -31,7 +33,7 @@
         default = lc-3-2;
 
         lc-3-2 = stdenv.mkDerivation {
-          inherit name buildInputs nativeBuildInputs;
+          inherit name buildInputs nativeBuildInputs propagatedBuildInputs;
 
           src = self;
 
@@ -65,7 +67,7 @@
         default = lc-3-2;
 
         lc-3-2 = pkgs.mkShell {
-          inherit name buildInputs nativeBuildInputs;
+          inherit name buildInputs nativeBuildInputs propagatedBuildInputs;
 
           shellHook = ''
             export PS1="(${name}) [\u@\h \W]\$ "
