@@ -182,10 +182,13 @@ if [ "$DOCKER_TAG" != "" ]; then
   DOCKER_TAG=":$DOCKER_TAG"
 fi
 
+# For authentication, we have to pass a secret here. This requires buildx to
+# work
 echo "Building ${DOCKER_REPOSITORY}${DOCKER_TAG} from $IMAGE_SOURCE"
-docker build -t "${DOCKER_REPOSITORY}${DOCKER_TAG}" \
+DOCKER_BUILDKIT=1 docker build -t "${DOCKER_REPOSITORY}${DOCKER_TAG}" \
   --build-arg "checkout_args=$CHECKOUT_ARGS" \
   --build-arg "buildscript_args=$BUILDSCRIPT_ARGS" \
+  --secret id=GIT_CREDENTIAL,src=git-credential.sh \
   -f "$BUILD_DIR/$IMAGE_SOURCE/Dockerfile" \
   "$BUILD_DIR"
 echo "Done"
