@@ -222,6 +222,12 @@ bool LC32TargetLowering::shouldTransformSignedTruncationCheck(
   return true;
 }
 
+bool LC32TargetLowering::shouldNormalizeToSelectSequence(LLVMContext &Context,
+                                                         EVT VT) const {
+  // We can do logic operations on booleans
+  return false;
+}
+
 bool LC32TargetLowering::convertSelectOfConstantsToMath(EVT VT) const {
   // Selects should be avoided as much as possible
   return true;
