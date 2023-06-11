@@ -96,9 +96,9 @@ echo "Checking out sources from git"
 mkdir -p "$CLANG_BUILD_DIR/src"
 CHECKOUT_DIR="$CLANG_BUILD_DIR/src"
 
-echo "Checking out https://github.com/llvm/llvm-project.git to $CHECKOUT_DIR"
+echo "Checking out https://github.com/lc-3-2/llvm.git to $CHECKOUT_DIR"
 git clone -b $LLVM_BRANCH --single-branch \
-  "https://github.com/llvm/llvm-project.git" \
+  "https://github.com/lc-3-2/llvm.git" \
   "$CHECKOUT_DIR"
 
 pushd $CHECKOUT_DIR
