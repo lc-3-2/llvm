@@ -6,10 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "LC32CLOpts.h"
 #include "LC32ISelLowering.h"
 #include "LC32Subtarget.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 using namespace llvm;
+using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32ISelLoweringConstructor"
 
 LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
@@ -37,6 +39,9 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
 
   // Setup VLA
   this->setStackPointerRegisterToSaveRestore(LC32::SP);
+
+  // Optimization options
+  this->setJumpIsExpensive();
 
   // Setup how we should extend loads
   // Not all loads have corresponding instructions
@@ -127,4 +132,184 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
   this->setOperationAction(ISD::JumpTable, MVT::i32, Custom);
   this->setOperationAction(ISD::BlockAddress, MVT::i32, Custom);
   this->setOperationAction(ISD::FrameIndex, MVT::i32, Custom);
+}
+
+bool LC32TargetLowering::useSoftFloat() const {
+  // No floating point instructions - we have no choice
+  return true;
+}
+
+bool LC32TargetLowering::isSelectSupported(SelectSupportKind kind) const {
+  // Selects are always lowered to branches
+  return false;
+}
+
+bool LC32TargetLowering::reduceSelectOfFPConstantLoads(EVT CmpOpVT) const {
+  // The constant pool isn't fast, so don't bother
+  return false;
+}
+
+bool LC32TargetLowering::preferZeroCompareBranch() const {
+  // Only compares with zero are cheap
+  return true;
+}
+
+bool LC32TargetLowering::hasBitPreservingFPLogic(EVT VT) const {
+  // The standard library uses IEEE-754, so we can convert to bitwise
+  return true;
+}
+
+bool LC32TargetLowering::convertSetCCLogicToBitwiseLogic(EVT VT) const {
+  // SetCC is as expensive as a branch, so avoid it
+  return true;
+}
+
+bool LC32TargetLowering::hasAndNotCompare(SDValue Y) const {
+  // It is profitable to compare with zero in all cases, including this one
+  return true;
+}
+
+bool LC32TargetLowering::hasAndNot(SDValue X) const {
+  // Still, we do not have an and-not instruction
+  return false;
+}
+
+bool LC32TargetLowering::shouldFoldMaskToVariableShiftPair(SDValue X) const {
+  // The two variable shifts variant reduces register pressure
+  return true;
+}
+
+bool LC32TargetLowering::shouldFoldConstantShiftPairToMask(
+    const SDNode *N, CombineLevel Level) const {
+
+  assert(((N->getOpcode() == ISD::SHL &&
+           N->getOperand(0).getOpcode() == ISD::SRL) ||
+          (N->getOpcode() == ISD::SRL &&
+           N->getOperand(0).getOpcode() == ISD::SHL)) &&
+         "Expected shift-shift mask");
+
+  // Compute the shift constants
+  // If they are not constants, prefer shifts
+  SDValue c1 = N->getOperand(0).getOperand(1);
+  SDValue c2 = N->getOperand(1);
+  if (!isa<ConstantSDNode>(c1) || !isa<ConstantSDNode>(c2))
+    return false;
+  uint64_t c1_num = dyn_cast<ConstantSDNode>(c1)->getZExtValue();
+  uint64_t c2_num = dyn_cast<ConstantSDNode>(c2)->getZExtValue();
+
+  // Compute the mask that results from these shifts
+  uint32_t mask = -1;
+  switch (N->getOpcode()) {
+  case ISD::SHL:
+    mask >>= c1_num;
+    mask <<= c2_num;
+    break;
+  case ISD::SRL:
+    mask <<= c1_num;
+    mask >>= c2_num;
+    break;
+  default:
+    llvm_unreachable("Unhandled case");
+  }
+
+  // Check whether the mask can fit
+  return isInt<5>(SignExtend64<32>(mask));
+}
+
+bool LC32TargetLowering::shouldTransformSignedTruncationCheck(
+    EVT XVT, unsigned KeptBits) const {
+  // Doing the transformation this controls reduces register pressure
+  return true;
+}
+
+bool LC32TargetLowering::convertSelectOfConstantsToMath(EVT VT) const {
+  // Selects should be avoided as much as possible
+  return true;
+}
+
+bool LC32TargetLowering::decomposeMulByConstant(LLVMContext &Context, EVT VT,
+                                                SDValue C) const {
+
+  assert(isa<ConstantSDNode>(C) && "Not given a constant");
+
+  // Compute the hamming weight of the constant
+  uint32_t c_num = dyn_cast<ConstantSDNode>(C)->getZExtValue();
+  unsigned c_weight = 0;
+  for (size_t i = 0; i < 32; i++)
+    c_weight += (c_num & (1 << i)) ? 1 : 0;
+
+  // Only combine if the hamming weight is small enough
+  return c_weight <= MaxConstMulHammingWeight.getValue();
+}
+
+bool LC32TargetLowering::isMulAddWithConstProfitable(SDValue AddNode,
+                                                     SDValue ConstNode) const {
+  // Distributing a multiply will usually make constants larger, so it is almost
+  // never a good idea to do this
+  return false;
+}
+
+bool LC32TargetLowering::isLegalICmpImmediate(int64_t Value) const {
+  // No way to compare with immediates
+  return false;
+}
+
+bool LC32TargetLowering::isLegalAddImmediate(int64_t Value) const {
+  // Check imm5
+  return isInt<5>(Value);
+}
+
+bool LC32TargetLowering::isDesirableToCommuteWithShift(
+    const SDNode *N, CombineLevel Level) const {
+
+  // Commuting with shift is not desirable when it makes the constant operands
+  // bigger - out of range of imm5
+  assert((N->getOpcode() == ISD::SHL || N->getOpcode() == ISD::SRA ||
+          N->getOpcode() == ISD::SRL) &&
+         "Expected shift op");
+
+  // Arithmetic right shift always makes numbers smaller, so that's allowed
+  if (N->getOpcode() == ISD::SRA)
+    return true;
+
+  // Check that we have the pattern (N (M x c) a) where:
+  // * N is SHL or SRL
+  // * M is ADD, AND, or XOR
+  // * a and c are constants
+  // In those cases, we might accidentally make constants larger. If we're not
+  // in those cases, we're free to commute.
+  SDValue M = N->getOperand(0);
+  if (M.getOpcode() != ISD::ADD && M.getOpcode() != ISD::AND &&
+      M.getOpcode() != ISD::XOR)
+    return true;
+  SDValue a = N->getOperand(1);
+  SDValue c = M.getOperand(1);
+  if (!isa<ConstantSDNode>(a) || !isa<ConstantSDNode>(c))
+    return true;
+  uint64_t a_num = dyn_cast<ConstantSDNode>(a)->getZExtValue();
+  uint64_t c_num = dyn_cast<ConstantSDNode>(c)->getZExtValue();
+
+  // If we're an SHL, check that commuting won't cause us to go out of range for
+  // an imm5
+  if (N->getOpcode() == ISD::SHL) {
+    bool inrange_i = isInt<5>(a_num);
+    bool inrange_f = isInt<5>(a_num << c_num);
+    return (inrange_i && !inrange_f) ? false : true;
+  }
+  // If we're an SRL, do the same check
+  if (N->getOpcode() == ISD::SRL) {
+    bool inrange_i = isInt<5>(a_num);
+    bool inrange_f = isInt<5>(a_num >> c_num);
+    return (inrange_i && !inrange_f) ? false : true;
+  }
+
+  // We handled all the cases, so we should never get here
+  llvm_unreachable("Unhandled case");
+}
+
+bool LC32TargetLowering::isDesirableToTransformToIntegerOp(unsigned Opc,
+                                                           EVT VT) const {
+  // We don't have any native floating point support, so it is always welcome if
+  // we can get away with integer operations.
+  return true;
 }
