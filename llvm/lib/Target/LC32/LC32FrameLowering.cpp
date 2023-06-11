@@ -153,7 +153,7 @@ static unsigned EstimateFunctionSize(const MachineFunction &MF,
       // later, so over-estimate their size for the purposes of register
       // scavenging.
       if (MI.getOpcode() == LC32::C_BR_UNCOND)
-        ret += 18;
+        ret += 16;
       else if (MI.getOpcode() == LC32::C_BR_CMP_ZERO)
         ret += 18;
       // Otherwise, handle normally
@@ -175,22 +175,29 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   MachineFrameInfo &MFI = MF.getFrameInfo();
 
   // Count the number of scavenging slots we need:
-  // 1. if the stack frame is too large. This is an underestimate, so compensate
-  // 2. if branches can be out of range. This is an overestimate, but we still
+  // A. if the stack frame is too large. This is an underestimate, so compensate
+  // B. if branches can be out of range. This is an overestimate, but we still
   //    make contingency space.
-
-  // Do 1.
+  // Note that these two conditions are independent. Clearly, we will never have
+  // a branch that happens at the same time as a stack frame load. Therefore,
+  // these can share scavenging slots.
   unsigned num_scav = 0;
-  if (!isInt<6 - 1>(MFI.estimateStackSize(MF)))
-    num_scav++;
-  // Do 2. IF we do branch relaxation
-  //if (!isInt<10 - 1>(EstimateFunctionSize(MF, *TII)))
-  //  num_scav++;
+
+  // Do A.
+  bool need_a = !isInt<6 - 1>(MFI.estimateStackSize(MF));
+  if (need_a)
+    num_scav = std::max(1u, num_scav);
+  // Do B. IF we do branch relaxation
+  bool need_b = !isInt<10 - 1>(EstimateFunctionSize(MF, *TII));
+  (void)need_b;
+  // if (need_b)
+  //  num_scav = std::max(1u, num_scav);
 
   // Create the scavenging indicies
   for (unsigned i = 0; i < num_scav; i++) {
-    RS->addScavengingFrameIndex(
+    int FI =
         MFI.CreateStackObject(TRI->getSpillSize(LC32::GPRRegClass),
-                              TRI->getSpillAlign(LC32::GPRRegClass), false));
+                              TRI->getSpillAlign(LC32::GPRRegClass), false);
+    RS->addScavengingFrameIndex(FI);
   }
 }
