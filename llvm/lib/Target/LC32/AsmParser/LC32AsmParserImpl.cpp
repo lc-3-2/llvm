@@ -155,6 +155,7 @@ bool LC32AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   std::string mnemonic = Name.lower();
 
   // Check for BR instructions
+  // Remember that BREAK also starts with BR - ignore that
   if (mnemonic == "nop") {
     Operands.push_back(std::make_unique<LC32OperandToken>("br", NameLoc));
     Operands.push_back(
@@ -166,8 +167,9 @@ bool LC32AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     Operands.push_back(
         std::make_unique<LC32OperandNZP>(0b111, NameLoc, NameLoc));
 
-  } else if (mnemonic.substr(0, 2) == "br" ||
-             mnemonic.substr(0, 12) == "pseudo.farbr") {
+  } else if (mnemonic != "break" &&
+             (mnemonic.substr(0, 2) == "br" ||
+              mnemonic.substr(0, 12) == "pseudo.farbr")) {
     // Figure out which case we're in
     bool in_pseudo = mnemonic.substr(0, 12) == "pseudo.farbr";
     // Carve out the part of the mnemonic we need
