@@ -111,7 +111,7 @@ void LC32MCCodeEmitter::encodeInstruction(const MCInst &Inst, raw_ostream &OS,
           this->getMachineOpValue(Inst, Inst.getOperand(1), Fixups, STI);
       // Construct the encodings
       uint16_t br_enc = 0x0005 | (cc_neg << 9);
-      uint16_t lea_enc = 0xe606;
+      uint16_t lea_enc = 0xe604;
       uint16_t ldw_enc = 0xa6c0;
       uint16_t jmp_enc = 0xc0c0;
       // Write
