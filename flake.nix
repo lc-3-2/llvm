@@ -53,13 +53,8 @@
               -DCOMPILER_RT_BUILTINS_PASS_DATA_SECTIONS=ON
           '';
 
-          buildPhase = ''
-            ninja -v -C ./build/
-          '';
-
-          installPhase = ''
-            ninja -v -C ./build/ install
-          '';
+          buildPhase = "ninja -v -C ./build/";
+          installPhase = "ninja -v -C ./build/ install";
         };
       };
 
