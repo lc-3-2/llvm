@@ -116,10 +116,10 @@ unsigned LC32InstrInfo::removeBranch(MachineBasicBlock &MBB,
   unsigned bytes = 0;
 
   // Iterate backward
-  // We know that the block ends with BR and C_BR_CMP_ZERO
+  // We know that the block ends with BR and C_BR_CMP_ZERO, but there may be
+  // debug instructions after it
   MachineBasicBlock::iterator i = MBB.end();
   while (i != MBB.begin()) {
-    assert(i == MBB.end());
     i--;
 
     // Ignore the same set of instructions analyzeBranch does
@@ -138,6 +138,9 @@ unsigned LC32InstrInfo::removeBranch(MachineBasicBlock &MBB,
     bytes += this->getInstSizeInBytes(*i);
 
     // Remove
+    // Make sure to go to the end of the basic block after removal. The iterator
+    // is invalid now.
+    // FIXME: Performance
     i->eraseFromParent();
     i = MBB.end();
   }
