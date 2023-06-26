@@ -22,6 +22,7 @@
         pkgs.cmake
         pkgs.ninja
         pkgs.python311
+        pkgs.git
       ];
       propagatedBuildInputs = [
         pkgs.ncurses
