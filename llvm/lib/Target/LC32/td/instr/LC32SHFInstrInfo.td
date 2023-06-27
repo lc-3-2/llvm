@@ -9,6 +9,11 @@
 // This file declares the Shift instructions. That's both the register and the
 // immediate variants.
 //
+// Note that shift instructions completely bypass the normal path for DAG
+// instruction selection. We always want to use repeated shifts to materialize
+// shifts by "large" constants, so we handle that manually. There doesn't seem
+// to be a way to specify that via TableGen, so we use C++.
+//
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
 //
 //===----------------------------------------------------------------------===//

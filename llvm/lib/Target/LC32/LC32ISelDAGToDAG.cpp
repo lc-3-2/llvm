@@ -16,6 +16,8 @@ using namespace llvm;
 using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32ISelDAGToDag"
 
+static_assert(std::is_same<uint64_t, unsigned long>::value, "Bad type");
+
 char LC32DAGToDAGISel::ID;
 
 INITIALIZE_PASS(LC32DAGToDAGISel, DEBUG_TYPE,
@@ -28,6 +30,8 @@ INITIALIZE_PASS(LC32DAGToDAGISel, DEBUG_TYPE,
 void LC32DAGToDAGISel::Select(SDNode *N) {
   // Custom pattern matching
   if (this->SelectRepeatedAdd(N))
+    return;
+  if (this->SelectRepeatedShift(N))
     return;
   // TableGen
   this->SelectCode(N);
@@ -64,6 +68,72 @@ bool LC32DAGToDAGISel::SelectRepeatedAdd(SDNode *N) {
       to_go -= to_add;
     }
   }
+  // Done
+  this->ReplaceNode(N, out);
+  return true;
+}
+
+bool LC32DAGToDAGISel::SelectRepeatedShift(SDNode *N) {
+  // Populate variables
+  SDLoc dl(N);
+
+  // If the opcode isn't something we can handle, bail
+  if (N->getOpcode() != ISD::SHL && N->getOpcode() != ISD::SRL &&
+      N->getOpcode() != ISD::SRA)
+    return false;
+  // If the RHS isn't a constant, bail
+  // Assert that we have an RHS
+  assert(N->getNumOperands() == 2 && "Bad number of operands for shift");
+  if (N->getOperand(1)->getOpcode() != ISD::Constant)
+    return false;
+  // Assert the output and the constant have legal types
+  // Type legalization has already happened, so we can make this assumption
+  assert(N->getValueType(0) == MVT::i32 && "Results should be i32");
+  assert(N->getOperand(1).getValueType() == MVT::i32 &&
+         "Constants should be i32");
+
+  // Get the target node to use given the opcode
+  unsigned target_op;
+  switch (N->getOpcode()) {
+  case ISD::SHL:
+    target_op = LC32::LSHFi;
+    break;
+  case ISD::SRL:
+    target_op = LC32::RSHFLi;
+    break;
+  case ISD::SRA:
+    target_op = LC32::RSHFAi;
+    break;
+  default:
+    llvm_unreachable("Unhandled case");
+  }
+  // Pull out the immediate value
+  // Assert that it is in a reasonable range
+  uint64_t imm = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+  assert(imm > 0 && imm < 32 && "Bad value for shift immediate");
+
+  // Loop variables
+  // The variable out will be populated on the first iteration
+  SDNode *out = nullptr;
+  uint64_t to_go = imm;
+  while (to_go != 0) {
+
+    // Compute what value to use as the base for this iteration
+    // It's either the result of the last iteration or the input to this
+    // function
+    SDValue base = out == nullptr ? N->getOperand(0) : SDValue(out, 0);
+
+    // Compute how much we have to shift by this iteration
+    unsigned to_shf = std::min(to_go, 8ul);
+    // Update out
+    out = this->CurDAG->getMachineNode(
+        target_op, dl, MVT::i32, base,
+        this->CurDAG->getTargetConstant(to_shf, dl, MVT::i32));
+    // Update the amount to go
+    to_go -= to_shf;
+  }
+  assert(out != nullptr);
+
   // Done
   this->ReplaceNode(N, out);
   return true;
