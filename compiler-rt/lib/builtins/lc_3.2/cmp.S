@@ -96,10 +96,9 @@ __cmpsi3:
 ;   t = lhs ^ rhs;
 ;   if (t >= 0) {
 ;     lhs <<= 1;
+;     lhs >>= 1;
 ;     rhs <<= 1;
-;     t = 1;
-;     lhs >>= t;
-;     rhs >>= t;
+;     rhs >>= 1;
 ;     t = ~rhs;
 ;     t += 1;
 ;     ret = lhs + t;
@@ -134,19 +133,14 @@ __ucmpsi3:
 	BRn     .Luendif
 
 	; lhs <<= 1;
-	; rhs <<= 1;
-	ADD     R1, R1, R1
-	ADD     R0, R0, R0
+	LSHF    R1, R1, 1
+	; lhs >>= 1;
+	RSHFL   R1, R1, 1
 
-	; Note we have to use R2 as a temporary here since we don't have logical
-	; right-shift by immediate
-	; t = 1;
-	; lhs >>= t;
-	; rhs >>= t;
-	AND     R2, R2, 0
-	ADD     R2, R2, 1
-	RSHFL   R1, R1, R2
-	RSHFL   R0, R0, R2
+	; rhs <<= 1;
+	LSHF    R0, R0, 1
+	; rhs >>= 1;
+	RSHFL   R0, R0, 1
 
 	; Does ret = lhs - rhs Using t
 	; t = ~rhs;
