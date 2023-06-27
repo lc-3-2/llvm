@@ -176,6 +176,22 @@ uint64_t LC32MCCodeEmitter::getShiftedSignedImmOpValue(
   return op.getImm() >> S;
 }
 
+uint64_t LC32MCCodeEmitter::getAmount3Value(const MCInst &MI, unsigned OpNo,
+                                            SmallVectorImpl<MCFixup> &Fixups,
+                                            const MCSubtargetInfo &STI) const {
+  // Get the operand
+  const MCOperand &op = MI.getOperand(OpNo);
+  // Check operand has the right form
+  // Get around commas breaking assert
+  {
+    assert(op.isImm() && "Not an immediate");
+    bool is_correct = isUInt<3>(op.getImm() - 1);
+    assert(is_correct && "Bad value for immediate");
+  }
+  // Return
+  return op.getImm() - 1;
+}
+
 template <unsigned N, unsigned S>
 uint64_t LC32MCCodeEmitter::getPCOffsetValue(const MCInst &MI, unsigned OpNo,
                                              SmallVectorImpl<MCFixup> &Fixups,
