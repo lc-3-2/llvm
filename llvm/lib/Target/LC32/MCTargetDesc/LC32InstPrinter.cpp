@@ -99,6 +99,22 @@ void LC32InstPrinter::printShiftedSignedImmOperand(const MCInst *MI,
   O << '#' << (op.getImm() >> S);
 }
 
+void LC32InstPrinter::printAmount3(const MCInst *MI, unsigned OpNo,
+                                   raw_ostream &O, const char *Modifier) {
+  // Get the operand
+  const MCOperand &op = MI->getOperand(OpNo);
+  // Check operand has the right form
+  // Get around commas breaking assert
+  {
+    assert(op.isImm() && "Not an immediate");
+    bool is_correct = isUInt<3>(op.getImm() - 1);
+    assert(is_correct && "Bad value for immediate");
+  }
+  // Just print the immediate as-is
+  // We don't write the decremented verion
+  O << '#' << op.getImm();
+}
+
 template <unsigned N, unsigned S>
 void LC32InstPrinter::printPCOffset(const MCInst *MI, unsigned OpNo,
                                     raw_ostream &O, const char *Modifier) {

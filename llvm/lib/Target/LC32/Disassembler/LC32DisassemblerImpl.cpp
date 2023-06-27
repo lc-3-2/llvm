@@ -48,6 +48,13 @@ static DecodeStatus DecodeShiftedSignedImm(MCInst &MI, uint64_t Imm,
   return DecodeStatus::Success;
 }
 
+static DecodeStatus DecodeAmount3(MCInst &MI, uint64_t Imm,
+                                           uint64_t Address,
+                                           const MCDisassembler *Decoder) {
+  MI.addOperand(MCOperand::createImm(Imm + 1));
+  return DecodeStatus::Success;
+}
+
 template <unsigned N, unsigned S>
 static DecodeStatus DecodePCOffset(MCInst &MI, uint64_t Imm, uint64_t Address,
                                    const MCDisassembler *Decoder) {

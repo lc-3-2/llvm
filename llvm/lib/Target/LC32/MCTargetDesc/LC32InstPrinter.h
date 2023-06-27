@@ -54,6 +54,8 @@ private:
   void printShiftedSignedImmOperand(const MCInst *MI, unsigned OpNo,
                                     raw_ostream &O,
                                     const char *Modifier = nullptr);
+  void printAmount3(const MCInst *MI, unsigned OpNo, raw_ostream &O,
+                    const char *Modifier = nullptr);
   template <unsigned N, unsigned S>
   void printPCOffset(const MCInst *MI, unsigned OpNo, raw_ostream &O,
                      const char *Modifier = nullptr);
