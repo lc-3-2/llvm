@@ -21,8 +21,7 @@
 ;;     t = x & 1;
 ;;     if (t != 0)
 ;;       r += y;
-;;     t = 1;
-;;     x >>= t;
+;;     x >>= 1;
 ;;     y <<= 1;
 ;;   }
 ;;   return r;
@@ -79,16 +78,11 @@ __mulsi3:
 	; }
 .Lendif:
 
-	; Note we have to use R3 as a temporary here since we don't have logical
-	; right-shift by immediate
-	; t = 1;
-	; x >>= t;
-	AND     R3, R3, 0
-	ADD     R3, R3, 1
-	RSHFL   R1, R1, R3
+	; x >>= 1;
+	RSHFL   R1, R1, 1
 
 	; y <<= 1;
-	ADD     R2, R2, R2
+	LSHF    R2, R2, 1
 
 	; }
 	BR      .Lwhile
