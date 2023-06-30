@@ -181,13 +181,19 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // Note that these two conditions are independent. Clearly, we will never have
   // a branch that happens at the same time as a stack frame load. Therefore,
   // these can share scavenging slots.
+  //
+  // Also note that in both the checks, we keep the arguments positive since
+  // that is the more restrictive direction. Observe that we use isInt and not
+  // isUInt.
   unsigned num_scav = 0;
 
   // Do A.
-  bool need_a = !isInt<6 - 1>(MFI.estimateStackSize(MF));
+  // This is restricted by ADDi, which only has a 5-bit immediate
+  bool need_a = !isInt<5 - 1>(MFI.estimateStackSize(MF));
   if (need_a)
     num_scav = std::max(1u, num_scav);
   // Do B. IF we do branch relaxation
+  // BR has a 9-bit immediate, but it's doubled in hardware
   bool need_b = !isInt<10 - 1>(EstimateFunctionSize(MF, *TII));
   (void)need_b;
   // if (need_b)
