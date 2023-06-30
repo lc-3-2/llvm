@@ -182,10 +182,13 @@ void LC32RegisterInfo::genAddLargeImm(MachineBasicBlock::iterator MBBI,
 
   // If the immediate is zero, just ADDi
   if (imm == 0) {
-    BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
-        .addReg(dr, dr_flags)
-        .addReg(sr, sr_flags)
-        .addImm(0);
+    // Only emit if the source is not the same as the destination. In that
+    // case, this instruction would be a NOP
+    if (sr != dr)
+      BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
+          .addReg(dr, dr_flags)
+          .addReg(sr, sr_flags)
+          .addImm(0);
     return;
   }
 
