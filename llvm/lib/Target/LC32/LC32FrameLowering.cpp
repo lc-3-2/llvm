@@ -188,8 +188,9 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   unsigned num_scav = 0;
 
   // Do A.
-  // This is restricted by ADDi, which only has a 5-bit immediate
-  bool need_a = !isInt<5 - 1>(MFI.estimateStackSize(MF));
+  // This is restricted by STB, which has a 6-bit immediate with no shift. Only
+  // the stores use this frame index
+  bool need_a = !isInt<6 - 1>(MFI.estimateStackSize(MF));
   if (need_a)
     num_scav = std::max(1u, num_scav);
   // Do B. IF we do branch relaxation
