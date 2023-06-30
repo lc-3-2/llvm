@@ -69,4 +69,6 @@ include "td/instr/LC32ConditionalInstrInfo.td"
 
 include "td/instr/LC32SupervisorInstrInfo.td"
 
+include "td/instr/pei/LC32LRInstrInfo.td"
+
 def LC32InstrInfo : InstrInfo;
