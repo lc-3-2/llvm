@@ -42,8 +42,7 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   MFI.setOffsetAdjustment(-static_cast<int64_t>(MFI.getStackSize()) + 4l);
 
   // Save LR and FP
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
-      .addReg(LC32::LR, RegState::Kill)
+  BuildMI(MBB, MBBI, dl, TII.get(LC32::C_STLR))
       .addReg(LC32::SP)
       .addImm(-8);
   BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
@@ -79,7 +78,7 @@ void LC32FrameLowering::emitEpilogue(MachineFunction &MF,
       .addImm(12);
 
   // Restore LR and FP
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::LR)
+  BuildMI(MBB, MBBI, dl, TII.get(LC32::C_LDLR))
       .addReg(LC32::SP)
       .addImm(-4);
   BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::FP)
