@@ -13,7 +13,9 @@
 //
 // Note the use of AddedComplexity. These are used to prioritize which
 // instructions should be selected when moving an immediate into a register.
-// They were chosen by looking at LC32GenDAGISel.inc.
+// They were chosen by looking at LC32GenDAGISel.inc. However, these complexity
+// values are not used anymore since this instruction is selected directly by
+// LC32ISelDAGToDAG.cpp#LC32DAGToDAGISel::SelectRepeatedAdd.
 //
 // See: LC32LoadConstInstrInfo.td
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
