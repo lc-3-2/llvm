@@ -9,6 +9,12 @@
 // This file contains declarations for all the memory operations, so LD* and
 // ST*. It also contains pattern matching code for them.
 //
+// Note that the ST* instructions previously clobbered AT. They no longer do
+// that, instead using virtual registers which are then eliminated. As such,
+// there is no point in trying to separate stores that operate on frame indicies
+// from those that don't, since all stores only use an extra register if it is
+// needed.
+//
 // Usually: LC32InstrFormats.td and LC32InstrInfo.td
 //
 //===----------------------------------------------------------------------===//

@@ -10,8 +10,14 @@
 // instruction. Almost none of this can be lowered automatically. It has custom
 // code in LC32ISelLowering to select it.
 //
+// Note that branches clobber the AT register, unlike stores. This is because
+// they use AT only after relaxation, meaning the compiler can't deal with it
+// via virtual registers.
+//
 // Also note that NOP can't be expressed with InstAlias, so we need custom code
 // to deal with that.
+// See: AsmParser/AsmParserImpl.cpp#LC32AsmParser::ParseInstruction
+// See: MCTargetDesc/LC32InstPrinter.cpp#LC32InstPrinter::printInst
 //
 //===----------------------------------------------------------------------===//
 
