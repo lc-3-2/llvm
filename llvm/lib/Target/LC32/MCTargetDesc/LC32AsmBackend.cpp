@@ -50,10 +50,9 @@ void LC32AsmBackend::emitInstructionBegin(MCObjectStreamer &OS,
   // Non-pseudo instructions are aligned to two bytes
   // Emit zeros until then
   if (Inst.getOpcode() == LC32::P_LOADCONSTW ||
-      Inst.getOpcode() == LC32::P_FARJSR || Inst.getOpcode() == LC32::P_FARBR)
+      Inst.getOpcode() == LC32::P_FARJSR)
     OS.emitValueToAlignment(Align(4));
-  else if (Inst.getOpcode() == LC32::LEA || Inst.getOpcode() == LC32::JSR ||
-           Inst.getOpcode() == LC32::BR)
+  else if (Inst.getOpcode() == LC32::LEA || Inst.getOpcode() == LC32::JSR)
     OS.emitValueToAlignment(Align(4));
   else
     OS.emitValueToAlignment(Align(2));
@@ -168,7 +167,6 @@ bool LC32AsmBackend::mayNeedRelaxation(const MCInst &Inst,
   switch (Inst.getOpcode()) {
   case LC32::LEA:
   case LC32::JSR:
-  case LC32::BR:
     return true;
   default:
     return false;
@@ -182,8 +180,6 @@ bool LC32AsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
   switch (Kind) {
   case TFK_PCOffset11:
     return !isShiftedInt<11, 1>(Value - 2);
-  case TFK_PCOffset9BR:
-    return !isShiftedInt<9, 1>(Value - 2);
   case TFK_PCOffset9LEA:
     return !isShiftedInt<9, 0>(Value - 2);
   default:
@@ -202,10 +198,6 @@ void LC32AsmBackend::relaxInstruction(MCInst &Inst,
   case LC32::JSR:
     // JSR -> PSEUDO.FARJSR
     Inst.setOpcode(LC32::P_FARJSR);
-    return;
-  case LC32::BR:
-    // BR -> PSEUDO.FARBR
-    Inst.setOpcode(LC32::P_FARBR);
     return;
   default:
     llvm_unreachable("Bad instruction to relax");

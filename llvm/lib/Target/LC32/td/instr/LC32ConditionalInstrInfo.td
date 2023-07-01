@@ -25,30 +25,19 @@
 // The branch itself. For conditional branches, this is emitted as part of
 // C_BR_CMP_ZERO. For unconditional branches, we use C_BR_UNCOND.
 
-let
-  OutOperandList = (outs),
-  isBranch = true,
-  isTerminator = true
-in {
+def BR : LC32Instruction {
+  let AsmString = "BR$nzp\t$target";
+  let OutOperandList = (outs);
+  let InOperandList = (ins NZP:$nzp, PCOffset9BR:$target);
 
-  def BR : LC32Instruction {
-    let AsmString = "BR$nzp\t$target";
-    let InOperandList = (ins NZP:$nzp, PCOffset9BR:$target);
+  let isBranch = true;
+  let isTerminator = true;
 
-    bits<3> nzp;
-    bits<9> target;
-    let Inst{15-12} = 0b0000;
-    let Inst{11-9}  = nzp;
-    let Inst{8-0}   = target;
-  }
-
-  def P_FARBR : LC32Instruction_P {
-    let AsmString = "PSEUDO.FARBR$nzp\t$target";
-    let InOperandList = (ins NZP:$nzp, Const32:$target);
-    let Defs = [AT];
-
-    let Size = 14;
-  }
+  bits<3> nzp;
+  bits<9> target;
+  let Inst{15-12} = 0b0000;
+  let Inst{11-9}  = nzp;
+  let Inst{8-0}   = target;
 }
 
 //---

@@ -36,7 +36,6 @@ unsigned LC32InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   unsigned d_op = d.getOpcode();
 
   // We shouldn't have relaxed instructions at this point
-  assert(d_op != LC32::P_FARBR && "FARBR generated");
   assert(d_op != LC32::P_FARJSR && "FARJSR generated");
 
   // Meta instructions produce no output
