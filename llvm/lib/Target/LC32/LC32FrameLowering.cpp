@@ -40,7 +40,8 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   // This is relative from the end of the fixed variables section and in the
   // "wrong" direction. It is used when computing frame offsets via
   // getFrameIndexReference.
-  MFI.setOffsetAdjustment(-static_cast<int64_t>(MFI.getStackSize()) + 4l);
+  MFI.setOffsetAdjustment(-static_cast<int64_t>(MFI.getStackSize()) +
+                          INT64_C(4));
 
   // Save LR and FP
   BuildMI(MBB, MBBI, dl, TII.get(LC32::C_STLR)).addReg(LC32::SP).addImm(-8);
@@ -59,7 +60,8 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   // Remember, we always have one word for local variables
   TRI.genAddLargeImm(
       MBBI, dl, LC32::SP, LC32::FP,
-      std::min(-static_cast<int64_t>(MFI.getStackSize()) + 4l, 0l));
+      std::min(-static_cast<int64_t>(MFI.getStackSize()) + INT64_C(4),
+               INT64_C(0)));
 }
 
 void LC32FrameLowering::emitEpilogue(MachineFunction &MF,

@@ -16,8 +16,6 @@ using namespace llvm;
 using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32ISelDAGToDag"
 
-static_assert(std::is_same<uint64_t, unsigned long>::value, "Bad type");
-
 char LC32DAGToDAGISel::ID;
 
 INITIALIZE_PASS(LC32DAGToDAGISel, DEBUG_TYPE,
@@ -51,8 +49,8 @@ bool LC32DAGToDAGISel::SelectRepeatedAdd(SDNode *N) {
   // Check whether we should use repeated ADDs
   // Match zeros too, even though we have a pattern for that
   int64_t imm = cast<ConstantSDNode>(N)->getSExtValue();
-  if (imm < -16l * static_cast<int64_t>(MaxRepeatedAdd.getValue()) ||
-      imm > 15l * static_cast<int64_t>(MaxRepeatedAdd.getValue()))
+  if (imm < INT64_C(-16) * static_cast<int64_t>(MaxRepeatedAdd.getValue()) ||
+      imm > INT64_C(15) * static_cast<int64_t>(MaxRepeatedAdd.getValue()))
     return false;
 
   // Start with zero
@@ -61,7 +59,7 @@ bool LC32DAGToDAGISel::SelectRepeatedAdd(SDNode *N) {
   {
     int64_t to_go = imm;
     while (to_go != 0) {
-      int64_t to_add = std::max(-16l, std::min(15l, to_go));
+      int64_t to_add = std::max(INT64_C(-16), std::min(INT64_C(15), to_go));
       out = this->CurDAG->getMachineNode(
           LC32::ADDi, dl, MVT::i32, SDValue(out, 0),
           this->CurDAG->getTargetConstant(to_add, dl, MVT::i32));
@@ -124,7 +122,7 @@ bool LC32DAGToDAGISel::SelectRepeatedShift(SDNode *N) {
     SDValue base = out == nullptr ? N->getOperand(0) : SDValue(out, 0);
 
     // Compute how much we have to shift by this iteration
-    unsigned to_shf = std::min(to_go, 8ul);
+    uint64_t to_shf = std::min(to_go, UINT64_C(8));
     // Update out
     out = this->CurDAG->getMachineNode(
         target_op, dl, MVT::i32, base,

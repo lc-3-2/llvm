@@ -270,7 +270,7 @@ bool LC32AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   // For an invalid operand, ErrorInfo contains the operand index containing
   // the error, or ~0ull if not present.
   case Match_InvalidOperand:
-    if (ErrorInfo == 0ull)
+    if (ErrorInfo == ~0ull)
       return this->Error(IDLoc, "bad operand value");
     if (ErrorInfo >= Operands.size())
       return this->Error(IDLoc, "too many operands");

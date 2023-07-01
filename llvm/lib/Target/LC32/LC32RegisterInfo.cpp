@@ -193,12 +193,12 @@ void LC32RegisterInfo::genAddLargeImm(MachineBasicBlock::iterator MBBI,
   }
 
   // Compute if we can get away with the repeated adds
-  if (imm >= -16l * static_cast<ssize_t>(MaxRepeatedAdd.getValue()) &&
-      imm <= 15l * static_cast<ssize_t>(MaxRepeatedAdd.getValue())) {
+  if (imm >= INT64_C(-16) * static_cast<int64_t>(MaxRepeatedAdd.getValue()) &&
+      imm <= INT64_C(15) * static_cast<int64_t>(MaxRepeatedAdd.getValue())) {
     int64_t to_go = imm;
     bool first_loop = true;
     while (to_go != 0) {
-      int64_t to_add = std::max(-16l, std::min(15l, to_go));
+      int64_t to_add = std::max(INT64_C(-16), std::min(INT64_C(15), to_go));
       bool last_loop = to_add == to_go;
 
       BuildMI(MBB, MBBI, dl, TII.get(LC32::ADDi))
