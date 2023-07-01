@@ -141,23 +141,19 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
 
 static unsigned EstimateFunctionSize(const MachineFunction &MF,
                                      const LC32InstrInfo &TII) {
-  // Used by processFunctionBeforeFrameFinalized IF we use branch relaxation
+  // Used by processFunctionBeforeFrameFinalized
   // See: RISCVFrameLowering.cpp
   unsigned ret = 0;
   for (auto &MBB : MF) {
     for (auto &MI : MBB) {
       // We shouldn't have raw branches at this point
       assert(MI.getOpcode() != LC32::BR && "BR generated");
-      // Special case for branches. They will almost certainly be expanded
-      // later, so over-estimate their size for the purposes of register
-      // scavenging.
-      if (MI.getOpcode() == LC32::C_BR_UNCOND)
-        ret += 16;
-      else if (MI.getOpcode() == LC32::C_BR_CMP_ZERO)
-        ret += 18;
-      // Otherwise, handle normally
-      else
-        ret += TII.getInstSizeInBytes(MI);
+      // We don't want to use the expanded versions of branches, even if we're
+      // going to do branch relaxation. That's because this function is trying
+      // to figure out if we're going to have to expand branches in the first
+      // place. If the function is small enough, we don't have to expand. All
+      // that is to say, we should use getInstSizeInBytes raw.
+      ret += TII.getInstSizeInBytes(MI);
     }
   }
   return ret;
@@ -195,9 +191,8 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // Do B. IF we do branch relaxation
   // BR has a 9-bit immediate, but it's doubled in hardware
   bool need_b = !isInt<10 - 1>(EstimateFunctionSize(MF, *TII));
-  (void)need_b;
-  // if (need_b)
-  //  num_scav = std::max(1u, num_scav);
+  if (need_b)
+   num_scav = std::max(1u, num_scav);
 
   // Create the scavenging indicies
   for (unsigned i = 0; i < num_scav; i++) {
