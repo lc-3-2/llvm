@@ -99,7 +99,6 @@ def N_SELECT_CMP_ZERO : SDNode<
 >;
 
 def C_SELECT_CMP_ZERO : LC32Instruction_C {
-  let Defs = [AT];
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins NZP:$nzp, GPR:$sr, GPR:$truev, GPR:$falsev);
   let Pattern = [(set GPR:$dr, (N_SELECT_CMP_ZERO timm:$nzp, GPR:$sr, GPR:$truev, GPR:$falsev))];

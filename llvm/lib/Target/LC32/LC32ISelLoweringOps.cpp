@@ -25,7 +25,7 @@ const char *LC32TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case LC32ISD::RET:
     return "LC32ISD::RET";
   case LC32ISD::BR_CMP_ZERO:
-    return "LC32ISD::CMP_ZERO";
+    return "LC32ISD::BR_CMP_ZERO";
   case LC32ISD::SELECT_CMP_ZERO:
     return "LC32ISD::SELECT_CMP_ZERO";
   case LC32ISD::ADDR_WRAPPER:
@@ -275,11 +275,11 @@ LC32TargetLowering::emitC_SELECT_CMP_ZERO(MachineInstr &MI,
   //    %truev = ...
   //    %falsev = ...
   //    C_BR_CMP_ZERO $nzp, %value, TrueBB
-  //    BR 7, FalseBB
+  //    C_BR_UNCOND FalseBB
   //  TrueBB:
-  //    BR 7, RejoinBB
+  //    C_BR_UNCOND RejoinBB
   //  FalseBB:
-  //    BR 7, RejoinBB
+  //    C_BR_UNCOND RejoinBB
   //  RejoinBB:
   //    %result = phi [%truev, TrueBB], [%falsev, FalseBB]
 
