@@ -8,6 +8,7 @@
 
 #include "LC32FrameLowering.h"
 #include "LC32InstrInfo.h"
+#include "LC32MachineFunctionInfo.h"
 #include "LC32Subtarget.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -42,9 +43,7 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   MFI.setOffsetAdjustment(-static_cast<int64_t>(MFI.getStackSize()) + 4l);
 
   // Save LR and FP
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::C_STLR))
-      .addReg(LC32::SP)
-      .addImm(-8);
+  BuildMI(MBB, MBBI, dl, TII.get(LC32::C_STLR)).addReg(LC32::SP).addImm(-8);
   BuildMI(MBB, MBBI, dl, TII.get(LC32::STW))
       .addReg(LC32::FP, RegState::Kill)
       .addReg(LC32::SP)
@@ -78,9 +77,7 @@ void LC32FrameLowering::emitEpilogue(MachineFunction &MF,
       .addImm(12);
 
   // Restore LR and FP
-  BuildMI(MBB, MBBI, dl, TII.get(LC32::C_LDLR))
-      .addReg(LC32::SP)
-      .addImm(-4);
+  BuildMI(MBB, MBBI, dl, TII.get(LC32::C_LDLR)).addReg(LC32::SP).addImm(-4);
   BuildMI(MBB, MBBI, dl, TII.get(LC32::LDW), LC32::FP)
       .addReg(LC32::SP)
       .addImm(-8);
@@ -168,6 +165,7 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
       MF.getSubtarget<LC32Subtarget>().getRegisterInfo();
   const LC32InstrInfo *TII = MF.getSubtarget<LC32Subtarget>().getInstrInfo();
   MachineFrameInfo &MFI = MF.getFrameInfo();
+  LC32MachineFunctionInfo *MFnI = MF.getInfo<LC32MachineFunctionInfo>();
 
   // Count the number of scavenging slots we need:
   // A. if the stack frame is too large. This is a slight underestimate, so
@@ -194,7 +192,7 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // EstimateFunctionSize will always return an even value.
   bool need_b = !isInt<10>(EstimateFunctionSize(MF, *TII));
   if (need_b)
-   num_scav = std::max(1u, num_scav);
+    num_scav = std::max(1u, num_scav);
 
   // Create the scavenging indicies
   for (unsigned i = 0; i < num_scav; i++) {
@@ -202,5 +200,13 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
         MFI.CreateStackObject(TRI->getSpillSize(LC32::GPRRegClass),
                               TRI->getSpillAlign(LC32::GPRRegClass), false);
     RS->addScavengingFrameIndex(FI);
+
+    // The first scavening frame index we use should be used for branch
+    // relaxation. Note that this should happen on the first iteration of the
+    // loop if it happens at all
+    assert(MFnI->BranchRelaxationFI == -1);
+    assert(FI >= 0);
+    if (need_b && MFnI->BranchRelaxationFI == -1)
+      MFnI->BranchRelaxationFI = FI;
   }
 }

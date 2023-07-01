@@ -11,9 +11,9 @@
 // `eliminateFrameIndex` method.
 //
 // Another big responsibility of this module is analyzing branches. This allows
-// LLVM to reorder basic blocks. For compartmentalization, all this
-// functionality is kept in `LC32InstrInfoBranches.cpp`. The rest is in
-// `LC32InstrInfoImpl.cpp`.
+// LLVM to reorder basic blocks. This module is also responsible for branch
+// relaxation. For compartmentalization, all this functionality is kept in
+// `LC32InstrInfoBranches.cpp`. The rest is in `LC32InstrInfoImpl.cpp`.
 //
 //===----------------------------------------------------------------------===//
 
@@ -63,6 +63,15 @@ public:
                         int *BytesAdded = nullptr) const override;
   bool
   reverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
+
+  bool isBranchOffsetInRange(unsigned BranchOpc,
+                             int64_t BrOffset) const override;
+  MachineBasicBlock *getBranchDestBlock(const MachineInstr &MI) const override;
+  void insertIndirectBranch(MachineBasicBlock &MBB,
+                            MachineBasicBlock &NewDestBB,
+                            MachineBasicBlock &RestoreBB, const DebugLoc &DL,
+                            int64_t BrOffset = 0,
+                            RegScavenger *RS = nullptr) const override;
 
 private:
   // Modules need the register information to work with this class. Therefore,
