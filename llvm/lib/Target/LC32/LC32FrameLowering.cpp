@@ -153,6 +153,9 @@ static unsigned EstimateFunctionSize(const MachineFunction &MF,
       ret += TII.getInstSizeInBytes(MI);
     }
   }
+  // We should only ever return even values since all instructions are aligned
+  // to two bytes
+  assert(ret % 2 == 0 && "Functions should have even length");
   return ret;
 }
 
@@ -190,7 +193,7 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // Do B. IF we do branch relaxation
   // BR has a 9-bit immediate, but it's doubled in hardware. Note that
   // EstimateFunctionSize will always return an even value.
-  bool need_b = !isInt<10>(EstimateFunctionSize(MF, *TII));
+  bool need_b = !isShiftedInt<9, 1>(EstimateFunctionSize(MF, *TII));
   if (need_b)
     num_scav = std::max(1u, num_scav);
 
