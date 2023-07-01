@@ -87,44 +87,6 @@ void LC32MCCodeEmitter::encodeInstruction(const MCInst &Inst, raw_ostream &OS,
     // Done
     return;
   }
-  if (Inst.getOpcode() == LC32::P_FARBR) {
-    if (Inst.getOperand(0).getImm() == 0b111) {
-      uint64_t addr =
-          this->getMachineOpValue(Inst, Inst.getOperand(1), Fixups, STI);
-      // Construct the encodings
-      uint16_t lea_enc = 0xe606;
-      uint16_t ldw_enc = 0xa6c0;
-      uint16_t jmp_enc = 0xc0c0;
-      uint16_t trap_enc = 0xf0ff;
-      // Write
-      support::endian::write(OS, lea_enc, support::endianness::little);
-      support::endian::write(OS, ldw_enc, support::endianness::little);
-      support::endian::write(OS, jmp_enc, support::endianness::little);
-      support::endian::write(OS, trap_enc, support::endianness::little);
-      support::endian::write(OS, static_cast<uint32_t>(addr),
-                             support::endianness::little);
-      // Done
-      return;
-    } else {
-      uint64_t cc_neg = ~Inst.getOperand(0).getImm() & 0b111;
-      uint64_t addr =
-          this->getMachineOpValue(Inst, Inst.getOperand(1), Fixups, STI);
-      // Construct the encodings
-      uint16_t br_enc = 0x0005 | (cc_neg << 9);
-      uint16_t lea_enc = 0xe604;
-      uint16_t ldw_enc = 0xa6c0;
-      uint16_t jmp_enc = 0xc0c0;
-      // Write
-      support::endian::write(OS, br_enc, support::endianness::little);
-      support::endian::write(OS, lea_enc, support::endianness::little);
-      support::endian::write(OS, ldw_enc, support::endianness::little);
-      support::endian::write(OS, jmp_enc, support::endianness::little);
-      support::endian::write(OS, static_cast<uint32_t>(addr),
-                             support::endianness::little);
-      // Done
-      return;
-    }
-  }
 
   // Non-pseudo instructions are just written as-is
   // Remember to convert to uint16_t so only two bytes are written
@@ -149,7 +111,7 @@ LC32MCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   // Handle expressions
   if (MO.isExpr()) {
     if (MI.getOpcode() == LC32::P_LOADCONSTW ||
-        MI.getOpcode() == LC32::P_FARJSR || MI.getOpcode() == LC32::P_FARBR) {
+        MI.getOpcode() == LC32::P_FARJSR) {
       Fixups.push_back(
           MCFixup::create(8, MO.getExpr(), FK_Data_4, MI.getLoc()));
       return 0;

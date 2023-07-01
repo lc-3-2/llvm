@@ -162,18 +162,14 @@ bool LC32AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
         std::make_unique<LC32OperandNZP>(0b000, NameLoc, NameLoc));
     Operands.push_back(std::make_unique<LC32OperandImm>(0, NameLoc, NameLoc));
 
-  } else if (mnemonic == "br" || mnemonic == "pseudo.farbr") {
+  } else if (mnemonic == "br") {
     Operands.push_back(std::make_unique<LC32OperandToken>(mnemonic, NameLoc));
     Operands.push_back(
         std::make_unique<LC32OperandNZP>(0b111, NameLoc, NameLoc));
 
-  } else if (mnemonic != "break" &&
-             (mnemonic.substr(0, 2) == "br" ||
-              mnemonic.substr(0, 12) == "pseudo.farbr")) {
-    // Figure out which case we're in
-    bool in_pseudo = mnemonic.substr(0, 12) == "pseudo.farbr";
+  } else if (mnemonic != "break" && mnemonic.substr(0, 2) == "br") {
     // Carve out the part of the mnemonic we need
-    std::string cc = mnemonic.substr(in_pseudo ? 12 : 2);
+    std::string cc = mnemonic.substr(2);
     // Iterate over all the possibilities, looking for a match
     // Value at index i corresponds to nzp i + 1
     std::vector<std::string> cc_possibilities = {"p",  "z",  "zp", "n",
@@ -193,8 +189,7 @@ bool LC32AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                        LC32MnemonicSpellCheck(mnemonic,
                                               this->getAvailableFeatures(), 0));
     // Otherwise, add
-    Operands.push_back(std::make_unique<LC32OperandToken>(
-        in_pseudo ? "pseudo.farbr" : "br", NameLoc));
+    Operands.push_back(std::make_unique<LC32OperandToken>("br", NameLoc));
     Operands.push_back(std::make_unique<LC32OperandNZP>(nzp, NameLoc, NameLoc));
 
   } else {

@@ -8,6 +8,7 @@
 
 #include "LC32ELFObjectTargetWriter.h"
 #include "LC32FixupKinds.h"
+#include "llvm/MC/MCContext.h"
 using namespace llvm;
 using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32ELFObjectTargetWriter"
@@ -26,6 +27,9 @@ unsigned LC32ELFObjectTargetWriter::getRelocType(MCContext &Ctx,
     return ELF::R_LC_3_2_NONE;
   case FK_Data_4:
     return ELF::R_LC_3_2_32;
+  case TFK_PCOffset9BR:
+    Ctx.reportError(Fixup.getLoc(), "PCOffset9BR has no relocation");
+    return ELF::R_LC_3_2_NONE;
   default:
     llvm_unreachable("No relocation for fixup");
   }

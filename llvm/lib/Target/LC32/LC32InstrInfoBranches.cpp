@@ -46,9 +46,8 @@ bool LC32InstrInfo::analyzeBranch(MachineBasicBlock &MBB,
       return true;
 
     // Check the instruction has an expected opcode
-    // BR and FARBR shouldn't exist at this point
+    // BR shouldn't exist at this point
     assert(i->getOpcode() != LC32::BR && "BR generated");
-    assert(i->getOpcode() != LC32::P_FARBR && "FARBR generated");
     assert((i->getOpcode() == LC32::C_BR_UNCOND ||
             i->getOpcode() == LC32::C_BR_CMP_ZERO) &&
            "Bad terminator");
@@ -225,10 +224,9 @@ bool LC32InstrInfo::reverseBranchCondition(
 bool LC32InstrInfo::isBranchOffsetInRange(unsigned BranchOpc,
                                           int64_t BrOffset) const {
   // We should only get branch instructions in here, and never indirect
-  // branches. Also, we should never have BR or FARBR because they haven't been
-  // generated at this point.
+  // branches. Also, we should never have BR because it hasn't been generated at
+  // this point.
   assert(BranchOpc != LC32::BR && "BR generated");
-  assert(BranchOpc != LC32::P_FARBR && "FARBR generated");
   assert((BranchOpc == LC32::C_BR_UNCOND || BranchOpc == LC32::C_BR_CMP_ZERO) &&
          "Bad terminator");
   // All instructions have even length, so the branch offset should be even
@@ -241,9 +239,8 @@ bool LC32InstrInfo::isBranchOffsetInRange(unsigned BranchOpc,
 MachineBasicBlock *
 LC32InstrInfo::getBranchDestBlock(const MachineInstr &MI) const {
   // Whatever we get here should either satisfy isConditionalBranch or
-  // isUnconditionalBranch. As always, we should never get BR or FARBR either.
+  // isUnconditionalBranch. As always, we should never get BR either.
   assert(MI.getOpcode() != LC32::BR && "BR generated");
-  assert(MI.getOpcode() != LC32::P_FARBR && "FARBR generated");
   assert((MI.getOpcode() == LC32::C_BR_UNCOND ||
           MI.getOpcode() == LC32::C_BR_CMP_ZERO) &&
          "Bad terminator");
