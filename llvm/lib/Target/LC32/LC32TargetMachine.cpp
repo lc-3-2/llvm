@@ -102,6 +102,7 @@ bool LC32PassConfig::addInstSelector() {
 
 void LC32PassConfig::addPreEmitPass() {
   // FIXME: This pass could loop forever if a single basic block has more than
-  // 128 far predecessors that don't have any registers free at the end
+  // 128 far predecessors that don't have any registers free at the end. However
+  // this only rarely happens.
   this->addPass(&BranchRelaxationPassID);
 }

@@ -11,7 +11,6 @@
 #include "LC32RegisterInfo.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
-#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32InstrInfoBranches"
 
