@@ -170,9 +170,10 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   MachineFrameInfo &MFI = MF.getFrameInfo();
 
   // Count the number of scavenging slots we need:
-  // A. if the stack frame is too large. This is an underestimate, so compensate
-  // B. if branches can be out of range. This is an overestimate, but we still
-  //    make contingency space.
+  // A. if the stack frame is too large. This is a slight underestimate, so
+  //    compensate
+  // B. if branches can be out of range. This is an overestimate, so we
+  //    shouldn't need to compensate here
   // Note that these two conditions are independent. Clearly, we will never have
   // a branch that happens at the same time as a stack frame load. Therefore,
   // these can share scavenging slots.
@@ -189,8 +190,9 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   if (need_a)
     num_scav = std::max(1u, num_scav);
   // Do B. IF we do branch relaxation
-  // BR has a 9-bit immediate, but it's doubled in hardware
-  bool need_b = !isInt<10 - 1>(EstimateFunctionSize(MF, *TII));
+  // BR has a 9-bit immediate, but it's doubled in hardware. Note that
+  // EstimateFunctionSize will always return an even value.
+  bool need_b = !isInt<10>(EstimateFunctionSize(MF, *TII));
   if (need_b)
    num_scav = std::max(1u, num_scav);
 
