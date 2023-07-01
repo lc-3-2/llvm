@@ -8,7 +8,10 @@
 
 #include "LC32InstrInfo.h"
 #include "LC32MachineFunctionInfo.h"
+#include "LC32RegisterInfo.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32InstrInfoBranches"
 
@@ -286,5 +289,56 @@ void LC32InstrInfo::insertIndirectBranch(MachineBasicBlock &MBB,
   assert(MFnI->BranchRelaxationFI != -1 &&
          "Didn't populate branch relaxation frame index");
 
-  llvm_unreachable("TODO");
+  // We want to use register scavenging to figure out what free registers we can
+  // use as a scratchpad. However, it currently doesn't work with empty blocks.
+  // Therefore, we construct instructions with a virtual scratch register and
+  // replace it later.
+  Register vreg = MRI.createVirtualRegister(&LC32::GPRRegClass);
+
+  // Construct instructions at the end of MBB that do the indirect branch. We
+  // set the destination to NewDestBB for now, but we may set it to RestoreBB if
+  // we need to spill a register and do cleanup.
+  MachineInstr &ldc =
+      *BuildMI(MBB, MBB.end(), DL, this->get(LC32::P_LOADCONSTW), vreg)
+           .addMBB(&NewDestBB);
+  MachineInstr &jmp = *BuildMI(MBB, MBB.end(), DL, this->get(LC32::JMP))
+                           .addReg(vreg, RegState::Kill);
+  // We only need references to things that reference the destination bb
+  (void)jmp;
+
+  // Try to scavenge a physical register to replace the vierual register. Don't
+  // spill or restore registers during this. We will do that ourselves since it
+  // needs to go in the restore block
+  RS->enterBasicBlockEnd(MBB);
+  Register preg = RS->scavengeRegisterBackwards(
+      LC32::GPRRegClass, ldc.getIterator(), false, 0, false);
+
+  // Check the scavenging worked
+  if (preg != LC32::NoRegister) {
+    RS->setRegUsed(preg);
+
+  } else {
+    // We were unable to scavenge an unused register, so use AT
+    preg = LC32::AT;
+
+    // Spill AT before we use it as a scratch register
+    this->storeRegToStackSlot(MBB, ldc.getIterator(), LC32::AT, true,
+                              MFnI->BranchRelaxationFI, &LC32::GPRRegClass, TRI,
+                              Register());
+    TRI->eliminateFrameIndex(std::prev(ldc.getIterator()), 0, 1);
+
+    // Restore the AT in the restore block
+    this->loadRegFromStackSlot(RestoreBB, RestoreBB.end(), LC32::AT,
+                               MFnI->BranchRelaxationFI, &LC32::GPRRegClass,
+                               TRI, Register());
+    TRI->eliminateFrameIndex(RestoreBB.back(), 0, 1);
+
+    // Update our branch to point to the restore block, which falls through to
+    // the destination block
+    ldc.getOperand(1).setMBB(&RestoreBB);
+  }
+
+  // Substitute the virtual register for the physical register
+  MRI.replaceRegWith(vreg, preg);
+  MRI.clearVirtRegs();
 }

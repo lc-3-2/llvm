@@ -10,9 +10,9 @@
 // instruction. Almost none of this can be lowered automatically. It has custom
 // code in LC32ISelLowering to select it.
 //
-// Note that branches clobber the AT register, unlike stores. This is because
-// they use AT only after relaxation, meaning the compiler can't deal with it
-// via virtual registers.
+// Note that branches no longer clobber the AT register. This is because we use
+// the BranchRelaxation pass to ensure that all branches are in range before the
+// assembler.
 //
 // Also note that NOP can't be expressed with InstAlias, so we need custom code
 // to deal with that.
@@ -26,7 +26,6 @@
 // C_BR_CMP_ZERO. For unconditional branches, we use C_BR_UNCOND.
 
 let
-  Defs = [AT],
   OutOperandList = (outs),
   isBranch = true,
   isTerminator = true
@@ -46,6 +45,7 @@ in {
   def P_FARBR : LC32Instruction_P {
     let AsmString = "PSEUDO.FARBR$nzp\t$target";
     let InOperandList = (ins NZP:$nzp, Const32:$target);
+    let Defs = [AT];
 
     let Size = 14;
   }
@@ -57,7 +57,6 @@ in {
 // each block, and since BR is not always a terminator.
 
 def C_BR_UNCOND : LC32Instruction_C, PseudoInstExpansion<(BR 0b111, PCOffset9BR:$target)> {
-  let Defs = [AT];
   let OutOperandList = (outs);
   let InOperandList = (ins PCOffset9BR:$target);
   let Pattern = [(br bb:$target)];
@@ -84,7 +83,6 @@ def N_BR_CMP_ZERO : SDNode<
 >;
 
 def C_BR_CMP_ZERO : LC32Instruction_C {
-  let Defs = [AT];
   let OutOperandList = (outs);
   let InOperandList = (ins NZP:$nzp, GPR:$sr, PCOffset9BR:$target);
   let Pattern = [(N_BR_CMP_ZERO timm:$nzp, GPR:$sr, bb:$target)];
