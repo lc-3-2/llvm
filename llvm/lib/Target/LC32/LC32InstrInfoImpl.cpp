@@ -30,6 +30,7 @@ unsigned LC32InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   // underestimate.
   // See: llvm/lib/CodeGen/BranchRelaxation.cpp
   // See: llvm/lib/CodeGen/IfConversion.cpp
+  unsigned retval;
 
   const MCInstrDesc &d = MI.getDesc();
   unsigned d_op = d.getOpcode();
@@ -39,28 +40,40 @@ unsigned LC32InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   assert(d_op != LC32::P_FARJSR && "FARJSR generated");
 
   // Meta instructions produce no output
-  if (d.isMetaInstruction())
-    return 0;
+  if (d.isMetaInstruction()) {
+    retval = 0;
+    goto ret;
+  }
 
   // Handle inline assembly
   // This estimates every instruction to be the size specified in MCAsmInfo
   if (d_op == TargetOpcode::INLINEASM || d_op == TargetOpcode::INLINEASM_BR) {
     const MachineFunction &MF = *MI.getParent()->getParent();
-    return this->getInlineAsmLength(MI.getOperand(0).getSymbolName(),
-                                    *MF.getTarget().getMCAsmInfo());
+    retval = this->getInlineAsmLength(MI.getOperand(0).getSymbolName(),
+                                      *MF.getTarget().getMCAsmInfo());
+    goto ret;
   }
 
   // Special case for JSR
   // It will be relaxed, so we use the relaxed size as an estimate
   // We don't do this for BR since we have a pass that relaxes branches in the
   // compiler, while JSR is handled in the assembler.
-  if (d_op == LC32::JSR)
-    return this->get(LC32::P_FARJSR).getSize();
+  if (d_op == LC32::JSR) {
+    retval = this->get(LC32::P_FARJSR).getSize();
+    goto ret;
+  }
   // Same for LEA
-  if (d_op == LC32::LEA)
-    return this->get(LC32::P_LOADCONSTW).getSize();
+  if (d_op == LC32::LEA) {
+    retval = this->get(LC32::P_LOADCONSTW).getSize();
+    goto ret;
+  }
 
-  return d.getSize();
+  retval = d.getSize();
+  goto ret;
+
+ret:
+  assert(retval % 2 == 0 && "Instructions should have even length");
+  return retval;
 }
 
 void LC32InstrInfo::storeRegToStackSlot(
