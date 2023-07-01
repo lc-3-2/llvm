@@ -78,12 +78,14 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32Target() {
 namespace {
 
 // This is where we add the passes for the code generator. The only required
-// function here is to add the instruction selector.
+// function here is to add the instruction selector. However, we also add other
+// passes.
 class LC32PassConfig : public TargetPassConfig {
 public:
   LC32PassConfig(LC32TargetMachine &TM, PassManagerBase &PM)
       : TargetPassConfig(TM, PM) {}
   bool addInstSelector() override;
+  void addPreEmitPass() override;
 };
 
 } // namespace
@@ -96,4 +98,10 @@ bool LC32PassConfig::addInstSelector() {
   this->addPass(new LC32DAGToDAGISel(this->getTM<LC32TargetMachine>(),
                                      this->getOptLevel()));
   return false;
+}
+
+void LC32PassConfig::addPreEmitPass() {
+  // FIXME: This pass could loop forever if a single basic block has more than
+  // 128 far predecessors that don't have any registers free at the end
+  this->addPass(&BranchRelaxationPassID);
 }

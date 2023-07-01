@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LC32InstrInfo.h"
+#include "LC32MachineFunctionInfo.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 using namespace llvm;
 #define DEBUG_TYPE "LC32InstrInfoBranches"
@@ -217,4 +218,73 @@ bool LC32InstrInfo::reverseBranchCondition(
   // Return
   Cond[0].setImm(~Cond[0].getImm() & 0b111);
   return false;
+}
+
+bool LC32InstrInfo::isBranchOffsetInRange(unsigned BranchOpc,
+                                          int64_t BrOffset) const {
+  // We should only get branch instructions in here, and never indirect
+  // branches. Also, we should never have BR or FARBR because they haven't been
+  // generated at this point.
+  assert(BranchOpc != LC32::BR && "BR generated");
+  assert(BranchOpc != LC32::P_FARBR && "FARBR generated");
+  assert((BranchOpc == LC32::C_BR_UNCOND || BranchOpc == LC32::C_BR_CMP_ZERO) &&
+         "Bad terminator");
+  // All instructions have even length, so the branch offset should be even
+  assert(BrOffset % 2 == 0 && "Branch offset should be even");
+
+  // All possible instructions use PCOffset9
+  return isShiftedInt<9, 1>(BrOffset - 2);
+}
+
+MachineBasicBlock *
+LC32InstrInfo::getBranchDestBlock(const MachineInstr &MI) const {
+  // Whatever we get here should either satisfy isConditionalBranch or
+  // isUnconditionalBranch. As always, we should never get BR or FARBR either.
+  assert(MI.getOpcode() != LC32::BR && "BR generated");
+  assert(MI.getOpcode() != LC32::P_FARBR && "FARBR generated");
+  assert((MI.getOpcode() == LC32::C_BR_UNCOND ||
+          MI.getOpcode() == LC32::C_BR_CMP_ZERO) &&
+         "Bad terminator");
+  // Return the branch target for each case
+  switch (MI.getOpcode()) {
+  case LC32::C_BR_UNCOND:
+    return MI.getOperand(0).getMBB();
+  case LC32::C_BR_CMP_ZERO:
+    return MI.getOperand(2).getMBB();
+  default:
+    llvm_unreachable("Unhandled case");
+  }
+}
+
+void LC32InstrInfo::insertIndirectBranch(MachineBasicBlock &MBB,
+                                         MachineBasicBlock &NewDestBB,
+                                         MachineBasicBlock &RestoreBB,
+                                         const DebugLoc &DL, int64_t BrOffset,
+                                         RegScavenger *RS) const {
+  // This code is mostly copied from other backends. The RISCV backend was
+  // particularly helpful, as was the LoongArch Backend
+
+  // Preconditions. These are guaranteed by the pass, but the other backends
+  // still check them.
+  assert(RS != nullptr &&
+         "RegScavenger required for spilling registers for long branching");
+  assert(MBB.empty() &&
+         "New block should be inserted for expanding unconditional branch");
+  assert(MBB.pred_size() == 1 &&
+         "New block should only have one predecessor: the original block");
+  assert(RestoreBB.empty() &&
+         "Restore block should be inserted for restoring clobbered registers");
+
+  // Useful variables
+  MachineFunction *MF = MBB.getParent();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  LC32MachineFunctionInfo *MFnI = MF->getInfo<LC32MachineFunctionInfo>();
+  const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
+
+  // Check that we actually populated the branch relaxation frame index
+  // See: LC32FrameLowering::processFunctionBeforeFrameFinalized
+  assert(MFnI->BranchRelaxationFI != -1 &&
+         "Didn't populate branch relaxation frame index");
+
+  llvm_unreachable("TODO");
 }

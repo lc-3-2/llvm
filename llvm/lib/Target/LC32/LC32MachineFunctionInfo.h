@@ -45,6 +45,17 @@ public:
    * address stack in lieu of a return value for functions that are sret.
    */
   Register SRetAddrReg;
+
+  /**
+   * The frame index to use when spilling a register for branch relaxation
+   *
+   * This is populated by `processFunctionBeforeFrameFinalized` if it computes
+   * that we may require branch relaxation to make sure all the branches are in
+   * range. It is used by `insertIndirectBranch` to do just that. Specifically,
+   * it will spill AT into this frame index so it can use it as a scratchpad to
+   * put the target address into.
+   */
+  int BranchRelaxationFI;
 };
 
 } // namespace llvm
