@@ -28,12 +28,12 @@ cl::opt<bool> llvm::lc32::clopts::UseSignedCMPLibCall(
     "lc_3.2-use-libcall-for-signed-cmp",
     cl::desc("When comparing signed integers, use a libcall to prevent "
              "overflow instead of just subtracting"),
-    cl::init(false));
+    cl::init(false), cl::Hidden);
 cl::opt<bool> llvm::lc32::clopts::UseUnsignedCMPLibCall(
     "lc_3.2-use-libcall-for-unsigned-cmp",
     cl::desc("When comparing unsigned integers, use a libcall to prevent "
              "overflow instead of just subtracting"),
-    cl::init(false));
+    cl::init(false), cl::Hidden);
 
 cl::opt<unsigned> llvm::lc32::clopts::MaxRepeatedAdd(
     "lc_3.2-max-repeated-add",
@@ -54,3 +54,8 @@ cl::opt<bool>
     llvm::lc32::clopts::UseR7("lc_3.2-use-r7",
                               cl::desc("Allow use of R7 during functions"),
                               cl::init(false));
+
+cl::opt<bool> llvm::lc32::clopts::EnableTestElision(
+    "lc_3.2-enable-test-elision",
+    cl::desc("Remove unneeded tests before branches"), cl::init(true),
+    cl::Hidden);

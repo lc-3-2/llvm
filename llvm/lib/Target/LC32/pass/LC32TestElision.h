@@ -25,6 +25,14 @@
 // BR 2, %bb, implicit-use $r0
 // ```
 //
+// This pass only looks at instructions within a single basic block. It assumes
+// the condition codes are unknown on entry into the block. This can probably be
+// optimized, but it's probably not worth it.
+//
+// This is the only place where instructions and condition codes explicitly
+// interact. If that part of the ISA changes, the `transfer` method will likely
+// have to be modified.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIB_TARGET_LC32_PASS_LC32TESTELISION_H
@@ -46,6 +54,38 @@ public:
   StringRef getPassName() const override { return "LC-3.2 Test Elision"; }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
+
+private:
+  /**
+   * Run the analysis on a per-basic-block basis
+   *
+   * @param[in] MBB The block to run on
+   * @return Whether the block was changed
+   */
+  bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
+
+  /**
+   * Transfer function for the condition codes
+   *
+   * @param[in] MI The next instruction to be executed
+   * @param[in] CC What register is held in the condition codes before `MI`
+   * @return The register that will be held in the condition codes after `MI`
+   */
+  Register transfer(const MachineInstr &MI, Register CC);
+  /**
+   * Update instruction given the current conditon codes
+   *
+   * The new instruction sequence should be identical to the old one, including
+   * in terms of effects on the condition codes. It can output a sequence of
+   * instructions for one input instruction, though that is currently not done.
+   *
+   * @param[inout] MBBI Input points to the instruction to modify. Output points
+   * to the *last* instruction in the modified sequence (inclusive).
+   * @param[in] CC What register is held in the condition codes before the
+   * instruction pointed to by `MBBI`
+   * @return Whether a change was made
+   */
+  bool update(MachineBasicBlock::iterator &MBBI, Register CC);
 };
 
 } // namespace llvm
