@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LC32FrameLowering.h"
+#include "LC32CLOpts.h"
 #include "LC32InstrInfo.h"
 #include "LC32MachineFunctionInfo.h"
 #include "LC32Subtarget.h"
@@ -16,6 +17,7 @@
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
+using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32FrameLowering"
 
 LC32FrameLowering::LC32FrameLowering()
@@ -147,6 +149,15 @@ static unsigned EstimateFunctionSize(const MachineFunction &MF,
     for (auto &MI : MBB) {
       // We shouldn't have raw branches at this point
       assert(MI.getOpcode() != LC32::BR && "BR generated");
+
+      // We may still have the C_LEA_FRAMEINDEX instruction. Handle it
+      // conservatively, looking at how many bytes it could possibly produce.
+      // See: LC32RegisterInfo::eliminateFrameIndex
+      if (MI.getOpcode() == LC32::C_LEA_FRAMEINDEX) {
+        ret += std::max(2u * MaxRepeatedAdd.getValue(), 14u + 2u);
+        continue;
+      }
+
       // We don't want to use the expanded versions of branches, even if we're
       // going to do branch relaxation. That's because this function is trying
       // to figure out if we're going to have to expand branches in the first
