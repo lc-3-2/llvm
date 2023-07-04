@@ -10,6 +10,7 @@
 #include "LC32ISelDAGToDAG.h"
 #include "LC32MachineFunctionInfo.h"
 #include "TargetInfo/LC32TargetInfo.h"
+#include "pass/LC32TestElision.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -73,6 +74,10 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32Target() {
   // Auto-discovered method
   // Associate the LC-3.2 target handle with its `TargetMachine`
   RegisterTargetMachine<LC32TargetMachine> X(getTheLC32Target());
+  // Initialize all the passes
+  PassRegistry &PR = *PassRegistry::getPassRegistry();
+  initializeLC32DAGToDAGISelPass(PR);
+  initializeLC32TestElisionPass(PR);
 }
 
 namespace {
@@ -86,6 +91,7 @@ public:
       : TargetPassConfig(TM, PM) {}
   bool addInstSelector() override;
   void addPreEmitPass() override;
+  void addPreEmitPass2() override;
 };
 
 } // namespace
@@ -105,4 +111,10 @@ void LC32PassConfig::addPreEmitPass() {
   // 128 far predecessors that don't have any registers free at the end. However
   // this only rarely happens.
   this->addPass(&BranchRelaxationPassID);
+}
+
+void LC32PassConfig::addPreEmitPass2() {
+  // This pass has to be run at the very end, since it relies on instruction
+  // ordering. After this, nothing else should be done.
+  this->addPass(new LC32TestElision());
 }
