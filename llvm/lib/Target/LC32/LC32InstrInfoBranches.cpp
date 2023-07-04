@@ -45,9 +45,13 @@ bool LC32InstrInfo::analyzeBranch(MachineBasicBlock &MBB,
     if (i->isIndirectBranch())
       return true;
 
+    // This code is called by the MachineVerifier after the TestElision pass
+    // runs. Therefore, allow BR here, and say we just don't know what's going
+    // on since we can't decode it.
+    if (i->getOpcode() == LC32::BR)
+      return true;
+
     // Check the instruction has an expected opcode
-    // BR shouldn't exist at this point
-    assert(i->getOpcode() != LC32::BR && "BR generated");
     assert((i->getOpcode() == LC32::C_BR_UNCOND ||
             i->getOpcode() == LC32::C_BR_CMP_ZERO) &&
            "Bad terminator");
