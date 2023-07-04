@@ -15,6 +15,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/EndianStream.h"
 using namespace llvm;
+using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32MCCodeEmitter"
 
 // Provides: getBinaryCodeForInstr
@@ -181,9 +182,9 @@ uint64_t LC32MCCodeEmitter::getPCOffsetValue(const MCInst &MI, unsigned OpNo,
   // Expression case
   if (op.isExpr()) {
     // Compute and add fixup
-    auto tfk = N == 9 ? (S == 1 ? lc32::Fixups::TFK_PCOffset9BR
-                                : lc32::Fixups::TFK_PCOffset9LEA)
-                      : lc32::Fixups::TFK_PCOffset11;
+    auto tfk =
+        N == 9 ? (S == 1 ? Fixups::TFK_PCOffset9BR : Fixups::TFK_PCOffset9LEA)
+               : Fixups::TFK_PCOffset11;
     Fixups.push_back(MCFixup::create(
         0, op.getExpr(), static_cast<MCFixupKind>(tfk), MI.getLoc()));
     // Stub value

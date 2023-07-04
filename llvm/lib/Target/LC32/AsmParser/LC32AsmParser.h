@@ -20,9 +20,7 @@
 
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 
-// Usually, the contents of this file are in an anonymous namespace. I'll put
-// them in a namespace for the LC-3.2
-namespace llvm::lc32 {
+namespace llvm {
 
 class LC32AsmParser : public MCTargetAsmParser {
 public:
@@ -63,6 +61,6 @@ private:
 #include "LC32GenAsmMatcher.inc"
 };
 
-} // namespace llvm::lc32
+} // namespace llvm
 
 #endif // LLVM_LIB_TARGET_LC32_ASMPARSER_LC32ASMPARSER_H

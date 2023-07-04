@@ -16,7 +16,6 @@
 #include "TargetInfo/LC32TargetInfo.h"
 #include "llvm/MC/TargetRegistry.h"
 using namespace llvm;
-using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32AsmParser"
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32AsmParser() {

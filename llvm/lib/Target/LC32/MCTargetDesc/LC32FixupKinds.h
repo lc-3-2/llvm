@@ -18,7 +18,8 @@
 
 #include "llvm/MC/MCFixup.h"
 
-// I'll put this in a namespace for the LC-3.2
+// Since these don't have a very descriptive name on their own, I'll put this in
+// a namespace for the LC-3.2
 namespace llvm::lc32 {
 
 // Must match LC32AsmBackend.cpp
@@ -36,6 +37,6 @@ enum Fixups {
   NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind
 };
 
-} // llvm::lc32
+} // namespace llvm::lc32
 
 #endif // LLVM_LIB_TARGET_LC32_MCTARGETDESC_LC32FIXUPKINDS_H

@@ -13,7 +13,6 @@
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
-using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32Disassembler"
 
 // So we don't have to keep typing the long name
@@ -48,9 +47,8 @@ static DecodeStatus DecodeShiftedSignedImm(MCInst &MI, uint64_t Imm,
   return DecodeStatus::Success;
 }
 
-static DecodeStatus DecodeAmount3(MCInst &MI, uint64_t Imm,
-                                           uint64_t Address,
-                                           const MCDisassembler *Decoder) {
+static DecodeStatus DecodeAmount3(MCInst &MI, uint64_t Imm, uint64_t Address,
+                                  const MCDisassembler *Decoder) {
   MI.addOperand(MCOperand::createImm(Imm + 1));
   return DecodeStatus::Success;
 }

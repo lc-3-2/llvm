@@ -12,7 +12,6 @@
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
-using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32AsmParser"
 
 LC32OperandExpr::LC32OperandExpr(const MCExpr *Expr, SMLoc StartLoc,
@@ -47,8 +46,7 @@ void LC32OperandExpr::addConst32Operands(MCInst &Inst, unsigned N) {
 }
 
 OperandMatchResultTy
-llvm::lc32::OPERAND_PARSER_EXPR(LC32AsmParser &t,
-                                std::unique_ptr<LC32Operand> &op) {
+llvm::OPERAND_PARSER_EXPR(LC32AsmParser &t, std::unique_ptr<LC32Operand> &op) {
 
   // Remember the starting location
   SMLoc stt = t.getLexer().getLoc();

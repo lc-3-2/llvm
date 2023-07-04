@@ -9,7 +9,6 @@
 #include "operand/LC32OperandToken.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
-using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32AsmParser"
 
 LC32OperandToken::LC32OperandToken(std::string Name, SMLoc StartLoc)

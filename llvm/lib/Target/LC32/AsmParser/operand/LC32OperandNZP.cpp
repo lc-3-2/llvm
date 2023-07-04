@@ -9,7 +9,6 @@
 #include "operand/LC32OperandNZP.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
-using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32AsmParser"
 
 LC32OperandNZP::LC32OperandNZP(uint8_t Value, SMLoc StartLoc, SMLoc EndLoc)

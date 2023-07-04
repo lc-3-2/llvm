@@ -24,9 +24,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #define DEBUG_TYPE "LC32AsmParser"
 
-// Usually, the contents of this file are in an anonymous namespace. I'll put
-// them in a namespace for the LC-3.2
-namespace llvm::lc32 {
+namespace llvm {
 
 class LC32Operand : public MCParsedAsmOperand {
 public:
@@ -130,7 +128,7 @@ class LC32AsmParser;
 typedef OperandMatchResultTy operand_parser_t(LC32AsmParser &t,
                                               std::unique_ptr<LC32Operand> &op);
 
-} // namespace llvm::lc32
+} // namespace llvm
 
 #undef DEBUG_TYPE
 

@@ -17,9 +17,7 @@
 
 #include "LC32Operand.h"
 
-// Usually, the contents of this file are in an anonymous namespace. I'll put
-// them in a namespace for the LC-3.2
-namespace llvm::lc32 {
+namespace llvm {
 
 class LC32OperandImm : public LC32Operand {
 public:
@@ -57,6 +55,6 @@ private:
 
 extern operand_parser_t OPERAND_PARSER_IMM;
 
-} // namespace llvm::lc32
+} // namespace llvm
 
 #endif // LLVM_LIB_TARGET_LC32_ASMPARSER_LC32OPERANDIMM_H

@@ -25,7 +25,6 @@
 #include <memory>
 #include <optional>
 using namespace llvm;
-using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32AsmParser"
 
 // Provides: ComputeAvailableFeatures

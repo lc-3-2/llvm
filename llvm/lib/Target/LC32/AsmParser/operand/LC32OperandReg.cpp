@@ -11,7 +11,6 @@
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
-using namespace llvm::lc32;
 #define DEBUG_TYPE "LC32AsmParser"
 
 LC32OperandReg::LC32OperandReg(unsigned Number, SMLoc StartLoc, SMLoc EndLoc)
@@ -30,8 +29,7 @@ void LC32OperandReg::addRegOperands(MCInst &Inst, unsigned N) {
 }
 
 OperandMatchResultTy
-llvm::lc32::OPERAND_PARSER_REG(LC32AsmParser &t,
-                               std::unique_ptr<LC32Operand> &op) {
+llvm::OPERAND_PARSER_REG(LC32AsmParser &t, std::unique_ptr<LC32Operand> &op) {
   // This just wraps around the functionality in the parser
   MCRegister n;
   SMLoc stt;
