@@ -37,6 +37,14 @@ unsigned LC32InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
 
   // We shouldn't have relaxed instructions at this point
   assert(d_op != LC32::P_FARJSR && "FARJSR generated");
+  // Assert that instructions have been eliminated
+  // Note that C_LEA_FRAMEINDEX is still allowed at this point
+  assert(MI.getOpcode() != LC32::C_SELECT_CMP_ZERO &&
+         "C_SELECT_CMP_ZERO not eliminated");
+  assert(MI.getOpcode() != LC32::C_ADJCALLSTACKUP &&
+         "C_ADJCALLSTACKUP not eliminated");
+  assert(MI.getOpcode() != LC32::C_ADJCALLSTACKDOWN &&
+         "C_ADJCALLSTACKDOWN not eliminated");
 
   // Meta instructions produce no output
   if (d.isMetaInstruction()) {
