@@ -29,7 +29,10 @@ namespace {
 
 class LC32AsmPrinter : public AsmPrinter {
 public:
-  LC32AsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer);
+  LC32AsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
+      : AsmPrinter(TM, std::move(Streamer)) {}
+  StringRef getPassName() const override { return "LC-3.2 Assembly Printer"; }
+
   void emitInstruction(const MachineInstr *MI) override;
 
   // For inline assembly
@@ -51,10 +54,6 @@ private:
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32AsmPrinter() {
   RegisterAsmPrinter<LC32AsmPrinter> X(getTheLC32Target());
 }
-
-LC32AsmPrinter::LC32AsmPrinter(TargetMachine &TM,
-                               std::unique_ptr<MCStreamer> Streamer)
-    : AsmPrinter(TM, std::move(Streamer)) {}
 
 // Provides: emitPseudoExpansionLowering
 // Requires: lowerOperand

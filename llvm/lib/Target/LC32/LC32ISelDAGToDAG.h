@@ -20,13 +20,17 @@
 
 namespace llvm {
 
+// Required for INITIALIZE_PASS
+void initializeLC32DAGToDAGISelPass(PassRegistry &);
+
 class LC32DAGToDAGISel : public SelectionDAGISel {
 public:
   static char ID;
   LC32DAGToDAGISel() = delete;
   LC32DAGToDAGISel(LC32TargetMachine &TM, CodeGenOpt::Level OptLevel)
-      : SelectionDAGISel(this->ID, TM, OptLevel) {}
-
+      : SelectionDAGISel(this->ID, TM, OptLevel) {
+    initializeLC32DAGToDAGISelPass(*PassRegistry::getPassRegistry());
+  }
   StringRef getPassName() const override {
     return "LC-3.2 DAG->DAG Instruction Selection";
   }
@@ -42,9 +46,6 @@ private:
   // See: td/instr/LC32SHFInstrInfo.td
   bool SelectRepeatedShift(SDNode *N);
 };
-
-// Required for INITIALIZE_PASS
-void initializeLC32DAGToDAGISelPass(PassRegistry &);
 
 } // namespace llvm
 

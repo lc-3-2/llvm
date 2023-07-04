@@ -30,6 +30,7 @@ add_llvm_target(LC32CodeGen
   LC32RegisterInfo.cpp
   LC32MachineFunctionInfo.cpp
   LC32AsmPrinter.cpp
+  pass/LC32TestElision.cpp
 
   LINK_COMPONENTS
   Core
