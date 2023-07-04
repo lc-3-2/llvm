@@ -11,7 +11,7 @@
 #include "MCTargetDesc/LC32InstPrinter.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 using namespace llvm;
-using namespace llvm::lc32;
+using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32TestElision"
 
 char LC32TestElision::ID = 0;
@@ -22,7 +22,7 @@ INITIALIZE_PASS(LC32TestElision, DEBUG_TYPE, "LC-3.2 Test Elision", false,
 bool LC32TestElision::runOnMachineFunction(MachineFunction &MF) {
 
   // Bail if we were told not to execute this pass
-  if (!clopts::EnableTestElision)
+  if (!EnableTestElision)
     return false;
 
   // Print standard header
