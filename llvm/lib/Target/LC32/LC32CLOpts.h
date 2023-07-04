@@ -30,6 +30,8 @@ extern llvm::cl::opt<unsigned> MaxConstMulHammingWeight;
 extern llvm::cl::opt<bool> UseR4;
 extern llvm::cl::opt<bool> UseR7;
 
-} // llvm::lc32::clopts
+extern llvm::cl::opt<bool> EnableTestElision;
+
+} // namespace llvm::lc32::clopts
 
 #endif // LLVM_LIB_TARGET_LC32_LC32CLOPTS_H
