@@ -11,6 +11,7 @@
 #include "LC32InstrInfo.h"
 #include "MCTargetDesc/LC32InstPrinter.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 using namespace llvm;
 using namespace llvm::lc32::clopts;
@@ -20,6 +21,8 @@ char LC32TestElision::ID = 0;
 
 INITIALIZE_PASS(LC32TestElision, DEBUG_TYPE, "LC-3.2 Test Elision", false,
                 false)
+
+STATISTIC(NumTestsElided, "Number of redundant test instruction eliminated");
 
 bool LC32TestElision::runOnMachineFunction(MachineFunction &MF) {
 
@@ -66,9 +69,11 @@ bool LC32TestElision::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     // instructions and risk getting into an infinite loop. Also note that this
     // code modifies MBBI.
     bool UpdateMadeChange = this->update(MBBI, CurrentCC);
-    if (UpdateMadeChange)
+    if (UpdateMadeChange) {
       LLVM_DEBUG(dbgs() << "Made change before " << *MBBI);
-    MadeChange |= UpdateMadeChange;
+      NumTestsElided++;
+      MadeChange = true;
+    }
 
     // Update CC
     CurrentCC = NextCC;
