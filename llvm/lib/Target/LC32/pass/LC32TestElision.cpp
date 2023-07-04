@@ -8,8 +8,10 @@
 
 #include "pass/LC32TestElision.h"
 #include "LC32CLOpts.h"
+#include "LC32InstrInfo.h"
 #include "MCTargetDesc/LC32InstPrinter.h"
 #include "MCTargetDesc/LC32MCTargetDesc.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 using namespace llvm;
 using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32TestElision"
@@ -172,6 +174,32 @@ Register LC32TestElision::transfer(const MachineInstr &MI, Register CC) {
 }
 
 bool LC32TestElision::update(MachineBasicBlock::iterator &MBBI, Register CC) {
-  // TODO
-  return false;
+  // Populate variables
+  MachineBasicBlock &MBB = *MBBI->getParent();
+  MachineFunction &MF = *MBB.getParent();
+  DebugLoc DL = MBBI->getDebugLoc();
+  const LC32InstrInfo &TII =
+      *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
+
+  // Only compress `C_BR_CMP_ZERO` instructions
+  if (MBBI->getOpcode() != LC32::C_BR_CMP_ZERO)
+    return false;
+
+  // Check that the register we're testing is already in the condition codes
+  if (MBBI->getOperand(1).getReg() != CC)
+    return false;
+
+  // Insert a raw branch
+  // For convenience, record the register as an implicit
+  MachineInstr *n =
+      BuildMI(MBB, MBBI, DL, TII.get(LC32::BR))
+          .addImm(MBBI->getOperand(0).getImm())
+          .addMBB(MBBI->getOperand(2).getMBB())
+          .addReg(MBBI->getOperand(1).getReg(),
+                  RegState::Implicit | getRegState(MBBI->getOperand(1)));
+
+  // Erase the old instruction and point to the new one
+  MBBI->eraseFromParent();
+  MBBI = n->getIterator();
+  return true;
 }

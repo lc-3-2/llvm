@@ -22,7 +22,7 @@
 // into
 // ```
 // $r0 = ADDi $r0, 5
-// BR 2, %bb, implicit-use $r0
+// BR 2, %bb, implicit $r0
 // ```
 //
 // This pass only looks at instructions within a single basic block. It assumes
