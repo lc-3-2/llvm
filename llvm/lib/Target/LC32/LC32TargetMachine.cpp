@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LC32TargetMachine.h"
+#include "LC32CLOpts.h"
 #include "LC32ISelDAGToDAG.h"
 #include "LC32MachineFunctionInfo.h"
 #include "TargetInfo/LC32TargetInfo.h"
@@ -16,6 +17,7 @@
 #include "llvm/MC/TargetRegistry.h"
 #include <optional>
 using namespace llvm;
+using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32TargetMachine"
 
 static Reloc::Model getEffectiveRelocModel(std::optional<Reloc::Model> RM) {
@@ -116,5 +118,6 @@ void LC32PassConfig::addPreEmitPass() {
 void LC32PassConfig::addPreEmitPass2() {
   // This pass has to be run at the very end, since it relies on instruction
   // ordering. After this, nothing else should be done.
-  this->addPass(new LC32TestElision());
+  if (this->TM->getOptLevel() != CodeGenOpt::None && EnableTestElision)
+    this->addPass(new LC32TestElision());
 }
