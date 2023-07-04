@@ -32,8 +32,6 @@
 ;; * R1: x
 ;; * R2: y
 ;; * R3: t
-;; Remember that branches may clobber R3, so we can only really use it for
-;; temporaries.
 ;;
 ;;===----------------------------------------------------------------------===;;
 
