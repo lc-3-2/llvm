@@ -245,7 +245,7 @@ bool LC32TargetLowering::decomposeMulByConstant(LLVMContext &Context, EVT VT,
     c_weight += (c_num & (1 << i)) ? 1 : 0;
 
   // Only combine if the hamming weight is small enough
-  return c_weight <= MaxConstMulHammingWeight.getValue();
+  return c_weight <= MaxConstMulHammingWeight;
 }
 
 bool LC32TargetLowering::isMulAddWithConstProfitable(SDValue AddNode,

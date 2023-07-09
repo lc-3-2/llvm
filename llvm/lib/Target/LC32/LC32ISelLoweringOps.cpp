@@ -403,8 +403,8 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
 
     // Compute the value
     SDValue new_value;
-    if ((is_unsigned && !UseUnsignedCMPLibCall.getValue()) ||
-        (is_signed && !UseSignedCMPLibCall.getValue())) {
+    if ((is_unsigned && !UseUnsignedCMPLibCall) ||
+        (is_signed && !UseSignedCMPLibCall)) {
       // It's just subtraction if we're not worried about overflow
       new_value = DAG.getNode(ISD::SUB, dl, MVT::i32, LHS, RHS);
 
