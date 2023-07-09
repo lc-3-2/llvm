@@ -46,11 +46,16 @@ bool LC32DAGToDAGISel::SelectRepeatedAdd(SDNode *N) {
     return false;
   assert(N->getValueType(0) == MVT::i32 && "Constants should be i32");
 
+  // If we're not allowed to use repeated operations, bail
+  if (MaxRepeatedOps == 0)
+    return false;
+
   // Check whether we should use repeated ADDs
-  // Match zeros too, even though we have a pattern for that
+  // Note the -1 since we need one instruction to zero it out. That's also why
+  // we checked MaxRepeatedOps != 0
   int64_t imm = cast<ConstantSDNode>(N)->getSExtValue();
-  if (imm < INT64_C(-16) * static_cast<int64_t>(MaxRepeatedOps.getValue()) ||
-      imm > INT64_C(15) * static_cast<int64_t>(MaxRepeatedOps.getValue()))
+  if (imm < INT64_C(-16) * static_cast<int64_t>(MaxRepeatedOps - 1) ||
+      imm > INT64_C(15) * static_cast<int64_t>(MaxRepeatedOps - 1))
     return false;
 
   // Start with zero
