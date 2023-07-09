@@ -49,8 +49,8 @@ bool LC32DAGToDAGISel::SelectRepeatedAdd(SDNode *N) {
   // Check whether we should use repeated ADDs
   // Match zeros too, even though we have a pattern for that
   int64_t imm = cast<ConstantSDNode>(N)->getSExtValue();
-  if (imm < INT64_C(-16) * static_cast<int64_t>(MaxRepeatedAdd.getValue()) ||
-      imm > INT64_C(15) * static_cast<int64_t>(MaxRepeatedAdd.getValue()))
+  if (imm < INT64_C(-16) * static_cast<int64_t>(MaxRepeatedOps.getValue()) ||
+      imm > INT64_C(15) * static_cast<int64_t>(MaxRepeatedOps.getValue()))
     return false;
 
   // Start with zero

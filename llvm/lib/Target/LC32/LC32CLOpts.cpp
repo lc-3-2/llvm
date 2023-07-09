@@ -35,10 +35,11 @@ cl::opt<bool> llvm::lc32::clopts::UseUnsignedCMPLibCall(
              "overflow instead of just subtracting"),
     cl::init(false), cl::Hidden);
 
-cl::opt<unsigned> llvm::lc32::clopts::MaxRepeatedAdd(
-    "lc_3.2-max-repeated-add",
-    cl::desc("When realizing constants, the maximum number of repeated "
-             "ADDs to do instead of using PSEUDO.LOADCONST"),
+cl::opt<unsigned> llvm::lc32::clopts::MaxRepeatedOps(
+    "lc_3.2-max-repeated-ops",
+    cl::desc("How many instructions to use for repeated operations, such as "
+             "repeated ADDs to realize constants, before giving up and using "
+             "PSEUDO.LOADCONST* instead"),
     cl::init(4));
 cl::opt<unsigned> llvm::lc32::clopts::MaxConstMulHammingWeight(
     "lc_3.2-max-const-mul-hamming-weight",

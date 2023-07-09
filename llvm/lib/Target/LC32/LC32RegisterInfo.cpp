@@ -193,8 +193,8 @@ void LC32RegisterInfo::genAddLargeImm(MachineBasicBlock::iterator MBBI,
   }
 
   // Compute if we can get away with the repeated adds
-  if (imm >= INT64_C(-16) * static_cast<int64_t>(MaxRepeatedAdd.getValue()) &&
-      imm <= INT64_C(15) * static_cast<int64_t>(MaxRepeatedAdd.getValue())) {
+  if (imm >= INT64_C(-16) * static_cast<int64_t>(MaxRepeatedOps.getValue()) &&
+      imm <= INT64_C(15) * static_cast<int64_t>(MaxRepeatedOps.getValue())) {
     int64_t to_go = imm;
     bool first_loop = true;
     while (to_go != 0) {
