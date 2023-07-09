@@ -44,9 +44,9 @@ BitVector LC32RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // Note that using LR causes the machine code to fail validation. LLVM expects
   // it to be defined before we STW it in the function prologue. This should be
   // fine
-  if (!UseR4.getValue())
+  if (!UseR4)
     ret.set(LC32::GP);
-  if (!UseR7.getValue())
+  if (!UseR7)
     ret.set(LC32::LR);
 
   return ret;
@@ -193,8 +193,8 @@ void LC32RegisterInfo::genAddLargeImm(MachineBasicBlock::iterator MBBI,
   }
 
   // Compute if we can get away with the repeated adds
-  if (imm >= INT64_C(-16) * static_cast<int64_t>(MaxRepeatedOps.getValue()) &&
-      imm <= INT64_C(15) * static_cast<int64_t>(MaxRepeatedOps.getValue())) {
+  if (imm >= INT64_C(-16) * static_cast<int64_t>(MaxRepeatedOps) &&
+      imm <= INT64_C(15) * static_cast<int64_t>(MaxRepeatedOps)) {
     int64_t to_go = imm;
     bool first_loop = true;
     while (to_go != 0) {

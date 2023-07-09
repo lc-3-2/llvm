@@ -154,7 +154,7 @@ static unsigned EstimateFunctionSize(const MachineFunction &MF,
       // conservatively, looking at how many bytes it could possibly produce.
       // See: LC32RegisterInfo::eliminateFrameIndex
       if (MI.getOpcode() == LC32::C_LEA_FRAMEINDEX) {
-        ret += std::max(2u * MaxRepeatedOps.getValue(), 14u + 2u);
+        ret += std::max(2u * MaxRepeatedOps, 14u + 2u);
         continue;
       }
 
@@ -203,9 +203,9 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // This is also restricted by C_LEA_FRAMEINDEX, which requires us to check
   // MaxRepeatedOps.
   bool need_a = !isInt<6 - 1>(MFI.estimateStackSize(MF));
-  if (MaxRepeatedOps.getValue() == 0)
+  if (MaxRepeatedOps == 0)
     need_a |= true;
-  if (MaxRepeatedOps.getValue() == 1)
+  if (MaxRepeatedOps == 1)
     need_a |= !isInt<5 - 1>(MFI.estimateStackSize(MF));
   if (need_a)
     num_scav = std::max(1u, num_scav);
