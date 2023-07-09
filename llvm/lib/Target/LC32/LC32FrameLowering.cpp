@@ -200,7 +200,13 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // Do A.
   // This is restricted by STB, which has a 6-bit immediate with no shift. Only
   // the stores use this frame index
+  // This is also restricted by C_LEA_FRAMEINDEX, which requires us to check
+  // MaxRepeatedAdd.
   bool need_a = !isInt<6 - 1>(MFI.estimateStackSize(MF));
+  if (MaxRepeatedAdd.getValue() == 0)
+    need_a |= true;
+  if (MaxRepeatedAdd.getValue() == 1)
+    need_a |= !isInt<5 - 1>(MFI.estimateStackSize(MF));
   if (need_a)
     num_scav = std::max(1u, num_scav);
   // Do B. IF we do branch relaxation
