@@ -67,7 +67,7 @@ public:
    * @param [in] dr_flags The liveliness state of the destination register once
    *  the code is done. Should be either `Define` or `Dead`.
    * @param [in] sr_flags The liveliness state of the source register
-   * @see MaxRepeatedAdd
+   * @see MaxRepeatedOps
    */
   void genAddLargeImm(MachineBasicBlock::iterator MBBI, DebugLoc &dl,
                       Register dr, Register sr, int64_t imm, bool alias = false,
