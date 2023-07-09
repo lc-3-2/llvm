@@ -64,41 +64,26 @@ defm RSHFA : SHF<"RSHFA", 0b1, 0b1, sra>;
 
 //---
 
-// If we have an immediate mask that clears out the top bits, we want to realise
-// that with shifts. For profitability, we have a budget of four instructions.
-// Set the complexity to be lower than the normal immediate AND so that its
-// selected first if possible.
+// If we have an immediate mask that clears out the top or bottom bits, we want
+// to realise that with shifts. Make sure to set the complexity lower than that
+// of a normal ANDi so that we select it first if we can. Benchmarking, it seems
+// we can use two instructions and be profitable.
 //
-// Note that this could make instruction selection much slower because of how
-// many patterns we're generating. Hopefully it won't be an issue, but if it is
-// we should select these with C++ or ditch them entirely.
-foreach i = [1, 2, 3, 4, 5, 6, 7, 8] in {
-  defvar mask0 = !sub(!shl(1, !sub(!sub(32, 0), i)), 1);
-  defvar mask1 = !sub(!shl(1, !sub(!sub(32, 8), i)), 1);
+// This adds a lot of patterns to the instruction selector. If it starts being
+// slow, we should consider using raw C++ or ditching this entirely.
+let AddedComplexity = -2 in {
 
-  let AddedComplexity = -2 in {
-    def : Pat<(and GPR:$sr1, mask0), (RSHFLi (LSHFi GPR:$sr1, i), i)>;
-    def : Pat<(and GPR:$sr1, mask1), (RSHFLi (RSHFLi (LSHFi (LSHFi GPR:$sr1, 8), i), 8), i)>;
+  // Top bits
+  foreach i = [1, 2, 3, 4, 5, 6, 7, 8] in {
+    defvar mask = !sub(!shl(1, !sub(32, i)), 1);
+    def : Pat<(and GPR:$sr1, mask), (RSHFLi (LSHFi GPR:$sr1, i), i)>;
   }
-}
 
-// Do the same as above for clearing the low bits. Again, this could make
-// instruction selection much slower.
-foreach i = [1, 2, 3, 4, 5, 6, 7, 8] in {
-  defvar mask0 = !xor(!sub(!shl(1, !add(i, 0)), 1), -1);
-  defvar mask1 = !xor(!sub(!shl(1, !add(i, 8)), 1), -1);
-
-  // We could use both RSHFA and RSHFL here. I pick RSHFA because it
-  // distinguishes from the other case where we have to use RSHFL.
-  let AddedComplexity = -2 in {
-    // Extra check for mask0 to make sure it doesn't interfere with the normal
-    // immediate AND. We can get by without it due to AddedComplexity, but we
-    // want to keep the table size small, so we should keep unneeeded patterns
-    // to a minimum.
-    if !gt(i, 4) then {
-      def : Pat<(and GPR:$sr1, mask0), (LSHFi (RSHFAi GPR:$sr1, i), i)>;
-    }
-    // Usual mask1 code
-    def : Pat<(and GPR:$sr1, mask1), (LSHFi (LSHFi (RSHFAi (RSHFAi GPR:$sr1, 8), i), 8), i)>;
+  // Bottom bits. Make sure not to generate patterns that interfere with ANDi.
+  // It doesn't matter because of AddedComplexity, but we don't want to create
+  // patterns that don't do anything.
+  foreach i = [5, 6, 7, 8] in {
+    defvar mask = !xor(!sub(!shl(1, i), 1), -1);
+    def : Pat<(and GPR:$sr1, mask), (LSHFi (RSHFLi GPR:$sr1, i), i)>;
   }
 }
