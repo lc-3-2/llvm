@@ -35,7 +35,7 @@ def C_MOVE_ZERO : LC32Instruction_C, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr,
   let Size = 2;
 }
 
-// If a constant is small enough, do repeated additions to select it.
-// Unfortunately, there doesn't seem to be a way to tell the matcher to do this
-// automatically, even through ComplexPatterns. Thus, we do it in `Select` of
-// `ISelDAGToDAG`.
+// If a constant is small enough, do either repeated xor-shifts or repeated
+// additions to select it. Unfortunately, there doesn't seem to be a way to tell
+// the matcher to do this automatically, even through ComplexPatterns. Thus, we
+// do it in `Select` of `ISelDAGToDAG`.
