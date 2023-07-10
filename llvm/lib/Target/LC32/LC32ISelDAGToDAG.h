@@ -42,6 +42,8 @@ private:
   void Select(SDNode *N) override;
 
   // See: td/instr/LC32MoveInstrInfo.td
+  bool SelectRepeatedXorShift(SDNode *N);
+  // See: td/instr/LC32MoveInstrInfo.td
   bool SelectRepeatedAdd(SDNode *N);
   // See: td/instr/LC32SHFInstrInfo.td
   bool SelectRepeatedShift(SDNode *N);

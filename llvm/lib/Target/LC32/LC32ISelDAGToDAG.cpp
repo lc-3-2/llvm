@@ -27,12 +27,104 @@ INITIALIZE_PASS(LC32DAGToDAGISel, DEBUG_TYPE,
 
 void LC32DAGToDAGISel::Select(SDNode *N) {
   // Custom pattern matching
+  if (this->SelectRepeatedXorShift(N))
+    return;
   if (this->SelectRepeatedAdd(N))
     return;
   if (this->SelectRepeatedShift(N))
     return;
   // TableGen
   this->SelectCode(N);
+}
+
+bool LC32DAGToDAGISel::SelectRepeatedXorShift(SDNode *N) {
+  // Populate variables
+  SDLoc dl(N);
+
+  // Input validation
+  // Note that type legalization has already happened by this point, so we can
+  // assume the input is a legal type.
+  if (N->getOpcode() != ISD::Constant)
+    return false;
+  assert(N->getValueType(0) == MVT::i32 && "Constants should be i32");
+
+  // If we're not allowed to use repeated operations, bail
+  if (MaxRepeatedOps == 0)
+    return false;
+
+  // Get the value we're trying to put
+  // Make sure the value is 32-bit sign exteded
+  int64_t imm = SignExtend64<32>(cast<ConstantSDNode>(N)->getSExtValue());
+
+  // Edge case if we're trying to zero out
+  if (imm == 0) {
+    SDNode *out = this->CurDAG->getMachineNode(LC32::C_MOVE_ZERO, dl, MVT::i32);
+    this->ReplaceNode(N, out);
+    return true;
+  }
+
+  // Compute what values we will need to XOR with
+  // In REVERSE order
+  SmallVector<int64_t> xor_values;
+  {
+    int64_t togo = imm;
+    size_t loopcnt = 0;
+    while (togo != 0) {
+      // We should never have to loop more than seven times
+      assert(loopcnt < 7 && "Looped too many times");
+      loopcnt++;
+
+      // Extract the least significant five bits
+      int64_t lsb5 = SignExtend64<5>(togo & 0x1f);
+      togo >>= 5;
+      xor_values.push_back(lsb5);
+
+      // If we are going to XOR with a negative value, account for sign
+      // extension
+      if (lsb5 < 0)
+        togo = ~togo;
+    }
+  }
+  // We shouldn't have gotten zero
+  assert(xor_values.size() != 0 && "Input to loop should not have been zero");
+
+  // Check whether we're allowed to do that many shifts and xors
+  // Usually, each would take two instructions. If we're XORing with zero, it
+  // only counts one for the shift
+  {
+    size_t instcnt = 0;
+    for (int64_t &v : xor_values)
+      instcnt += v == 0 ? 1 : 2;
+    if (instcnt > MaxRepeatedOps)
+      return false;
+  }
+
+  // Do the XORs
+  SDNode *out = nullptr;
+  while (!xor_values.empty()) {
+    int64_t toxor = xor_values.pop_back_val();
+    // Compute what value to use as the base for this iteration
+    // It's either shifting the last iteration, or zeroing out if this is the
+    // first iteration
+    SDNode *base =
+        out == nullptr
+            ? this->CurDAG->getMachineNode(LC32::C_MOVE_ZERO, dl, MVT::i32)
+            : this->CurDAG->getMachineNode(
+                  LC32::LSHFi, dl, MVT::i32, SDValue(out, 0),
+                  this->CurDAG->getTargetConstant(5, dl, MVT::i32));
+    // XOR
+    // Skip this if toxor == 0
+    if (toxor != 0)
+      out = this->CurDAG->getMachineNode(
+          LC32::XORi, dl, MVT::i32, SDValue(base, 0),
+          this->CurDAG->getTargetConstant(toxor, dl, MVT::i32));
+    else
+      out = base;
+  }
+
+  // Done
+  this->ReplaceNode(N, out);
+  return true;
 }
 
 bool LC32DAGToDAGISel::SelectRepeatedAdd(SDNode *N) {
