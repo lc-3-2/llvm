@@ -60,3 +60,8 @@ cl::opt<bool> llvm::lc32::clopts::EnableTestElision(
     "lc_3.2-enable-test-elision",
     cl::desc("Remove unneeded tests before branches"), cl::init(true),
     cl::Hidden);
+
+cl::opt<bool> llvm::lc32::clopts::EnableRedundantClearElimination(
+    "lc_3.2-enable-redundant-clear-elimination",
+    cl::desc("Remove unneeded register clears after branches"), cl::init(true),
+    cl::Hidden);
