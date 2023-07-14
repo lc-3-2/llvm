@@ -50,7 +50,7 @@ public:
   static char ID;
   LC32TestElision() : MachineFunctionPass(this->ID) {
     initializeLC32TestElisionPass(*PassRegistry::getPassRegistry());
-  };
+  }
   StringRef getPassName() const override { return "LC-3.2 Test Elision"; }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
