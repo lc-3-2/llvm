@@ -53,6 +53,33 @@ public:
   }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
+
+private:
+  /**
+   * Run the analysis on a per-basic-block basis
+   *
+   * @param[in] MBB The block to run on
+   * @return Whether the block was changed
+   */
+  bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
+
+  /**
+   * Check whether the register for a branch is guaranteed to be zero
+   *
+   * This function should be called on the outputs of `analyzeBranch`. That call
+   * should've been able to decode the branch, and it should've flagged this as
+   * a conditional branch. Furthermore, `MBB` must be one of the potential
+   * successors of the block containing the analyzed branch.
+   *
+   * @param[in] MBB The block to check for a zeroed register
+   * @param[in] Cond The nonempty output of `analyzeBranch`
+   * @param[in] TBB Where the predecessor branches on true, from `analyzeBranch`
+   * @return Whether the source register for the corresponding branch is zero in
+   * `MBB`
+   */
+  bool guaranteesZeroRegInBlock(MachineBasicBlock &MBB,
+                                const SmallVectorImpl<MachineOperand> &Cond,
+                                MachineBasicBlock *TBB);
 };
 
 } // namespace llvm
