@@ -27,6 +27,8 @@ STATISTIC(NumTestsElided, "Number of redundant test instruction eliminated");
 bool LC32TestElision::runOnMachineFunction(MachineFunction &MF) {
 
   // Bail if we were told not to execute this pass
+  if (this->skipFunction(MF.getFunction()))
+    return false;
   if (!EnableTestElision)
     return false;
 
