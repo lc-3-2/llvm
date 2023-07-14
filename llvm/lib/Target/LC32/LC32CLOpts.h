@@ -31,6 +31,7 @@ extern llvm::cl::opt<bool> UseR4;
 extern llvm::cl::opt<bool> UseR7;
 
 extern llvm::cl::opt<bool> EnableTestElision;
+extern llvm::cl::opt<bool> EnableRedundantClearElimination;
 
 } // namespace llvm::lc32::clopts
 

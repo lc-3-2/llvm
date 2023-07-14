@@ -11,6 +11,7 @@
 #include "LC32ISelDAGToDAG.h"
 #include "LC32MachineFunctionInfo.h"
 #include "TargetInfo/LC32TargetInfo.h"
+#include "pass/LC32RedundantClearElimination.h"
 #include "pass/LC32TestElision.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
@@ -79,6 +80,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32Target() {
   // Initialize all the passes
   PassRegistry &PR = *PassRegistry::getPassRegistry();
   initializeLC32DAGToDAGISelPass(PR);
+  initializeLC32RedundantClearEliminationPass(PR);
   initializeLC32TestElisionPass(PR);
 }
 
@@ -92,6 +94,7 @@ public:
   LC32PassConfig(LC32TargetMachine &TM, PassManagerBase &PM)
       : TargetPassConfig(TM, PM) {}
   bool addInstSelector() override;
+  void addPostRegAlloc() override;
   void addPreEmitPass() override;
   void addPreEmitPass2() override;
 };
@@ -106,6 +109,12 @@ bool LC32PassConfig::addInstSelector() {
   this->addPass(new LC32DAGToDAGISel(this->getTM<LC32TargetMachine>(),
                                      this->getOptLevel()));
   return false;
+}
+
+void LC32PassConfig::addPostRegAlloc() {
+  if (this->TM->getOptLevel() != CodeGenOpt::None &&
+      EnableRedundantClearElimination)
+    this->addPass(new LC32RedundantClearElimination());
 }
 
 void LC32PassConfig::addPreEmitPass() {
