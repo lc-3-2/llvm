@@ -57,11 +57,11 @@ class LC32Instruction_C : LC32Instruction_P {
 //---
 // The order here is important for dependencies
 
-include "td/instr/LC32LoadConstInstrInfo.td"
+include "td/instr/LC32LoadConstLargeInstrInfo.td"
 
 include "td/instr/LC32ALUInstrInfo.td"
 include "td/instr/LC32SHFInstrInfo.td"
-include "td/instr/LC32MoveInstrInfo.td"
+include "td/instr/LC32LoadConstSmallInstrInfo.td"
 
 include "td/instr/LC32MemInstrInfo.td"
 include "td/instr/LC32SubroutineInstrInfo.td"
