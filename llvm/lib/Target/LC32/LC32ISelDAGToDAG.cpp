@@ -58,7 +58,7 @@ bool LC32DAGToDAGISel::SelectRepeatedXorShift(SDNode *N) {
 
   // Edge case if we're trying to zero out
   if (imm == 0) {
-    SDNode *out = this->CurDAG->getMachineNode(LC32::C_MOVE_ZERO, dl, MVT::i32);
+    SDNode *out = this->CurDAG->getMachineNode(LC32::C_LOADZERO, dl, MVT::i32);
     this->ReplaceNode(N, out);
     return true;
   }
@@ -108,7 +108,7 @@ bool LC32DAGToDAGISel::SelectRepeatedXorShift(SDNode *N) {
     // first iteration
     SDNode *base =
         out == nullptr
-            ? this->CurDAG->getMachineNode(LC32::C_MOVE_ZERO, dl, MVT::i32)
+            ? this->CurDAG->getMachineNode(LC32::C_LOADZERO, dl, MVT::i32)
             : this->CurDAG->getMachineNode(
                   LC32::LSHFi, dl, MVT::i32, SDValue(out, 0),
                   this->CurDAG->getTargetConstant(5, dl, MVT::i32));
@@ -151,7 +151,7 @@ bool LC32DAGToDAGISel::SelectRepeatedAdd(SDNode *N) {
     return false;
 
   // Start with zero
-  SDNode *out = this->CurDAG->getMachineNode(LC32::C_MOVE_ZERO, dl, MVT::i32);
+  SDNode *out = this->CurDAG->getMachineNode(LC32::C_LOADZERO, dl, MVT::i32);
   // Do repeated ADDi
   {
     int64_t to_go = imm;

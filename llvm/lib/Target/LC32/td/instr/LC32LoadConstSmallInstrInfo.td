@@ -22,7 +22,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-def C_MOVE_ZERO : LC32Instruction_C, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr, 0)> {
+def C_LOADZERO : LC32Instruction_C, PseudoInstExpansion<(ANDi GPR:$dr, GPR:$dr, 0)> {
   let OutOperandList = (outs GPR:$dr);
   let InOperandList = (ins);
   let Pattern = [(set GPR:$dr, 0)];

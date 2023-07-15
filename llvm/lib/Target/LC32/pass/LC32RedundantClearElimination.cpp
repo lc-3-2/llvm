@@ -106,7 +106,7 @@ bool LC32RedundantClearElimination::runOnMachineBasicBlock(
     // Check for clear
     LLVM_DEBUG(dbgs() << "Checking instruction: ");
     LLVM_DEBUG(MI.print(dbgs()));
-    if (MI.getOpcode() == LC32::C_MOVE_ZERO &&
+    if (MI.getOpcode() == LC32::C_LOADZERO &&
         MI.getOperand(0).getReg() == TargetReg) {
       // Log
       LLVM_DEBUG(dbgs() << "Remove redundant register clear: ");

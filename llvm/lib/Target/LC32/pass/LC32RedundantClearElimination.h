@@ -15,11 +15,21 @@
 // bb0:
 //   C_BR_CMP_ZERO 2, $r0, %bb1
 // bb1:
-//   $r0 = C_MOVE_ZERO
+//   $r0 = C_LOADZERO
 // ```
-// In this case, the `C_MOVE_ZERO` instruction is redundant since we know the
-// register is already zero as a result of the branch. LLVM can't handle this
-// since it does optimization on a per-basic-block level. Thus, we handle it.
+// In this case, the `C_LOADZERO` instruction is redundant since we know the
+// register is already zero as a result of the branch. Likewise with the case
+// below.
+// ```
+// bb0:
+//   C_BR_CMP_ZERO 5, $r0, %bb2
+//   C_BR_UNCOND %bb1
+// bb1:
+//   $r0 = C_LOADZERO
+// bb2:
+// ```
+// LLVM can't handle this since it does optimization on a per-basic-block level.
+// Thus, we handle it.
 //
 // The AArch64 version of this pass also handles immediates. We don't because of
 // the difficulty in doing that for this target, especially since we don't pack

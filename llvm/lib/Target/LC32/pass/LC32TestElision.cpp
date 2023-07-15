@@ -112,7 +112,6 @@ Register LC32TestElision::transfer(const MachineInstr &MI, Register CC) {
   // The following instructions just set it to the destination register:
   // * ALU
   // * SHF
-  // * Move Immediate
   // * Load Constant
   // * Loads
   case LC32::ADDr:
@@ -127,7 +126,7 @@ Register LC32TestElision::transfer(const MachineInstr &MI, Register CC) {
   case LC32::LSHFi:
   case LC32::RSHFLi:
   case LC32::RSHFAi:
-  case LC32::C_MOVE_ZERO:
+  case LC32::C_LOADZERO:
   case LC32::P_LOADCONSTH:
   case LC32::P_LOADCONSTW:
   case LC32::LDB:
