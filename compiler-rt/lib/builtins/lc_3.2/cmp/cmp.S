@@ -12,33 +12,47 @@
 ;; The former does signed comparison while the latter does unsigned.
 ;;
 ;; See: llvm/lib/Target/LC32/LC32ISelLoweringOps.cpp LC32TargetLowering::DoCmp
+;; See: check.py
 ;;
 ;;===----------------------------------------------------------------------===;;
 
 	.section .text.__cmpsi3, "ax", @progbits
 	.align 2
 
-; The idea here is that we want to perform a normal subtraction, but we might
-; overflow. Subtraction can overflow if the operands have different signs, so we
-; handle that case separately. If they have different signs, we can just return
-; the LHS of the comparison. Otherwise, we subtract. The code is:
+; We have two cases here. In the first case, the operands have the same sign.
+; Then, we can subtract without risk of overflow.
+;
+; In the second case, the operands have different signs. In that case, we want
+; to return something that shares the sign of the LHS. To see this, break into
+; cases:
+; * If the LHS is negative, then LHS < RHS, and we need to return something
+;   negative
+; * If the LHS is positive, then LHS > RHS, and we need to return something
+;   positive
+;
+; We can't just return the LHS since there is an edge case when LHS = 0. Then,
+; we'll falsely report equality. Thus, we OR the LHS with 1 before returning.
+;
+; The code is:
 ; ```
-; int __cmpsi3(unsigned lhs, unsigned rhs) {
-;   int t;
-;   int ret = lhs;
-;   t = lhs ^ rhs
-;   if (t >= 0) {
-;     t = ~rhs;
-;     t += 1;
-;     ret += t;
+; int32_t __cmpsi3(int32_t %lhs, int32_t %rhs) {
+;   %det = %lhs ^ %rhs
+;   if (%det < 0) {
+;     %t0 = %lhs & -2
+;     %retn = %t0 + 1
+;   } else {
+;     %t1 = ~%rhs
+;     %t2 = %t1 + 1
+;     %retp = %lhs + %t2
 ;   }
-;   return ret;
+;   %ret = PHI %retn %retp
+;   return %ret
 ; }
 ; ```
 ; Register allocation is:
-; * R0: ret, lhs
-; * R1: rhs
-; * R2: t
+; * R0: %ret %retn %retp %t0 %t1 %t2 %det
+; * R1: %lhs
+; * R2: %rhs
 	.global __cmpsi3
 	.type __cmpsi3, @function
 __cmpsi3:
@@ -51,29 +65,39 @@ __cmpsi3:
 	ADD     R6, R5, 0
 
 	; Load parameters into registers
-	; unsigned ret = lhs;
-	LDW     R0, R5, 4
-	LDW     R1, R5, 5
+	LDW     R1, R5, 4
+	LDW     R2, R5, 5
 
-	; t = lhs ^ rhs;
-	XOR     R2, R0, R1
+	; %det = %lhs ^ %rhs
+	XOR     R0, R1, R2
 
-	; if (t >= 0) {
-	BRn     .Lsendif
+	; if (%det < 0) {
+	BRzp    .Ls_else
 
-	; Does ret -= rhs Using t
-	; t = ~rhs;
-	; t += 1;
-	; ret += t;
-	NOT     R2, R1
-	ADD     R2, R2, 1
-	ADD     R0, R0, R2
+	; Set %retn = %lhs | 1
+	; %t0 = %lhs & -2
+	; %retn = %t0 + 1
+	AND     R0, R1, -2
+	ADD     R0, R0, 1
+
+	; } else {
+	BR      .Ls_endif
+.Ls_else:
+
+	; Set %retp = %lhs - %rhs
+	; %t1 = ~%rhs
+	; %t2 = %t1 + 1
+	; %retp = %lhs + %t2
+	NOT     R0, R2
+	ADD     R0, R0, 1
+	ADD     R0, R1, R0
 
 	; }
-.Lsendif:
+.Ls_endif:
 
 	; Stack teardown
-	; return ret;
+	; %ret = PHI %retn %retp
+	; return %ret
 	STW     R0, R5, 3
 	ADD     R6, R5, 12
 	LDW     R7, R6, -1
@@ -85,31 +109,33 @@ __cmpsi3:
 	.section .text.__ucmpsi3, "ax", @progbits
 	.align 2
 
-; Very similar ideas to __cmpsi3. If the MSBs are different, the greater one has
-; the MSB set. This corresponds to returning the RHS in that case. If the MSBs
-; are the same, we bring them down into the lower half of the range, then do
-; normal subtraction. Code is:
+; Very similar idea to `__cmpsi3`. Again, we have two cases. If the two
+; arguments have the same sign, this means they are in the same half of the
+; range of unsigned integers. Subtracting them will result in a number of
+; magnitude at most `2**31 - 1`, so we can subtract without worrying about
+; overflow. If the two arguments have different signs, this means they are in
+; different halves of the range, and we want to return the same sign as the RHS.
+;
+; The code is:
 ; ```
-; int __ucmpsi3(unsigned lhs, unsigned rhs) {
-;   int t;
-;   int ret = rhs;
-;   t = lhs ^ rhs;
-;   if (t >= 0) {
-;     lhs <<= 1;
-;     lhs >>= 1;
-;     rhs <<= 1;
-;     rhs >>= 1;
-;     t = ~rhs;
-;     t += 1;
-;     ret = lhs + t;
+; int32_t __ucmpsi3(uint32_t lhs, uint32_t rhs) {
+;   %det = lhs ^ rhs
+;   if (%det < 0) {
+;     %t0 = %rhs & -2
+;     %retn = %t0 + 1
+;   } else {
+;     %t1 = ~%rhs
+;     %t2 = %t1 + 1
+;     %retp = %lhs + %t2
 ;   }
-;   return ret;
+;   %ret = PHI %retn %retp
+;   return %ret
 ; }
 ; ```
 ; Register allocation is:
-; * R0: ret, rhs
-; * R1: lhs
-; * R2: t
+; * R0: %ret %retn %retp %t0 %t1 %t2 %det
+; * R1: %lhs
+; * R2: %rhs
 	.global __ucmpsi3
 	.type __ucmpsi3, @function
 __ucmpsi3:
@@ -122,39 +148,39 @@ __ucmpsi3:
 	ADD     R6, R5, 0
 
 	; Load parameters into registers
-	; unsigned ret = rhs;
 	LDW     R1, R5, 4
-	LDW     R0, R5, 5
+	LDW     R2, R5, 5
 
-	; t = lhs ^ rhs;
-	XOR     R2, R0, R1
+	; %det = %lhs ^ %rhs
+	XOR     R0, R1, R2
 
-	; if (t >= 0) {
-	BRn     .Luendif
+	; if (%det < 0) {
+	BRzp    .Lu_else
 
-	; lhs <<= 1;
-	LSHF    R1, R1, 1
-	; lhs >>= 1;
-	RSHFL   R1, R1, 1
+	; Set %retn = %rhs | 1
+	; %t0 = %rhs & -2
+	; %retn = %t0 + 1
+	AND     R0, R2, -2
+	ADD     R0, R0, 1
 
-	; rhs <<= 1;
-	LSHF    R0, R0, 1
-	; rhs >>= 1;
-	RSHFL   R0, R0, 1
+	; } else {
+	BR      .Lu_endif
+.Lu_else:
 
-	; Does ret = lhs - rhs Using t
-	; t = ~rhs;
-	; t += 1;
-	; ret = lhs + t;
-	NOT     R2, R0
-	ADD     R2, R2, 1
-	ADD     R0, R1, R2
+	; Set %retp = %lhs - %rhs
+	; %t1 = ~%rhs
+	; %t2 = %t1 + 1
+	; %retp = %lhs + %t2
+	NOT     R0, R2
+	ADD     R0, R0, 1
+	ADD     R0, R1, R0
 
 	; }
-.Luendif:
+.Lu_endif:
 
 	; Stack teardown
-	; return ret;
+	; %ret = PHI %retn %retp
+	; return %ret
 	STW     R0, R5, 3
 	ADD     R6, R5, 12
 	LDW     R7, R6, -1
