@@ -79,13 +79,16 @@ private:
    * in terms of effects on the condition codes. It can output a sequence of
    * instructions for one input instruction, though that is currently not done.
    *
-   * @param[inout] MBBI Input points to the instruction to modify. Output points
-   * to the *last* instruction in the modified sequence (inclusive).
+   * The `MI` argument is a reference to an instruction inside a basic block. If
+   * it is to be modified, the instruction should be deleted, with the
+   * replacement in its place.
+   *
+   * @param[inout] MI The instruction to modify
    * @param[in] CC What register is held in the condition codes before the
    * instruction pointed to by `MBBI`
    * @return Whether a change was made
    */
-  bool update(MachineBasicBlock::iterator &MBBI, Register CC);
+  bool update(MachineInstr &MI, Register CC);
 };
 
 } // namespace llvm
