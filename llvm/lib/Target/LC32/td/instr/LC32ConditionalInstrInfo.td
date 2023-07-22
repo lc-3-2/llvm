@@ -94,8 +94,7 @@ def NT_SELECT_CMP_ZERO : SDTypeProfile<1, 4, [
 ]>;
 def N_SELECT_CMP_ZERO : SDNode<
   "LC32ISD::SELECT_CMP_ZERO",
-  NT_SELECT_CMP_ZERO,
-  [SDNPHasChain]
+  NT_SELECT_CMP_ZERO
 >;
 
 def C_SELECT_CMP_ZERO : LC32Instruction_C {

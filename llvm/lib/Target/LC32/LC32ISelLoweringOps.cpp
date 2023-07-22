@@ -214,9 +214,9 @@ SDValue LC32TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Target = Op.getOperand(4);
   SDLoc dl(Op);
   // Generate the comparison
-  DoCMPResult cmp_res = this->DoCMP(DAG, dl, Chain, CC, LHS, RHS);
+  DoCMPResult cmp_res = this->DoCMP(DAG, dl, CC, LHS, RHS);
   // Generate the branch
-  return DAG.getNode(LC32ISD::BR_CMP_ZERO, dl, Op.getValueType(), cmp_res.Chain,
+  return DAG.getNode(LC32ISD::BR_CMP_ZERO, dl, Op.getValueType(), Chain,
                      cmp_res.NZP, cmp_res.Value, Target);
 }
 
@@ -234,10 +234,10 @@ SDValue LC32TargetLowering::LowerSELECT_CC(SDValue Op,
   assert(Op.getValueType() == MVT::i32 &&
          "Only i32 is supported for SELECT_CC");
   // Generate the comparison
-  DoCMPResult cmp_res = this->DoCMP(DAG, dl, DAG.getEntryNode(), CC, LHS, RHS);
+  DoCMPResult cmp_res = this->DoCMP(DAG, dl, CC, LHS, RHS);
   // Generate the selection
-  return DAG.getNode(LC32ISD::SELECT_CMP_ZERO, dl, MVT::i32, cmp_res.Chain,
-                     cmp_res.NZP, cmp_res.Value, TrueV, FalseV);
+  return DAG.getNode(LC32ISD::SELECT_CMP_ZERO, dl, MVT::i32, cmp_res.NZP,
+                     cmp_res.Value, TrueV, FalseV);
 }
 
 SDValue LC32TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
@@ -332,8 +332,8 @@ LC32TargetLowering::emitC_SELECT_CMP_ZERO(MachineInstr &MI,
 }
 
 LC32TargetLowering::DoCMPResult
-LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
-                          ISD::CondCode CC, SDValue LHS, SDValue RHS) const {
+LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, ISD::CondCode CC,
+                          SDValue LHS, SDValue RHS) const {
   // Check that comparisons have the right type
   assert(LHS.getValueType() == MVT::i32 &&
          "Only i32 is supported for comparison");
@@ -370,7 +370,7 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
     case ISD::SETLE:
     case ISD::SETGT:
     case ISD::SETGE:
-      return DoCMPResult{Chain, nzp, LHS};
+      return DoCMPResult{nzp, LHS};
     default:
       break;
     }
@@ -383,8 +383,7 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
   case ISD::SETEQ:
   case ISD::SETNE:
     // Return
-    return DoCMPResult{Chain, nzp,
-                       DAG.getNode(ISD::XOR, dl, MVT::i32, LHS, RHS)};
+    return DoCMPResult{nzp, DAG.getNode(ISD::XOR, dl, MVT::i32, LHS, RHS)};
 
   // For inequality, we either subtract or do a libcall
   case ISD::SETLT:
@@ -397,7 +396,6 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
   case ISD::SETUGE: {
     // Populate variables
     // See: llvm/CodeGen/ISDOpcodes.h:1428
-    SDValue new_chain = Chain;
     bool is_unsigned = (CC & (1 << 3)) != 0;
     bool is_signed = (CC & (1 << 3)) == 0;
 
@@ -439,16 +437,16 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
       CallLoweringInfo CLI(DAG);
       Type *ret_ty = EVT(MVT::i32).getTypeForEVT(*DAG.getContext());
       CLI.setDebugLoc(dl)
-          .setChain(Chain)
+          .setChain(DAG.getEntryNode())
           .setCallee(CallingConv::C, ret_ty, callee, std::move(args))
           .setSExtResult(true);
 
       // Do the call
-      std::tie(new_value, new_chain) = this->LowerCallTo(CLI);
+      new_value = this->LowerCallTo(CLI).first;
     }
 
     // Return
-    return DoCMPResult{new_chain, nzp, new_value};
+    return DoCMPResult{nzp, new_value};
   }
 
   default:
