@@ -20,9 +20,7 @@
 // their own namespace.
 namespace llvm::lc32::clopts {
 
-extern llvm::cl::opt<bool> UseCMPLibCall;
-extern llvm::cl::opt<bool> UseSignedCMPLibCall;
-extern llvm::cl::opt<bool> UseUnsignedCMPLibCall;
+extern llvm::cl::opt<bool> UnsafeCMP;
 
 extern llvm::cl::opt<unsigned> MaxRepeatedOps;
 extern llvm::cl::opt<unsigned> MaxConstMulHammingWeight;

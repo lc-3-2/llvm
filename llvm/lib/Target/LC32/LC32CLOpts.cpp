@@ -16,24 +16,11 @@ static_assert(std::is_same<ssize_t, long>::value, "Bad type");
 static_assert(std::is_same<uint64_t, unsigned long>::value, "Bad type");
 static_assert(std::is_same<int64_t, long>::value, "Bad type");
 
-cl::opt<bool> llvm::lc32::clopts::UseCMPLibCall(
-    "lc_3.2-use-libcall-for-cmp",
-    cl::desc("Set --lc_3.2-use-libcall-for-signed-cmp and "
-             "--lc_3.2-use-libcall-for-unsigned-cmp"),
-    cl::init(false), cl::callback([](const bool &v) {
-      UseSignedCMPLibCall = v;
-      UseUnsignedCMPLibCall = v;
-    }));
-cl::opt<bool> llvm::lc32::clopts::UseSignedCMPLibCall(
-    "lc_3.2-use-libcall-for-signed-cmp",
-    cl::desc("When comparing signed integers, use a libcall to prevent "
-             "overflow instead of just subtracting"),
-    cl::init(false), cl::Hidden);
-cl::opt<bool> llvm::lc32::clopts::UseUnsignedCMPLibCall(
-    "lc_3.2-use-libcall-for-unsigned-cmp",
-    cl::desc("When comparing unsigned integers, use a libcall to prevent "
-             "overflow instead of just subtracting"),
-    cl::init(false), cl::Hidden);
+cl::opt<bool> llvm::lc32::clopts::UnsafeCMP(
+    "lc_3.2-unsafe-cmp",
+    cl::desc("Don't check for overflows when subtracting values for "
+             "comparison. This is not Standard C behavior."),
+    cl::init(false));
 
 cl::opt<unsigned> llvm::lc32::clopts::MaxRepeatedOps(
     "lc_3.2-max-repeated-ops",
