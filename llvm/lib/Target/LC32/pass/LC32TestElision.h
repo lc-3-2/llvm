@@ -83,7 +83,7 @@ private:
    * it is to be modified, the instruction should be deleted, with the
    * replacement in its place.
    *
-   * @param[inout] MI The instruction to modify
+   * @param[in] MI The instruction to modify
    * @param[in] CC What register is held in the condition codes before the
    * instruction pointed to by `MBBI`
    * @return Whether a change was made
