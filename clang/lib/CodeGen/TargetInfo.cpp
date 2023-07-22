@@ -12180,6 +12180,45 @@ public:
 } // namespace
 
 //===----------------------------------------------------------------------===//
+// LC-3.2 ABI Implementation
+//
+// It seems we're not required to do a whole lot here. We're using the defaults
+// for the ABI since we have only a minimal prior ABI to adhere to. The only
+// thing we have to do is pass on function attributes.
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+class LC32TargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  LC32TargetCodeGenInfo(CodeGenTypes &CGT)
+      : TargetCodeGenInfo(std::make_unique<DefaultABIInfo>(CGT)) {}
+  void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                           CodeGen::CodeGenModule &M) const override;
+};
+
+} // namespace
+
+void LC32TargetCodeGenInfo::setTargetAttributes(
+    const Decl *D, llvm::GlobalValue *GV, CodeGen::CodeGenModule &M) const {
+  // This was copued from AVRTargetCodeGenInfo and M68kTargetCodeGenInfo
+
+  // Treat definitions as the source of truth. All the attributes have to do
+  // with the implementation, after all.
+  if (GV->isDeclaration())
+    return;
+
+  // Handle function attributes
+  if (const auto *FD = dyn_cast_or_null<FunctionDecl>(D)) {
+    auto *Fn = cast<llvm::Function>(GV);
+
+    // Handle the unsafe_cmp attribute
+    if (FD->getAttr<LC32UnsafeCMPAttr>())
+      Fn->addFnAttr("unsafe_cmp");
+  }
+}
+
+//===----------------------------------------------------------------------===//
 // Driver code
 //===----------------------------------------------------------------------===//
 
@@ -12421,6 +12460,9 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     return SetCGInfo(new LoongArchTargetCodeGenInfo(
         Types, getTarget().getPointerWidth(LangAS::Default), ABIFRLen));
   }
+
+  case llvm::Triple::lc_3_2:
+    return SetCGInfo(new LC32TargetCodeGenInfo(Types));
   }
 }
 

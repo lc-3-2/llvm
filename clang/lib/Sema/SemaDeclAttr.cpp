@@ -3831,7 +3831,7 @@ static void handleInitPriorityAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
     S.Diag(AL.getLoc(), diag::warn_attribute_ignored) << AL;
     return;
   }
-  
+
   if (S.getLangOpts().HLSL) {
     S.Diag(AL.getLoc(), diag::err_hlsl_init_priority_unsupported);
     return;
@@ -9346,6 +9346,10 @@ ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D, const ParsedAttr &AL,
 
   case ParsedAttr::AT_UsingIfExists:
     handleSimpleAttribute<UsingIfExistsAttr>(S, D, AL);
+    break;
+
+  case ParsedAttr::AT_LC32UnsafeCMP:
+    handleSimpleAttribute<LC32UnsafeCMPAttr>(S, D, AL);
     break;
   }
 }

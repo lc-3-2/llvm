@@ -403,8 +403,11 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
 
     // Compute the value
     SDValue new_value;
-    if (UnsafeCMP) {
-      // It's just subtraction if we're not worried about overflow
+    if (UnsafeCMP ||
+        DAG.getMachineFunction().getFunction().hasFnAttribute("unsafe_cmp")) {
+      // It's just subtraction if we're not worried about overflow. That happens
+      // if we have the flag on this file or if the function has the flag.
+      // Sadly, we can't get more granular than that.
       new_value = DAG.getNode(ISD::SUB, dl, MVT::i32, LHS, RHS);
 
     } else {
