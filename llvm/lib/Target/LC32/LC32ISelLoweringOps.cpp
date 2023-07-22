@@ -409,40 +409,26 @@ LC32TargetLowering::DoCMP(SelectionDAG &DAG, SDLoc dl, ISD::CondCode CC,
       new_value = DAG.getNode(ISD::SUB, dl, MVT::i32, LHS, RHS);
 
     } else {
-      // Compute the name of the function to call
-      const char *callee_name;
+      // Normal case is subtraction
+      SDValue normal_val = DAG.getNode(ISD::SUB, dl, MVT::i32, LHS, RHS);
+
+      // Determine what side to return in case of overflow
+      SDValue overflow_side;
       if (is_signed)
-        callee_name = "__cmpsi3";
+        overflow_side = LHS;
       if (is_unsigned)
-        callee_name = "__ucmpsi3";
-      // Get the symbol associated with that name
-      SDValue callee = DAG.getExternalSymbol(
-          callee_name, this->getPointerTy(DAG.getDataLayout()));
+        overflow_side = RHS;
+      // OR the value with 1 to make sure we don't inadvertently return zero
+      SDValue overflow_val = DAG.getNode(ISD::OR, dl, MVT::i32, overflow_side,
+                                         DAG.getConstant(1, dl, MVT::i32));
 
-      // Calculate the arguments to the libcall
-      ArgListTy args;
-      args.reserve(2);
-      {
-        ArgListEntry arg0;
-        ArgListEntry arg1;
-        arg0.Node = LHS;
-        arg1.Node = RHS;
-        arg0.Ty = arg1.Ty = EVT(MVT::i32).getTypeForEVT(*DAG.getContext());
-        arg0.IsSExt = arg1.IsSExt = true;
-        args.push_back(arg0);
-        args.push_back(arg1);
-      }
+      // Discrimination is done by XORing the sides together
+      SDValue discriminator = DAG.getNode(ISD::XOR, dl, MVT::i32, LHS, RHS);
 
-      // Calculate the libcall options
-      CallLoweringInfo CLI(DAG);
-      Type *ret_ty = EVT(MVT::i32).getTypeForEVT(*DAG.getContext());
-      CLI.setDebugLoc(dl)
-          .setChain(DAG.getEntryNode())
-          .setCallee(CallingConv::C, ret_ty, callee, std::move(args))
-          .setSExtResult(true);
-
-      // Do the call
-      new_value = this->LowerCallTo(CLI).first;
+      // Select
+      new_value = DAG.getNode(LC32ISD::SELECT_CMP_ZERO, dl, MVT::i32,
+                              DAG.getTargetConstant(0b100, dl, MVT::i32),
+                              discriminator, overflow_val, normal_val);
     }
 
     // Return
