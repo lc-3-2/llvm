@@ -68,12 +68,12 @@ The LC-3.2 backend has several options to affect code generation. They are
 listed in `llvm/lib/Target/LC32CLOpts.cpp`, and they can be passed to `llc` with
 the `-mllvm` option in the driver.
 
-One important class of options is `--lc_3.2-use-libcall-for-cmp` and its
-friends. Usually, the backend emits `a - b > 0` when synthesizing `a > b` for
-both the signed and unsigned case. However, this can lead to overflow. Adding
-this flag makes the backend lower comparisons to libcalls wherever overflow is
-possible. By default, this is disabled since we teach students to compare via
-subtraction.
+One important option is `--lc_3.2-unsafe-cmp`. Usually, the backend cannot
+simply subtract two numbers to compare them, since that could lead to overflow.
+It is forced to pessimistically emit overflow checks, which have overhead. This
+option disables those checks - increasing speed at a potential cost of
+correctness. This option can also be applied on a per-function basis with
+`__attribute__((unsafe_cmp))`.
 
 Another set of options is `--lc_3.2-use-r4` and `--lc_3.2-use-r7`. The compiler
 can't take advantage of the global pointer, and the calling convention has the
