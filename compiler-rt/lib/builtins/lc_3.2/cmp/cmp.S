@@ -11,6 +11,10 @@
 ;; equal, a negative result if less than, and a positive result if greater than.
 ;; The former does signed comparison while the latter does unsigned.
 ;;
+;; The logic in these functions are now generated inline, so these functions are
+;; never called. They're kept here for convenience. Their logic should be
+;; reflected in `LC32TargetLowering`.
+;;
 ;; See: llvm/lib/Target/LC32/LC32ISelLoweringOps.cpp LC32TargetLowering::DoCmp
 ;; See: check.py
 ;;
