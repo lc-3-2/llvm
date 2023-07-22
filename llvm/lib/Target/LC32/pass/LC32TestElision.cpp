@@ -53,26 +53,29 @@ bool LC32TestElision::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool MadeChange = false;
 
   // Iterate over all the instructions in the block
-  for (MachineBasicBlock::iterator MBBI = MBB.begin(); MBBI != MBB.end();
-       MBBI++) {
+  for (MachineBasicBlock::iterator MBBI = MBB.begin(); MBBI != MBB.end();) {
+
+    // Pull out the machine instruction for convenience
+    // This way, we're fine if we modify the instruction
+    MachineInstr &MI = *MBBI;
+    MBBI++;
 
     // Compute the condition codes after this instruction
     // Log the output
-    Register NextCC = this->transfer(*MBBI, CurrentCC);
+    Register NextCC = this->transfer(MI, CurrentCC);
     if (NextCC != 0)
       LLVM_DEBUG(dbgs() << "Condition codes hold "
                         << LC32InstPrinter::getRegisterName(NextCC) << " after "
-                        << *MBBI);
+                        << MI);
     else
-      LLVM_DEBUG(dbgs() << "Unknown condition codes after " << *MBBI);
+      LLVM_DEBUG(dbgs() << "Unknown condition codes after " << MI);
 
     // Update the instruction if needed. Note that we do this after computing
     // the NextCC. This way, we don't have to iterate over all of the produced
-    // instructions and risk getting into an infinite loop. Also note that this
-    // code modifies MBBI.
-    bool UpdateMadeChange = this->update(MBBI, CurrentCC);
+    // instructions and risk getting into an infinite loop.
+    bool UpdateMadeChange = this->update(MI, CurrentCC);
     if (UpdateMadeChange) {
-      LLVM_DEBUG(dbgs() << "Made change before " << *MBBI);
+      LLVM_DEBUG(dbgs() << "Made change\n");
       NumTestsElided++;
       MadeChange = true;
     }
@@ -179,33 +182,31 @@ Register LC32TestElision::transfer(const MachineInstr &MI, Register CC) {
   }
 }
 
-bool LC32TestElision::update(MachineBasicBlock::iterator &MBBI, Register CC) {
+bool LC32TestElision::update(MachineInstr &MI, Register CC) {
   // Populate variables
-  MachineBasicBlock &MBB = *MBBI->getParent();
+  MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  DebugLoc DL = MBBI->getDebugLoc();
+  DebugLoc DL = MI.getDebugLoc();
   const LC32InstrInfo &TII =
       *static_cast<const LC32InstrInfo *>(MF.getSubtarget().getInstrInfo());
 
   // Only compress `C_BR_CMP_ZERO` instructions
-  if (MBBI->getOpcode() != LC32::C_BR_CMP_ZERO)
+  if (MI.getOpcode() != LC32::C_BR_CMP_ZERO)
     return false;
 
   // Check that the register we're testing is already in the condition codes
-  if (MBBI->getOperand(1).getReg() != CC)
+  if (MI.getOperand(1).getReg() != CC)
     return false;
 
   // Insert a raw branch
   // For convenience, record the register as an implicit
-  MachineInstr *n =
-      BuildMI(MBB, MBBI, DL, TII.get(LC32::BR))
-          .addImm(MBBI->getOperand(0).getImm())
-          .addMBB(MBBI->getOperand(2).getMBB())
-          .addReg(MBBI->getOperand(1).getReg(),
-                  RegState::Implicit | getRegState(MBBI->getOperand(1)));
+  BuildMI(MBB, MI.getIterator(), DL, TII.get(LC32::BR))
+      .addImm(MI.getOperand(0).getImm())
+      .addMBB(MI.getOperand(2).getMBB())
+      .addReg(MI.getOperand(1).getReg(),
+              RegState::Implicit | getRegState(MI.getOperand(1)));
 
-  // Erase the old instruction and point to the new one
-  MBBI->eraseFromParent();
-  MBBI = n->getIterator();
+  // Erase the old instruction
+  MI.eraseFromParent();
   return true;
 }
