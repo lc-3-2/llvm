@@ -63,13 +63,11 @@ enum {
   // Operand 3: Target
   BR_CMP_ZERO,
 
-  // Output 0: Chain
-  // Output 1: Value
-  // Operand 0: Chain
-  // Operand 1: NZP
-  // Operand 2: Value to compare with zero
-  // Operand 3: Value if true
-  // Operand 4: Value if false
+  // Output 0: Value
+  // Operand 0: NZP
+  // Operand 1: Value to compare with zero
+  // Operand 2: Value if true
+  // Operand 3: Value if false
   SELECT_CMP_ZERO,
 
   // Output 0: Address
@@ -186,12 +184,11 @@ private:
    * This emits a structure with the results.
    */
   struct DoCMPResult {
-    SDValue Chain; //< The new chain
     SDValue NZP;   //< The NZP to put for the branch
     SDValue Value; //< The value to compare against zero
   };
-  DoCMPResult DoCMP(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
-                    ISD::CondCode CC, SDValue LHS, SDValue RHS) const;
+  DoCMPResult DoCMP(SelectionDAG &DAG, SDLoc dl, ISD::CondCode CC, SDValue LHS,
+                    SDValue RHS) const;
 };
 
 } // namespace llvm
