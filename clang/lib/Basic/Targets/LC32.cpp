@@ -91,6 +91,7 @@ bool LC32TargetInfo::validateAsmConstraint(
   case 'a': // R0
   case 'x': // R1
   case 'y': // R2
+  case 't': // R3
     info.setAllowsRegister();
     return true;
   case 'I': // imm5

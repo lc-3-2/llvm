@@ -25,6 +25,7 @@ LC32TargetLowering::getConstraintType(StringRef Constraint) const {
     case 'a': // R0
     case 'x': // R1
     case 'y': // R2
+    case 't': // R3
       return C_Register;
     case 'I': // imm5
     case 'N': // amount5
@@ -53,6 +54,7 @@ LC32TargetLowering::getSingleConstraintMatchWeight(
     case 'a': // R0
     case 'x': // R1
     case 'y': // R2
+    case 't': // R3
       return CW_SpecificReg;
     case 'I': // imm5
     case 'N': // amount5
@@ -85,6 +87,8 @@ LC32TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *RI,
         return std::make_pair((unsigned)LC32::R1, &LC32::GPRRegClass);
       case 'y': // R2
         return std::make_pair((unsigned)LC32::R2, &LC32::GPRRegClass);
+      case 't': // R3
+        return std::make_pair((unsigned)LC32::AT, &LC32::GPRRegClass);
       }
     }
   }
