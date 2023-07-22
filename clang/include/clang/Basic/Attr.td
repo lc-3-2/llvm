@@ -408,6 +408,7 @@ def TargetRISCV : TargetArch<["riscv32", "riscv64"]>;
 def TargetX86 : TargetArch<["x86"]>;
 def TargetAnyX86 : TargetArch<["x86", "x86_64"]>;
 def TargetWebAssembly : TargetArch<["wasm32", "wasm64"]>;
+def TargetLC32 : TargetArch<["lc_3_2"]>;
 def TargetWindows : TargetSpec {
   let OSes = ["Win32"];
 }
@@ -4126,4 +4127,10 @@ def ReadOnlyPlacement : InheritableAttr {
   let Spellings = [Clang<"enforce_read_only_placement">];
   let Subjects = SubjectList<[Record]>;
   let Documentation = [ReadOnlyPlacementDocs];
+}
+
+def LC32UnsafeCMP : Attr, TargetSpecificAttr<TargetLC32> {
+  let Spellings = [Clang<"unsafe_cmp">];
+  let Subjects = SubjectList<[Function]>;
+  let Documentation = [Undocumented];
 }
