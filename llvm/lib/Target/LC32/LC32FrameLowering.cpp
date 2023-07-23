@@ -192,6 +192,12 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // a branch that happens at the same time as a stack frame load. Therefore,
   // these can share scavenging slots.
   //
+  // However, A. could cause B. If we have a frame size that's too large, we'll
+  // need to insert extra instructions, which could cause branches to become out
+  // of range. So even though they can share scavenging slots, we do no delegate
+  // it specifically to one or the other. That's why the `if` in the `for` loop
+  // doesn't check `need_b` anymore.
+  //
   // Also note that in both the checks, we keep the arguments positive since
   // that is the more restrictive direction. Observe that we use isInt and not
   // isUInt.
@@ -224,11 +230,9 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
     RS->addScavengingFrameIndex(FI);
 
     // The first scavening frame index we use should be used for branch
-    // relaxation. Note that this should happen on the first iteration of the
-    // loop if it happens at all
-    assert(MFnI->BranchRelaxationFI == -1);
+    // relaxation
     assert(FI >= 0);
-    if (need_b && MFnI->BranchRelaxationFI == -1)
+    if (MFnI->BranchRelaxationFI == -1)
       MFnI->BranchRelaxationFI = FI;
   }
 }
