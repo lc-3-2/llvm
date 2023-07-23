@@ -64,14 +64,10 @@ ArrayRef<const char *> LC32TargetInfo::getGCCRegNames() const {
 
 ArrayRef<TargetInfo::GCCRegAlias> LC32TargetInfo::getGCCRegAliases() const {
   static const TargetInfo::GCCRegAlias GCC_REG_ALIASES[] = {
-      {{"AR", "r0", "ar"}, "R0"},
-      {{"XR", "r1", "xr"}, "R1"},
-      {{"YR", "r2", "yr"}, "R2"},
-      {{"R3", "r3", "at"}, "AT"},
-      {{"R4", "r4", "gp"}, "GP"},
-      {{"R5", "r5", "fp"}, "FP"},
-      {{"R6", "r6", "sp"}, "SP"},
-      {{"R7", "r7", "lr"}, "LR"}};
+      {{"AR", "r0", "ar"}, "R0"}, {{"XR", "r1", "xr"}, "R1"},
+      {{"YR", "r2", "yr"}, "R2"}, {{"R3", "r3", "at"}, "AT"},
+      {{"R4", "r4", "gp"}, "GP"}, {{"R5", "r5", "fp"}, "FP"},
+      {{"R6", "r6", "sp"}, "SP"}, {{"R7", "r7", "lr"}, "LR"}};
   return ArrayRef<TargetInfo::GCCRegAlias>(GCC_REG_ALIASES);
 }
 
