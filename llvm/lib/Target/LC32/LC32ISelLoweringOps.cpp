@@ -201,6 +201,14 @@ SDValue LC32TargetLowering::visitLOWERING_NOT(SDNode *N,
       N->getOperand(0).getOpcode() == LC32ISD::LOWERING_NOT) {
     return N->getOperand(0).getNode()->getOperand(0);
   }
+  // fold (N_LOWERING_NOT c) -> ~c
+  if (N->getOperand(0).getNode() != nullptr &&
+      N->getOperand(0).getOpcode() == ISD::Constant) {
+    SDLoc dl(N);
+    SDValue c_sdv = N->getOperand(0);
+    int64_t c_val = cast<ConstantSDNode>(c_sdv)->getSExtValue();
+    return DCI.DAG.getConstant(~c_val, dl, N->getValueType(0));
+  }
   // Can't combine here
   return SDValue();
 }
