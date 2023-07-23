@@ -18,11 +18,8 @@ LC32TargetInfo::LC32TargetInfo(const llvm::Triple &Triple,
   // Set all the parameters
   // These are defaulted in the superclass constructor, so look at that to see
   // the values.
-  // Note that `long` is 32-bit
-
+  // Note that `long` is 32-bit and that `long double` is 64-bit
   this->TLSSupported = false;
-  this->VLASupported = false;
-  this->HasLongDouble = false;
 
   // Set the data layout
   this->resetDataLayout(
