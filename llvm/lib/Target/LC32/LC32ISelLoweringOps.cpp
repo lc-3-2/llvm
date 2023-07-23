@@ -168,11 +168,34 @@ SDValue LC32TargetLowering::LowerOR(SDValue Op, SelectionDAG &DAG) const {
   assert(Op.getOperand(1).getValueType() == MVT::i32 &&
          "Only i32 is supported for OR");
 
+  // Pull out operands
+  SDValue lhs = Op.getOperand(0);
+  SDValue rhs = Op.getOperand(1);
+
+  // Canonicalize the constant to the RHS
+  if (lhs.getOpcode() == ISD::Constant)
+    std::swap(lhs, rhs);
+
+  // Try to optimize selecting a bit. The DAG combiner doesn't seem to try to
+  // combine this, so we don't need special handling to avoid an infinite loop.
+  // fold (or x c) -> (add (and x ~c) c)
+  if (rhs.getOpcode() == ISD::Constant) {
+    int64_t c = cast<ConstantSDNode>(rhs)->getSExtValue();
+    // Check that this is a power of two that can fit in an imm5
+    if (isPowerOf2_64(c) && isInt<5>(c)) {
+      SDValue c_val = DAG.getConstant(c, dl, MVT::i32);
+      SDValue n_val = DAG.getConstant(~c, dl, MVT::i32);
+      return DAG.getNode(ISD::ADD, dl, MVT::i32,
+                         DAG.getNode(ISD::AND, dl, MVT::i32, lhs, n_val),
+                         c_val);
+    }
+  }
+
   // Use DeMorgan's law to expand
   // Remember to inhibit combining on the top-level node
   // See: td/instr/LC32ALUInstrInfo.td
-  SDValue a_prime = DAG.getNOT(dl, Op.getOperand(0), MVT::i32);
-  SDValue b_prime = DAG.getNOT(dl, Op.getOperand(1), MVT::i32);
+  SDValue a_prime = DAG.getNOT(dl, lhs, MVT::i32);
+  SDValue b_prime = DAG.getNOT(dl, rhs, MVT::i32);
   SDValue x_prime = DAG.getNode(ISD::AND, dl, MVT::i32, a_prime, b_prime);
   return DAG.getNode(LC32ISD::LOWERING_NOT, dl, MVT::i32, x_prime);
 }
