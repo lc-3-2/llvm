@@ -21,6 +21,18 @@ LC32TargetInfo::LC32TargetInfo(const llvm::Triple &Triple,
   // Note that `long` is 32-bit and that `long double` is 64-bit
   this->TLSSupported = false;
 
+  // Alignments above 32-bit don't mean anything on this target, and in fact
+  // they cause errors since we can't realign the stack. Therefore, lower the
+  // alignment of wide types.
+  this->LongLongAlign = 32;
+  this->Int128Align = 32;
+  this->LongAccumAlign = 32;
+  this->DoubleAlign = 32;
+  this->LongDoubleAlign = 32;
+  this->Float128Align = 32;
+  this->SuitableAlign = 32;
+  this->DefaultAlignForAttributeAligned = 32;
+
   // Set the data layout
   this->resetDataLayout(
       "e"        // Little endian
