@@ -31,9 +31,9 @@
     in {
 
       packages = rec {
-        default = lc-3-2;
+        default = llvm-lc-3-2;
 
-        lc-3-2 = stdenv.mkDerivation {
+        llvm-lc-3-2 = stdenv.mkDerivation {
           inherit name buildInputs nativeBuildInputs propagatedBuildInputs;
 
           src = self;
@@ -60,9 +60,9 @@
       };
 
       devShells = rec {
-        default = lc-3-2;
+        default = llvm-lc-3-2;
 
-        lc-3-2 = pkgs.mkShell {
+        llvm-lc-3-2 = pkgs.mkShell {
           inherit name buildInputs nativeBuildInputs propagatedBuildInputs;
 
           shellHook = ''
