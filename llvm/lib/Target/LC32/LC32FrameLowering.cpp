@@ -183,44 +183,20 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   MachineFrameInfo &MFI = MF.getFrameInfo();
   LC32MachineFunctionInfo *MFnI = MF.getInfo<LC32MachineFunctionInfo>();
 
-  // Count the number of scavenging slots we need:
-  // A. if the stack frame is too large. This is a slight underestimate, so
-  //    compensate
-  // B. if branches can be out of range. This is an overestimate, so we
-  //    shouldn't need to compensate here
-  // Note that these two conditions are independent. Clearly, we will never have
-  // a branch that happens at the same time as a stack frame load. Therefore,
-  // these can share scavenging slots.
+  // Previously, there would be code here to count the number of scavenging
+  // slots we'd need. It took two things into account:
+  // * if the stack frame was too large
+  // * if branches were out of range
+  // Unfortunately, it did not take into account things like:
+  // * unaligned stack accesses
+  // * parameter accesses
+  // As such, we always assume we require at least one scavenging slot.
   //
-  // However, A. could cause B. If we have a frame size that's too large, we'll
-  // need to insert extra instructions, which could cause branches to become out
-  // of range. So even though they can share scavenging slots, we do no delegate
-  // it specifically to one or the other. That's why the `if` in the `for` loop
-  // doesn't check `need_b` anymore.
-  //
-  // Also note that in both the checks, we keep the arguments positive since
-  // that is the more restrictive direction. Observe that we use isInt and not
-  // isUInt.
-  unsigned num_scav = 0;
-
-  // Do A.
-  // This is restricted by STB, which has a 6-bit immediate with no shift. Only
-  // the stores use this frame index
-  // This is also restricted by C_LEA_FRAMEINDEX, which requires us to check
-  // MaxRepeatedOps.
-  bool need_a = !isInt<6 - 1>(MFI.estimateStackSize(MF));
-  if (MaxRepeatedOps == 0)
-    need_a |= true;
-  if (MaxRepeatedOps == 1)
-    need_a |= !isInt<5 - 1>(MFI.estimateStackSize(MF));
-  if (need_a)
-    num_scav = std::max(1u, num_scav);
-  // Do B. IF we do branch relaxation
-  // BR has a 9-bit immediate, but it's doubled in hardware. Note that
-  // EstimateFunctionSize will always return an even value.
-  bool need_b = !isShiftedInt<9, 1>(EstimateFunctionSize(MF, *TII));
-  if (need_b)
-    num_scav = std::max(1u, num_scav);
+  // Note that we'll never need more than one scavenging slot. We only use these
+  // when accessing the stack or when saving a register for a relaxed branch.
+  // Those occurrences never overlap (even with each other), so we can use the
+  // same scavenging slot for all of them.
+  unsigned num_scav = 1;
 
   // Create the scavenging indicies
   for (unsigned i = 0; i < num_scav; i++) {
