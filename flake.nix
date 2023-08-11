@@ -35,37 +35,21 @@
 
         llvm-lc-3-2 = stdenv.mkDerivation {
           inherit name buildInputs nativeBuildInputs propagatedBuildInputs;
-
           src = self;
-
-          configurePhase = ''
-            runHook preConfigure
-            cmake -G Ninja -B ./build/ -S ./llvm/ \
-              -DCMAKE_INSTALL_PREFIX=$out \
-              -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON \
-              -DLLVM_PARALLEL_LINK_JOBS=1 \
-              -DLLVM_ENABLE_PROJECTS="clang;lld" \
-              -DLLVM_ENABLE_RUNTIMES="compiler-rt" \
-              -DLLVM_TARGETS_TO_BUILD="X86;RISCV;MSP430;Lanai" \
-              -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="LC32" \
-              -DLLVM_DEFAULT_TARGET_TRIPLE="lc_3.2-unknown-unknown" \
-              -DCOMPILER_RT_BAREMETAL_BUILD=ON \
-              -DCOMPILER_RT_EXCLUDE_PERSONALITY=ON \
-              -DCOMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS=ON \
-              -DCOMPILER_RT_BUILTINS_PASS_DATA_SECTIONS=ON
-            runHook postConfigure
-          '';
-
-          buildPhase = ''
-            runHook preBuild
-            ninja -v -C ./build/
-            runHook postBuild
-          '';
-          installPhase = ''
-            runHook preInstall
-            ninja -v -C ./build/ install
-            runHook postInstall
-          '';
+          cmakeDir = "${self}/llvm/";
+          cmakeFlags = [
+            "-DLLVM_ENABLE_ASSERTIONS=ON"
+            "-DLLVM_PARALLEL_LINK_JOBS=1"
+            "-DLLVM_ENABLE_PROJECTS=clang;lld"
+            "-DLLVM_ENABLE_RUNTIMES=compiler-rt"
+            "-DLLVM_TARGETS_TO_BUILD="
+            "-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=LC32"
+            "-DLLVM_DEFAULT_TARGET_TRIPLE=lc_3.2-unknown-unknown"
+            "-DCOMPILER_RT_BAREMETAL_BUILD=ON"
+            "-DCOMPILER_RT_EXCLUDE_PERSONALITY=ON"
+            "-DCOMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS=ON"
+            "-DCOMPILER_RT_BUILTINS_PASS_DATA_SECTIONS=ON"
+          ];
         };
       };
 
@@ -74,7 +58,6 @@
 
         llvm-lc-3-2 = pkgs.mkShell {
           inherit name buildInputs nativeBuildInputs propagatedBuildInputs;
-
           shellHook = ''
             export PS1="(${name}) [\u@\h \W]\$ "
           '';
