@@ -39,6 +39,7 @@
           src = self;
 
           configurePhase = ''
+            runHook preConfigure
             cmake -G Ninja -B ./build/ -S ./llvm/ \
               -DCMAKE_INSTALL_PREFIX=$out \
               -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON \
@@ -52,10 +53,19 @@
               -DCOMPILER_RT_EXCLUDE_PERSONALITY=ON \
               -DCOMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS=ON \
               -DCOMPILER_RT_BUILTINS_PASS_DATA_SECTIONS=ON
+            runHook postConfigure
           '';
 
-          buildPhase = "ninja -v -C ./build/";
-          installPhase = "ninja -v -C ./build/ install";
+          buildPhase = ''
+            runHook preBuild
+            ninja -C ./build/
+            runHook postBuild
+          '';
+          installPhase = ''
+            runHook preInstall
+            ninja -C ./build/ install
+            runHook postInstall
+          ''
         };
       };
 
