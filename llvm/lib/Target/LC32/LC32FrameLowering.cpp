@@ -140,38 +140,6 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
   return MBB.erase(MI);
 }
 
-static unsigned EstimateFunctionSize(const MachineFunction &MF,
-                                     const LC32InstrInfo &TII) {
-  // Used by processFunctionBeforeFrameFinalized
-  // See: RISCVFrameLowering.cpp
-  unsigned ret = 0;
-  for (auto &MBB : MF) {
-    for (auto &MI : MBB) {
-      // We shouldn't have raw branches at this point
-      assert(MI.getOpcode() != LC32::BR && "BR generated");
-
-      // We may still have the C_LEA_FRAMEINDEX instruction. Handle it
-      // conservatively, looking at how many bytes it could possibly produce.
-      // See: LC32RegisterInfo::eliminateFrameIndex
-      if (MI.getOpcode() == LC32::C_LEA_FRAMEINDEX) {
-        ret += std::max(2u * MaxRepeatedOps, 14u + 2u);
-        continue;
-      }
-
-      // We don't want to use the expanded versions of branches, even if we're
-      // going to do branch relaxation. That's because this function is trying
-      // to figure out if we're going to have to expand branches in the first
-      // place. If the function is small enough, we don't have to expand. All
-      // that is to say, we should use getInstSizeInBytes raw.
-      ret += TII.getInstSizeInBytes(MI);
-    }
-  }
-  // We should only ever return even values since all instructions are aligned
-  // to two bytes
-  assert(ret % 2 == 0 && "Functions should have even length");
-  return ret;
-}
-
 void LC32FrameLowering::processFunctionBeforeFrameFinalized(
     MachineFunction &MF, RegScavenger *RS) const {
   // Check that we actually got a register scavenger
