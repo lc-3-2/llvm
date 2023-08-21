@@ -176,8 +176,11 @@ SDValue LC32TargetLowering::LowerOR(SDValue Op, SelectionDAG &DAG) const {
   if (lhs.getOpcode() == ISD::Constant)
     std::swap(lhs, rhs);
 
-  // Try to optimize selecting a bit. The DAG combiner doesn't seem to try to
-  // combine this, so we don't need special handling to avoid an infinite loop.
+  // Try to optimize selecting a bit. Note that the DAG Combiner won't try to
+  // optimize this, since it first checks whether ISD::OR is legal on the target
+  // platform.
+  // See: llvm/lib/CodeGen/SelectionDAG/DAGCombiner.cpp:2667
+  // See: llvm/lib/CodeGen/SelectionDAG/DAGCombiner.cpp:8718
   // fold (or x c) -> (add (and x ~c) c)
   if (rhs.getOpcode() == ISD::Constant) {
     int64_t c = cast<ConstantSDNode>(rhs)->getSExtValue();
