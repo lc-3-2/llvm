@@ -16,12 +16,6 @@ static_assert(std::is_same<ssize_t, long>::value, "Bad type");
 static_assert(std::is_same<uint64_t, unsigned long>::value, "Bad type");
 static_assert(std::is_same<int64_t, long>::value, "Bad type");
 
-cl::opt<bool> llvm::lc32::clopts::UnsafeCMP(
-    "lc_3.2-unsafe-cmp",
-    cl::desc("Don't check for overflows when subtracting values for "
-             "comparison. This is not Standard C behavior."),
-    cl::init(false));
-
 cl::opt<unsigned> llvm::lc32::clopts::MaxRepeatedOps(
     "lc_3.2-max-repeated-ops",
     cl::desc("How many instructions to use for repeated operations, such as "

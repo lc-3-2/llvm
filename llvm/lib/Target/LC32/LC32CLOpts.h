@@ -20,8 +20,6 @@
 // their own namespace.
 namespace llvm::lc32::clopts {
 
-extern llvm::cl::opt<bool> UnsafeCMP;
-
 extern llvm::cl::opt<unsigned> MaxRepeatedOps;
 extern llvm::cl::opt<unsigned> MaxConstMulHammingWeight;
 
