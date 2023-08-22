@@ -38,9 +38,10 @@ public:
 
 private:
   const MCExpr *Expr;
-};
 
-extern operand_parser_t OPERAND_PARSER_EXPR;
+public:
+  static operand_parser_t parser;
+};
 
 } // namespace llvm
 

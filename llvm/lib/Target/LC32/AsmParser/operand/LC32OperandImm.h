@@ -51,9 +51,10 @@ public:
 
 private:
   uint64_t Value;
-};
 
-extern operand_parser_t OPERAND_PARSER_IMM;
+public:
+  static operand_parser_t parser;
+};
 
 } // namespace llvm
 

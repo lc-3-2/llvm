@@ -78,8 +78,8 @@ void LC32OperandImm::addConst32Operands(MCInst &Inst, unsigned N) {
   Inst.addOperand(MCOperand::createImm(this->Value));
 }
 
-OperandMatchResultTy
-llvm::OPERAND_PARSER_IMM(LC32AsmParser &t, std::unique_ptr<LC32Operand> &op) {
+OperandMatchResultTy LC32OperandImm::parser(LC32AsmParser &t,
+                                            std::unique_ptr<LC32Operand> &op) {
 
   // Remember the starting location
   SMLoc stt = t.getLexer().getLoc();

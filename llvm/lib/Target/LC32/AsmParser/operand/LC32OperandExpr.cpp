@@ -45,8 +45,8 @@ void LC32OperandExpr::addConst32Operands(MCInst &Inst, unsigned N) {
   Inst.addOperand(MCOperand::createExpr(this->Expr));
 }
 
-OperandMatchResultTy
-llvm::OPERAND_PARSER_EXPR(LC32AsmParser &t, std::unique_ptr<LC32Operand> &op) {
+OperandMatchResultTy LC32OperandExpr::parser(LC32AsmParser &t,
+                                             std::unique_ptr<LC32Operand> &op) {
 
   // Remember the starting location
   SMLoc stt = t.getLexer().getLoc();

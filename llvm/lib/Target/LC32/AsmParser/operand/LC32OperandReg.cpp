@@ -28,8 +28,8 @@ void LC32OperandReg::addRegOperands(MCInst &Inst, unsigned N) {
   Inst.addOperand(MCOperand::createReg(this->Number));
 }
 
-OperandMatchResultTy
-llvm::OPERAND_PARSER_REG(LC32AsmParser &t, std::unique_ptr<LC32Operand> &op) {
+OperandMatchResultTy LC32OperandReg::parser(LC32AsmParser &t,
+                                            std::unique_ptr<LC32Operand> &op) {
   // This just wraps around the functionality in the parser
   MCRegister n;
   SMLoc stt;
