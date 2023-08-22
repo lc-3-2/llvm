@@ -4132,5 +4132,5 @@ def ReadOnlyPlacement : InheritableAttr {
 def LC32UnsafeCMP : Attr, TargetSpecificAttr<TargetLC32> {
   let Spellings = [Clang<"unsafe_cmp">];
   let Subjects = SubjectList<[Function]>;
-  let Documentation = [Undocumented];
+  let Documentation = [LC32UnsafeCMPDocs];
 }
