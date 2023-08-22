@@ -28,7 +28,7 @@ LC32TargetLowering::LC32TargetLowering(const TargetMachine &TM,
 
   // Set function alignment
   this->setMinFunctionAlignment(Align(2));
-  this->setPrefFunctionAlignment(Align(4));
+  this->setPrefFunctionAlignment(Align(2));
 
   // Set stack alignment
   this->setMinStackArgumentAlignment(Align(4));
