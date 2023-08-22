@@ -11,6 +11,7 @@
 #include "LC32InstPrinter.h"
 #include "LC32MCAsmInfo.h"
 #include "LC32MCCodeEmitter.h"
+#include "LC32MCObjectFileInfo.h"
 #include "TargetInfo/LC32TargetInfo.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -30,18 +31,36 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_MC_DESC
 #include "LC32GenSubtargetInfo.inc"
 
-static MCInstrInfo *createLC32MCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitLC32MCInstrInfo(X);
-  return X;
-}
-
 static MCRegisterInfo *createLC32MCRegisterInfo(const Triple & /*TT*/) {
   // This method passes the register that stores the return address. It doesn't
   // seem to be used anywhere though.
   MCRegisterInfo *X = new MCRegisterInfo();
   InitLC32MCRegisterInfo(X, LC32::LR);
   return X;
+}
+
+static MCInstrInfo *createLC32MCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitLC32MCInstrInfo(X);
+  return X;
+}
+
+static MCSubtargetInfo *createLC32MCSubtargetInfo(const Triple &TT,
+                                                  StringRef CPU, StringRef FS) {
+  // The Lanai target checks if the CPU name is empty. However, this method can
+  // take an empty string as input. In that case, it will just apply all the
+  // features given in `FS`.
+  //
+  // See: llvm/lib/MC/MCSubtargetInfo.cpp
+  return createLC32MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
+}
+
+static MCObjectFileInfo *
+createLC32MCObjectFileInfo(MCContext &Ctx, bool PIC,
+                           bool LargeCodeModel = false) {
+  MCObjectFileInfo *MOFI = new LC32MCObjectFileInfo();
+  MOFI->initMCObjectFileInfo(Ctx, PIC, LargeCodeModel);
+  return MOFI;
 }
 
 static MCInstPrinter *createLC32InstPrinter(const Triple &T,
@@ -54,16 +73,6 @@ static MCInstPrinter *createLC32InstPrinter(const Triple &T,
   if (SyntaxVariant == 0)
     return new LC32InstPrinter(MAI, MII, MRI);
   return nullptr;
-}
-
-static MCSubtargetInfo *createLC32MCSubtargetInfo(const Triple &TT,
-                                                  StringRef CPU, StringRef FS) {
-  // The Lanai target checks if the CPU name is empty. However, this method can
-  // take an empty string as input. In that case, it will just apply all the
-  // features given in `FS`.
-  //
-  // See: llvm/lib/MC/MCSubtargetInfo.cpp
-  return createLC32MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
 }
 
 static MCAsmBackend *createLC32AsmBackend(const Target &T,
@@ -99,6 +108,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLC32TargetMC() {
   TargetRegistry::RegisterMCRegInfo(T, createLC32MCRegisterInfo);
   TargetRegistry::RegisterMCInstrInfo(T, createLC32MCInstrInfo);
   TargetRegistry::RegisterMCSubtargetInfo(T, createLC32MCSubtargetInfo);
+  TargetRegistry::RegisterMCObjectFileInfo(T, createLC32MCObjectFileInfo);
   TargetRegistry::RegisterMCInstPrinter(T, createLC32InstPrinter);
   TargetRegistry::RegisterMCAsmBackend(T, createLC32AsmBackend);
   TargetRegistry::RegisterMCCodeEmitter(T, createLC32MCCodeEmitter);

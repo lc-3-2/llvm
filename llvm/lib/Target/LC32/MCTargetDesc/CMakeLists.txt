@@ -5,6 +5,7 @@ add_llvm_component_library(LLVMLC32Desc
   LC32AsmBackend.cpp
   LC32ELFObjectTargetWriter.cpp
   LC32MCCodeEmitter.cpp
+  LC32MCObjectFileInfo.cpp
 
   LINK_COMPONENTS
   MC
