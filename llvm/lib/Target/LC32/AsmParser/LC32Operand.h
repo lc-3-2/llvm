@@ -10,8 +10,11 @@
 // by the LC-3.2. Usually, this is defined as a single class in the
 // AsmParser.cpp file, using enums and unions to discriminate between the types.
 //
-// This file also defines the type of a function that parses to operands. These
-// should be registered in the OperandParsers array in LC32AsmParserImpl.cpp.
+// This file also defines the type of a function that parses to operands, named
+// `operand_parser_t`. Functions of this type should try to parse one type of
+// operand, returning the status of the parse along with the parsed operand.
+// These should be registered in the OperandParsers array in
+// LC32AsmParserImpl.cpp.
 //
 //===----------------------------------------------------------------------===//
 
@@ -121,6 +124,26 @@ private:
 
 class LC32AsmParser;
 /**
+ * \brief Operand parser function signature
+ *
+ * Functions using this signature should try to parse one type of operand. The
+ * parsed operand should be returned in `op` if successful.
+ *
+ * If unsuccessful, it can be so in two ways. It can fail with
+ * `MatchOperand_NoMatch`, meaning the operand was not recognized as an element
+ * of the class being parsed. It could be of another class - like it could be an
+ * immediate instead of a register. Thus, other operand parsers will be tried if
+ * this status is returned. In this case, the function should not have touched
+ * the lexer's state when it returns.
+ *
+ * Alternatively, the function can return `MatchOperand_ParseFail`. This means
+ * the operand was recognized as an element of the class, but it is not
+ * syntactically correct. For instance, writing R9. No other operand parsers
+ * will be tried after this status is returned, and parsing will fail
+ * unconditionally.
+ *
+ * \see LC32AsmParser::ParseInstruction
+ *
  * \param [in]  t reference to the calling LC32AsmParser
  * \param [out] op the parsed operand
  * \return result of the parse
