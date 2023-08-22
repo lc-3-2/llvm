@@ -6847,3 +6847,13 @@ def ReadOnlyPlacementDocs : Documentation {
      ``enforce_read_only_placement`` attribute.
   }];
 }
+
+def LC32UnsafeCMPDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Usually, the backend cannot simply subtract two numbers to compare them, since
+that could lead to overflow. It is forced to pessimistically emit overflow
+checks, which have overhead. This function attribute disables those checks on
+the annotated function - increasing speed at a potential cost of correctness.
+  }];
+}
