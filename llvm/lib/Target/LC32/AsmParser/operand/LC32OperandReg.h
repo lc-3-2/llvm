@@ -31,9 +31,10 @@ public:
 
 private:
   unsigned Number;
-};
 
-extern operand_parser_t OPERAND_PARSER_REG;
+public:
+  static operand_parser_t parser;
+};
 
 } // namespace llvm
 

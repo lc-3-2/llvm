@@ -34,11 +34,13 @@ using namespace llvm;
 #define GET_MNEMONIC_SPELL_CHECKER
 #include "LC32GenAsmMatcher.inc"
 
-const std::vector<std::function<operand_parser_t>> OPERAND_PARSERS = {
-    OPERAND_PARSER_REG,
-    OPERAND_PARSER_IMM,
-    OPERAND_PARSER_EXPR,
+namespace {
+const std::vector<std::function<operand_parser_t>> OperandParsers = {
+    LC32OperandReg::parser,
+    LC32OperandImm::parser,
+    LC32OperandExpr::parser,
 };
+} // namespace
 
 void LC32Operand::anchor() {}
 
@@ -215,7 +217,7 @@ bool LC32AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
     // Try to parse using all the parsers
     bool success = false;
-    for (auto parser : OPERAND_PARSERS) {
+    for (auto parser : OperandParsers) {
       std::unique_ptr<LC32Operand> op;
       auto r = parser(*this, op);
       // If the parse didn't work, either die or try the next one

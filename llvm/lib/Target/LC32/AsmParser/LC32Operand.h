@@ -11,7 +11,7 @@
 // AsmParser.cpp file, using enums and unions to discriminate between the types.
 //
 // This file also defines the type of a function that parses to operands. These
-// should be registered in the OPERAND_PARSERS array in LC32AsmParserImpl.cpp.
+// should be registered in the OperandParsers array in LC32AsmParserImpl.cpp.
 //
 //===----------------------------------------------------------------------===//
 
