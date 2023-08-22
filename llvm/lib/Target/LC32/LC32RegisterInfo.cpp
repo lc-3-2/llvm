@@ -107,15 +107,29 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     Offset += MI->getOperand(2).getImm();
 
     // Check if the offset is in range
+    // Also keep track of the "scale" of the instruction in bits
     bool in_range = false;
-    if (MI->getOpcode() == LC32::LDB || MI->getOpcode() == LC32::STB)
+    size_t scale = ~0ull;
+    switch (MI->getOpcode()) {
+    case LC32::LDB:
+    case LC32::STB:
       in_range = isShiftedInt<6, 0>(Offset);
-    else if (MI->getOpcode() == LC32::LDH || MI->getOpcode() == LC32::STH)
+      scale = 0;
+      break;
+    case LC32::LDH:
+    case LC32::STH:
       in_range = isShiftedInt<6, 1>(Offset);
-    else if (MI->getOpcode() == LC32::LDW || MI->getOpcode() == LC32::STW)
+      scale = 1;
+      break;
+    case LC32::LDW:
+    case LC32::STW:
       in_range = isShiftedInt<6, 2>(Offset);
-    else
+      scale = 2;
+      break;
+    default:
       llvm_unreachable("Not all cases handled");
+    }
+    assert(scale != ~0ull && "Did not set scale");
 
     // If the offset is in range, then we're good to just use the FP
     if (in_range) {
@@ -126,19 +140,22 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 
     // Figure out what temporary register to use to store the address
     Register tr;
-    if (MI->getOpcode() == LC32::LDB || MI->getOpcode() == LC32::LDH ||
-        MI->getOpcode() == LC32::LDW) {
+    switch (MI->getOpcode()) {
+    case LC32::LDB:
+    case LC32::LDH:
+    case LC32::LDW:
       // For loads, we can just reuse the destination register
       tr = MI->getOperand(0).getReg();
-
-    } else if (MI->getOpcode() == LC32::STB || MI->getOpcode() == LC32::STH ||
-               MI->getOpcode() == LC32::STW) {
+      break;
+    case LC32::STB:
+    case LC32::STH:
+    case LC32::STW:
       // For stores, use a virtual register
       // PEI will eliminate this since we told it too
       // See: llvm/lib/CodeGen/PrologEpilogInserter.cpp:281
       tr = MRI.createVirtualRegister(&LC32::GPRRegClass);
-
-    } else {
+      break;
+    default:
       llvm_unreachable("Not all cases handled");
     }
 
