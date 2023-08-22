@@ -13,6 +13,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/Support/MathExtras.h"
+#include <assert.h>
 using namespace llvm;
 using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32RegisterInfo"
@@ -107,29 +109,30 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     Offset += MI->getOperand(2).getImm();
 
     // Check if the offset is in range
-    // Also keep track of the "scale" of the instruction in bits
+    // Also keep track of the "word size" of the instruction in bits
     bool in_range = false;
-    size_t scale = ~0ull;
+    size_t word_size = ~0ull;
     switch (MI->getOpcode()) {
     case LC32::LDB:
     case LC32::STB:
       in_range = isShiftedInt<6, 0>(Offset);
-      scale = 0;
+      word_size = 1;
       break;
     case LC32::LDH:
     case LC32::STH:
       in_range = isShiftedInt<6, 1>(Offset);
-      scale = 1;
+      word_size = 2;
       break;
     case LC32::LDW:
     case LC32::STW:
       in_range = isShiftedInt<6, 2>(Offset);
-      scale = 2;
+      word_size = 4;
       break;
     default:
       llvm_unreachable("Not all cases handled");
     }
-    assert(scale != ~0ull && "Did not set scale");
+    assert((word_size == 1 || word_size == 2 || word_size == 4) &&
+           "Did not set word_size correctly");
 
     // If the offset is in range, then we're good to just use the FP
     if (in_range) {
@@ -159,10 +162,27 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
       llvm_unreachable("Not all cases handled");
     }
 
+    // Compute how much of the offset to fold into the instruction itself. We
+    // want to do as much work as possible with this, so that the added
+    // instructions have to do less work.
+    int32_t FoldedOffset;
+    {
+      // Compute the largest multiple that fits. We assume that negative numbers
+      // round toward zero.
+      static_assert(-1 / 2 == 0, "Negative division should round to zero");
+      int32_t fo_w = Offset / word_size;
+      // Restrict to 6-bit signed
+      fo_w = std::min(std::max(fo_w, -32), 31);
+      assert(isInt<6>(fo_w) && "Did not restrict to 6-bit signed");
+
+      // Convert to bytes
+      FoldedOffset = fo_w * word_size;
+    }
+
     // Construct the address and load from it
-    this->genAddLargeImm(MI, dl, tr, LC32::FP, Offset);
+    this->genAddLargeImm(MI, dl, tr, LC32::FP, Offset - FoldedOffset);
     MI->getOperand(1).ChangeToRegister(tr, false, false, true);
-    MI->getOperand(2).ChangeToImmediate(0);
+    MI->getOperand(2).ChangeToImmediate(FoldedOffset);
     return false;
   }
 
