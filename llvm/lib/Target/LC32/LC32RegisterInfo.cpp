@@ -43,9 +43,6 @@ BitVector LC32RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   ret.set(LC32::SP);
 
   // Set global pointer and link register
-  // Note that using LR causes the machine code to fail validation. LLVM expects
-  // it to be defined before we STW it in the function prologue. This should be
-  // fine
   if (!UseR4)
     ret.set(LC32::GP);
   if (!UseR7)
