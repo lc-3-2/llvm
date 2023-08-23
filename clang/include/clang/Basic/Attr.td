@@ -4129,6 +4129,12 @@ def ReadOnlyPlacement : InheritableAttr {
   let Documentation = [ReadOnlyPlacementDocs];
 }
 
+def LC32UseR4 : Attr, TargetSpecificAttr<TargetLC32> {
+  let Spellings = [Clang<"use_r4">];
+  let Subjects = SubjectList<[Function]>;
+  let Args = [DefaultBoolArgument<"Request", true>];
+  let Documentation = [LC32UseR4Docs];
+}
 def LC32UseR7 : Attr, TargetSpecificAttr<TargetLC32> {
   let Spellings = [Clang<"use_r7">];
   let Subjects = SubjectList<[Function]>;
