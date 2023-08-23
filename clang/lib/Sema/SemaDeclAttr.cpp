@@ -8534,6 +8534,29 @@ EnforceTCBLeafAttr *Sema::mergeEnforceTCBLeafAttr(
       *this, D, AL);
 }
 
+static void handleLC32UseR7Attr(Sema &S, Decl *D, const ParsedAttr &AL) {
+
+  assert((AL.getNumArgs() == 0 || AL.getNumArgs() == 1) &&
+         "Too many arguments for use_r7");
+
+  // Figure out whether to set to `true` or `false`
+  // Default is `true`
+  bool ToSet = true;
+  if (AL.isArgExpr(0)) {
+    // Check if it's an integer
+    uint32_t res;
+    if (!checkUInt32Argument(S, AL, AL.getArgAsExpr(0), res, 1))
+      return;
+    // Set appropriately
+    // `0` is `false`, anything else is `true`
+    ToSet = res;
+  }
+
+  // Add the attribute
+  // See: handleSimpleAttribute
+  D->addAttr(::new (S.Context) LC32UseR7Attr(S.Context, AL, ToSet));
+}
+
 //===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
@@ -9346,6 +9369,10 @@ ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D, const ParsedAttr &AL,
 
   case ParsedAttr::AT_UsingIfExists:
     handleSimpleAttribute<UsingIfExistsAttr>(S, D, AL);
+    break;
+
+  case ParsedAttr::AT_LC32UseR7:
+    handleLC32UseR7Attr(S, D, AL);
     break;
 
   case ParsedAttr::AT_LC32UnsafeCMP:

@@ -6848,6 +6848,21 @@ def ReadOnlyPlacementDocs : Documentation {
   }];
 }
 
+def LC32UseR7Docs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Traditionally, the link register is not used to hold temporary values. However,
+there's no reason it can't be. It's saved at the start of the function and
+restored at the end, and nothing in the middle looks at the return address.
+Thus, this function attribute instructs the backed to open ``R7`` for register
+allocation.
+
+This behavior can also be enabled globally by passing ``-mllvm -lc_3.2-use-r7``.
+If both the attribute and the command-line argument are passed, the attribute
+takes priority.
+  }];
+}
+
 def LC32UnsafeCMPDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{

@@ -12212,10 +12212,11 @@ void LC32TargetCodeGenInfo::setTargetAttributes(
   if (const auto *FD = dyn_cast_or_null<FunctionDecl>(D)) {
     auto *Fn = cast<llvm::Function>(GV);
 
-    // Handle the unsafe_cmp attribute
+    if (const auto *Attr = FD->getAttr<LC32UseR7Attr>())
+      Fn->addFnAttr("use_r7", Attr->getRequest() ? "true" : "false");
+
     if (FD->getAttr<LC32UnsafeCMPAttr>())
       Fn->addFnAttr("unsafe_cmp");
-    // Handle the unsafe_scavenging attribute
     if (FD->getAttr<LC32UnsafeScavengingAttr>())
       Fn->addFnAttr("unsafe_scavenging");
   }
