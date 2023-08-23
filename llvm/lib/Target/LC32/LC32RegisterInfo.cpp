@@ -42,11 +42,19 @@ BitVector LC32RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   ret.set(LC32::FP);
   ret.set(LC32::SP);
 
-  // Set global pointer and link register
+  // Set R4
+  // Check the function attributes before looking at the command-line
   if (!UseR4)
     ret.set(LC32::GP);
-  if (!UseR7)
+  // Do the same for R7
+  if (MF.getFunction().hasFnAttribute("use_r7")) {
+    Attribute attr = MF.getFunction().getFnAttribute("use_r7");
+    assert(attr.isStringAttribute() && "Attribute use_r7 should be a String");
+    if (attr.getValueAsString() != "true")
+      ret.set(LC32::LR);
+  } else if (!UseR7) {
     ret.set(LC32::LR);
+  }
 
   return ret;
 }
