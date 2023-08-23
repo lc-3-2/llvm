@@ -12212,6 +12212,8 @@ void LC32TargetCodeGenInfo::setTargetAttributes(
   if (const auto *FD = dyn_cast_or_null<FunctionDecl>(D)) {
     auto *Fn = cast<llvm::Function>(GV);
 
+    if (const auto *Attr = FD->getAttr<LC32UseR4Attr>())
+      Fn->addFnAttr("use_r4", Attr->getRequest() ? "true" : "false");
     if (const auto *Attr = FD->getAttr<LC32UseR7Attr>())
       Fn->addFnAttr("use_r7", Attr->getRequest() ? "true" : "false");
 

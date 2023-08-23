@@ -44,8 +44,14 @@ BitVector LC32RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
   // Set R4
   // Check the function attributes before looking at the command-line
-  if (!UseR4)
+  if (MF.getFunction().hasFnAttribute("use_r4")) {
+    Attribute attr = MF.getFunction().getFnAttribute("use_r4");
+    assert(attr.isStringAttribute() && "Attribute use_r4 should be a String");
+    if (attr.getValueAsString() != "true")
+      ret.set(LC32::GP);
+  } else if (!UseR4) {
     ret.set(LC32::GP);
+  }
   // Do the same for R7
   if (MF.getFunction().hasFnAttribute("use_r7")) {
     Attribute attr = MF.getFunction().getFnAttribute("use_r7");

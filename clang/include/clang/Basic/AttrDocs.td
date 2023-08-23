@@ -6848,6 +6848,21 @@ def ReadOnlyPlacementDocs : Documentation {
   }];
 }
 
+def LC32UseR4Docs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Most functions will not touch ``R4``. It is used for the global data section,
+which is quite small, and hard to use in everything but top-level code. Thus,
+this function attribute opens ``R4`` for register allocation. The register is
+callee-saved, so it won't distrupt calling code that depends on its value.
+However, code that modifies ``R4`` cannot call into code that expects it to be a
+global pointer.
+
+This behavior can also be enabled globally by passing ``-mllvm -lc_3.2-use-r4``.
+If both the attribute and the command-line argument are passed, the attribute
+takes priority.
+  }];
+}
 def LC32UseR7Docs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
