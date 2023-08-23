@@ -5,6 +5,7 @@ include(CheckCSourceCompiles)
 set(TEST_COMPILE_ONLY On)
 
 # Check host compiler support for certain flags
+builtin_check_c_compiler_flag(-g                    COMPILER_RT_HAS_G_FLAG)
 builtin_check_c_compiler_flag(-fPIC                 COMPILER_RT_HAS_FPIC_FLAG)
 builtin_check_c_compiler_flag(-fPIE                 COMPILER_RT_HAS_FPIE_FLAG)
 builtin_check_c_compiler_flag(-fno-builtin          COMPILER_RT_HAS_FNO_BUILTIN_FLAG)

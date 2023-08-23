@@ -72,6 +72,8 @@ option(COMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS
 option(COMPILER_RT_BUILTINS_PASS_DATA_SECTIONS
   "Pass -ffunction-sections when building builtins" OFF)
 
+option(COMPILER_RT_BUILTINS_PASS_G "Pass -g when building builtins" OFF)
+
 # TODO: Need to add a mechanism for logging errors when builtin source files are
 # added to a sub-directory and not this CMakeLists file.
 set(GENERIC_SOURCES
@@ -790,6 +792,11 @@ else ()
   endif()
   if(COMPILER_RT_BUILTINS_PASS_DATA_SECTIONS)
     append_list_if(COMPILER_RT_HAS_FDATA_SECTIONS_FLAG -fdata-sections BUILTIN_CFLAGS)
+  endif()
+
+  # Build with debug info if we were told to
+  if(COMPILER_RT_BUILTINS_PASS_G)
+    append_list_if(COMPILER_RT_HAS_G_FLAG -g BUILTIN_CFLAGS)
   endif()
 
   if(COMPILER_RT_DISABLE_AARCH64_FMV)
