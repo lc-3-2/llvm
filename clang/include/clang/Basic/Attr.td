@@ -4134,3 +4134,8 @@ def LC32UnsafeCMP : Attr, TargetSpecificAttr<TargetLC32> {
   let Subjects = SubjectList<[Function]>;
   let Documentation = [LC32UnsafeCMPDocs];
 }
+def LC32UnsafeScavenging : Attr, TargetSpecificAttr<TargetLC32> {
+  let Spellings = [Clang<"unsafe_scavenging">];
+  let Subjects = SubjectList<[Function]>;
+  let Documentation = [LC32UnsafeScavengingDocs];
+}

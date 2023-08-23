@@ -147,7 +147,6 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // Populate variables
   const LC32RegisterInfo *TRI =
       MF.getSubtarget<LC32Subtarget>().getRegisterInfo();
-  const LC32InstrInfo *TII = MF.getSubtarget<LC32Subtarget>().getInstrInfo();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   LC32MachineFunctionInfo *MFnI = MF.getInfo<LC32MachineFunctionInfo>();
 
@@ -165,6 +164,11 @@ void LC32FrameLowering::processFunctionBeforeFrameFinalized(
   // Those occurrences never overlap (even with each other), so we can use the
   // same scavenging slot for all of them.
   unsigned num_scav = 1;
+
+  // If the function explicitly requests that we don't reserve an emergency
+  // stack slot, don't. They know that this can cause compiler crashes.
+  if (MF.getFunction().hasFnAttribute("unsafe_scavenging"))
+    num_scav = 0;
 
   // Create the scavenging indicies
   for (unsigned i = 0; i < num_scav; i++) {
