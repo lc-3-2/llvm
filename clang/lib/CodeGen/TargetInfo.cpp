@@ -12215,6 +12215,9 @@ void LC32TargetCodeGenInfo::setTargetAttributes(
     // Handle the unsafe_cmp attribute
     if (FD->getAttr<LC32UnsafeCMPAttr>())
       Fn->addFnAttr("unsafe_cmp");
+    // Handle the unsafe_scavenging attribute
+    if (FD->getAttr<LC32UnsafeScavengingAttr>())
+      Fn->addFnAttr("unsafe_scavenging");
   }
 }
 
