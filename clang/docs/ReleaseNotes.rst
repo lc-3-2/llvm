@@ -715,6 +715,16 @@ Improvements to Clang's diagnostics
 Bug Fixes in This Version
 -------------------------
 
+- Fix crash when attempting to perform parenthesized initialization of an
+  aggregate with a base class with only non-public constructors.
+  (`#62296 <https://github.com/llvm/llvm-project/issues/62296>`_)
+- Fix crash when handling nested immediate invocations in initializers of global
+  variables.
+  (`#58207 <https://github.com/llvm/llvm-project/issues/58207>`_)
+- Fix crash when passing a braced initializer list to a parentehsized aggregate
+  initialization expression.
+  (`#63008 <https://github.com/llvm/llvm-project/issues/63008>`_).
+
 Bug Fixes to Compiler Builtins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -778,6 +788,10 @@ Bug Fixes to Attribute Support
 
 Bug Fixes to C++ Support
 ^^^^^^^^^^^^^^^^^^^^^^^^
+- No longer issue a pre-C++2b compatibility warning in ``-pedantic`` mode
+  regading overloaded `operator[]` with more than one parmeter or for static
+  lambdas. (`#61582 <https://github.com/llvm/llvm-project/issues/61582>`_)
+
 - Address the thread identification problems in coroutines.
   (`#47177 <https://github.com/llvm/llvm-project/issues/47177>`_,
   `#47179 <https://github.com/llvm/llvm-project/issues/47179>`_)
@@ -812,6 +826,13 @@ Bug Fixes to C++ Support
 
 - Do not hide templated base members introduced via using-decl in derived class
   (useful specially for constrained members). (`#50886 <https://github.com/llvm/llvm-project/issues/50886>`_)
+
+- Fix default member initializers sometimes being ignored when performing
+  parenthesized aggregate initialization of templated types.
+  (`#62266 <https://github.com/llvm/llvm-project/issues/62266>`_)
+- Fix overly aggressive lifetime checks for parenthesized aggregate
+  initialization.
+  (`#61567 <https://github.com/llvm/llvm-project/issues/61567>`_)
 
 Concepts Specific Fixes:
 
@@ -1048,6 +1069,7 @@ RISC-V Support
 - Note that the RISC-V Vector C intrinsics are still under development. The RVV
   C Intrinsic Task Group is working towards a ratified v1.0.
 - The rvv-intrinsic-doc provides `compatible headers <https://github.com/riscv-non-isa/rvv-intrinsic-doc/tree/master/auto-generated/rvv-v0p10-compatible-headers>`_ for transition from the previous implemented version to the current (v0.11) version.
+- Clang now supports `v0.11 RVV intrinsics <https://github.com/riscv-non-isa/rvv-intrinsic-doc/tree/v0.11.x>`_.
 
 CUDA/HIP Language Changes in Clang
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
