@@ -65,36 +65,11 @@ You must supply both.
 
 ### Options
 
-The LC-3.2 backend has several options to affect code generation. They are
-listed in `llvm/lib/Target/LC32CLOpts.cpp`, and they can be passed to `llc` with
-the `-mllvm` option in the driver.
-
-One important option is `--lc_3.2-unsafe-cmp`. Usually, the backend cannot
-simply subtract two numbers to compare them, since that could lead to overflow.
-It is forced to pessimistically emit overflow checks, which have overhead. This
-option disables those checks - increasing speed at a potential cost of
-correctness. This option can also be applied on a per-function basis with
-`__attribute__((unsafe_cmp))`.
-
-Another set of options is `--lc_3.2-use-r4` and `--lc_3.2-use-r7`. The compiler
-can't take advantage of the global pointer, and the calling convention has the
-link register dead throughout the entire function's execution. These options
-reclaim these registers for allocation. By default, this is disabled so as to
-not confuse the students.
-
-Finally, there are the arithmetic options. The flag `--lc_3.2-max-repeated-add`
-controls how immediates are materialized. Up to a point, the backend will do
-repeated additions. After that, it will use `PSEUDO.LOADCONST*`. This flag
-controls the threshold. The flag `--lc_3.2-max-const-mul-hamming-weight`
-similarly controls how multiplications by constants are materialized. Up to a
-point, the backend will do shifts and adds, and after that it will use the
-libcall. Again, this flag controls the threshold.
-
-When compiling with the driver, there are some considerations for linking.
-First, there is no default linker script or C runtime. You have to provide
-those. Second and more importantly, the linker will try to find `-lc`, `-lm`,
-and `-lclang_rt.builtins-lc_3.2`. The first two can be suppressed with
-`-nostdlib`, and all three can be suppressed with `-nodefaultlibs`.
+The LC-3.2 backend has several options and function attributes to affect code
+generation. The options are listed in `llvm/lib/Target/LC32CLOpts.cpp`, and they
+can be passed to `llc` with the `-mllvm` option in the driver. The attributes
+are listed at the very end of `clang/include/clang/Basic/Attr.td`, and they can
+be put on a function with the `__attribute__` syntax.
 
 ## Contributing
 
