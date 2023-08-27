@@ -28,6 +28,15 @@
         pkgs.ncurses
         pkgs.zlib
       ];
+
+      # Convenience variable for the LC-3.2 targets we want to build. We don't
+      # specify a default, so you have to supply `--target` whenever you invoke
+      # `clang` (even for linking), and that has to match one of these exactly.
+      lc-3-2-targets = [
+        "lc_3.2-unknown-unknown"
+        "lc_3.2-unknown-none"
+      ];
+
     in {
 
       packages = rec {
@@ -37,6 +46,7 @@
           inherit name buildInputs nativeBuildInputs propagatedBuildInputs;
           src = self;
           cmakeDir = "${self}/llvm/";
+
           cmakeFlags = [
             "-DLLVM_ENABLE_ASSERTIONS=ON"
             "-DLLVM_PARALLEL_LINK_JOBS=1"
@@ -44,13 +54,17 @@
             "-DLLVM_ENABLE_RUNTIMES=compiler-rt"
             "-DLLVM_TARGETS_TO_BUILD="
             "-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=LC32"
-            "-DLLVM_DEFAULT_TARGET_TRIPLE=lc_3.2-unknown-unknown"
-            "-DCOMPILER_RT_BAREMETAL_BUILD=ON"
-            "-DCOMPILER_RT_EXCLUDE_PERSONALITY=ON"
-            "-DCOMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS=ON"
-            "-DCOMPILER_RT_BUILTINS_PASS_DATA_SECTIONS=ON"
-            "-DCOMPILER_RT_BUILTINS_PASS_G=ON"
-          ];
+            "-DLLVM_RUNTIME_TARGETS=${builtins.concatStringsSep ";" lc-3-2-targets}"
+            "-DLLVM_BUILTIN_TARGETS=${builtins.concatStringsSep ";" lc-3-2-targets}"
+          ] ++ (
+            builtins.map (t: [
+              "-DBUILTINS_${t}_COMPILER_RT_BAREMETAL_BUILD=ON"
+              "-DBUILTINS_${t}_COMPILER_RT_EXCLUDE_PERSONALITY=ON"
+              "-DBUILTINS_${t}_COMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS=ON"
+              "-DBUILTINS_${t}_COMPILER_RT_BUILTINS_PASS_DATA_SECTIONS=ON"
+              "-DBUILTINS_${t}_COMPILER_RT_BUILTINS_PASS_G=ON"
+            ]) lc-3-2-targets
+          );
         };
       };
 
