@@ -22,6 +22,12 @@ cl::opt<unsigned> llvm::lc32::clopts::MaxRepeatedOps(
              "repeated ADDs to realize constants, before giving up and using "
              "PSEUDO.LOADCONST* instead"),
     cl::init(4));
+cl::opt<unsigned> llvm::lc32::clopts::MaxRepeatedShf(
+    "lc_3.2-max-repeated-shf",
+    cl::desc("How many instructions to use for repeated shifts "
+             "specifically, like when shifting by a constant greater than 8, "
+             "before giving up and materializing the constant instead"),
+    cl::init(4));
 cl::opt<unsigned> llvm::lc32::clopts::MaxConstMulHammingWeight(
     "lc_3.2-max-const-mul-hamming-weight",
     cl::desc("When performing multiplications by constants, how many bits "

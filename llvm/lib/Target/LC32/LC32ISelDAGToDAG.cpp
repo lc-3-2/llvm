@@ -202,10 +202,14 @@ bool LC32DAGToDAGISel::SelectRepeatedShift(SDNode *N) {
   default:
     llvm_unreachable("Unhandled case");
   }
+
   // Pull out the immediate value
   // Assert that it is in a reasonable range
   uint64_t imm = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
   assert(imm > 0 && imm < 32 && "Bad value for shift immediate");
+  // Check that we're allowed to do enough repetitions
+  if (MaxRepeatedShf < (imm + 7) / 8)
+    return false;
 
   // Loop variables
   // The variable out will be populated on the first iteration

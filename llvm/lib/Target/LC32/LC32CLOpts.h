@@ -21,6 +21,7 @@
 namespace llvm::lc32::clopts {
 
 extern llvm::cl::opt<unsigned> MaxRepeatedOps;
+extern llvm::cl::opt<unsigned> MaxRepeatedShf;
 extern llvm::cl::opt<unsigned> MaxConstMulHammingWeight;
 
 extern llvm::cl::opt<bool> UseR4;
