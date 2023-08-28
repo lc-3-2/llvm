@@ -33,6 +33,8 @@
       # specify a default, so you have to supply `--target` whenever you invoke
       # `clang` (even for linking), and that has to match one of these exactly.
       lc-3-2-targets = [
+        "lc_3.2-unknown"
+        "lc_3.2-none"
         "lc_3.2-unknown-unknown"
         "lc_3.2-unknown-none"
       ];

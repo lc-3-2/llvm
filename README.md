@@ -23,23 +23,20 @@ $ cmake -G Ninja \
   -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_ASSERTIONS=ON \
   -DLLVM_ENABLE_PROJECTS="clang;lld" -DLLVM_ENABLE_RUNTIMES="compiler-rt" \
   -DLLVM_TARGETS_TO_BUILD="" -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="LC32" \
-  -DLLVM_RUNTIME_TARGETS="lc_3.2-unknown-unknown;lc_3.2-unknown-none" \
-  -DLLVM_BUILTIN_TARGETS="lc_3.2-unknown-unknown;lc_3.2-unknown-none" \
+  -DLLVM_RUNTIME_TARGETS="lc_3.2-unknown-unknown" \
+  -DLLVM_BUILTIN_TARGETS="lc_3.2-unknown-unknown" \
   -DBUILTINS_lc_3.2-unknown-unknown_COMPILER_RT_BAREMETAL_BUILD=ON \
   -DBUILTINS_lc_3.2-unknown-unknown_COMPILER_RT_EXCLUDE_PERSONALITY=ON \
   -DBUILTINS_lc_3.2-unknown-unknown_COMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS=ON \
   -DBUILTINS_lc_3.2-unknown-unknown_COMPILER_RT_BUILTINS_PASS_DATA_SECTIONS=ON \
   -DBUILTINS_lc_3.2-unknown-unknown_COMPILER_RT_BUILTINS_PASS_G=ON \
-  -DBUILTINS_lc_3.2-unknown-none_COMPILER_RT_BAREMETAL_BUILD=ON \
-  -DBUILTINS_lc_3.2-unknown-none_COMPILER_RT_EXCLUDE_PERSONALITY=ON \
-  -DBUILTINS_lc_3.2-unknown-none_COMPILER_RT_BUILTINS_PASS_FUNCTION_SECTIONS=ON \
-  -DBUILTINS_lc_3.2-unknown-none_COMPILER_RT_BUILTINS_PASS_DATA_SECTIONS=ON \
-  -DBUILTINS_lc_3.2-unknown-none_COMPILER_RT_BUILTINS_PASS_G=ON \
   ../llvm/
 ```
 Make sure to set `CMAKE_INSTALL_PREFIX` to the installation directory. Also
-change `CMAKE_BUILD_TYPE` as needed. It is recommended to keep assertions `ON`
-even when building in `Release` mode on account of this project's instability.
+change `CMAKE_BUILD_TYPE` as needed. If any targets are added to
+`LLVM_RUNTIME_TARGETS` or `LLVM_BUILTIN_TARGETS`, make sure to add the
+corresponding flags too. Finally, it is recommended to keep assertions `ON` even
+when building in `Release` mode.
 
 During development, one may enable `LLVM_OPTIMIZED_TABLEGEN`,
 `BUILD_SHARED_LIBS`, and `LLVM_USE_SPLIT_DWARF` to reduce build times.
