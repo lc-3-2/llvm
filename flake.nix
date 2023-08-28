@@ -29,9 +29,10 @@
         pkgs.zlib
       ];
 
-      # Convenience variable for the LC-3.2 targets we want to build. We don't
-      # specify a default, so you have to supply `--target` whenever you invoke
-      # `clang` (even for linking), and that has to match one of these exactly.
+      # Convenience variable for the LC-3.2 targets we want to build. If you
+      # don't want the default target, you have to supply `--target` whenever
+      # you invoke `clang` (even for linking), and that has to match one of
+      # these exactly.
       lc-3-2-targets = [
         "lc_3.2-unknown"
         "lc_3.2-none"
@@ -56,6 +57,7 @@
             "-DLLVM_ENABLE_RUNTIMES=compiler-rt"
             "-DLLVM_TARGETS_TO_BUILD="
             "-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=LC32"
+            "-DLLVM_DEFAULT_TARGET_TRIPLE=lc_3.2-none"
             "-DLLVM_RUNTIME_TARGETS=${builtins.concatStringsSep ";" lc-3-2-targets}"
             "-DLLVM_BUILTIN_TARGETS=${builtins.concatStringsSep ";" lc-3-2-targets}"
           ] ++ (
