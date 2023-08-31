@@ -39,7 +39,7 @@
         "lc_3.2-unknown-unknown"
         "lc_3.2-unknown-none"
       ];
-      lc-3-2-default-target="lc_3.2-none"
+      lc-3-2-default-target="lc_3.2-none";
 
     in {
 
