@@ -39,6 +39,7 @@
         "lc_3.2-unknown-unknown"
         "lc_3.2-unknown-none"
       ];
+      lc-3-2-default-target="lc_3.2-none"
 
     in {
 
@@ -57,7 +58,7 @@
             "-DLLVM_ENABLE_RUNTIMES=compiler-rt"
             "-DLLVM_TARGETS_TO_BUILD="
             "-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=LC32"
-            "-DLLVM_DEFAULT_TARGET_TRIPLE=lc_3.2-none"
+            "-DLLVM_DEFAULT_TARGET_TRIPLE=${lc-3-2-default-target}"
             "-DLLVM_RUNTIME_TARGETS=${builtins.concatStringsSep ";" lc-3-2-targets}"
             "-DLLVM_BUILTIN_TARGETS=${builtins.concatStringsSep ";" lc-3-2-targets}"
           ] ++ (
