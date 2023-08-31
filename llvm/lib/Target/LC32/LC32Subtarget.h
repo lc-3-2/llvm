@@ -19,6 +19,7 @@
 #include "LC32ISelLowering.h"
 #include "LC32InstrInfo.h"
 #include "LC32RegisterInfo.h"
+#include "LC32SelectionDAGInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 
 #define GET_SUBTARGETINFO_HEADER
@@ -36,11 +37,13 @@ public:
   const LC32FrameLowering *getFrameLowering() const override;
   const LC32InstrInfo *getInstrInfo() const override;
   const LC32RegisterInfo *getRegisterInfo() const override;
+  const LC32SelectionDAGInfo *getSelectionDAGInfo() const override;
 
 private:
   LC32TargetLowering TLInfo;
   LC32FrameLowering FrameLowering;
   LC32InstrInfo InstrInfo;
+  LC32SelectionDAGInfo TSInfo;
 };
 
 } // namespace llvm

@@ -36,3 +36,7 @@ const LC32InstrInfo *LC32Subtarget::getInstrInfo() const {
 const LC32RegisterInfo *LC32Subtarget::getRegisterInfo() const {
   return &this->InstrInfo.getRegisterInfo();
 }
+
+const LC32SelectionDAGInfo *LC32Subtarget::getSelectionDAGInfo() const {
+  return &this->TSInfo;
+}
