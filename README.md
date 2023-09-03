@@ -10,8 +10,8 @@ Guide](https://llvm.org/docs/CMake.html).
 
 ### Build Environment
 
-For ease-of-use, a `docker-compose.yml` script is provided. Its corresponding
-`Dockerfile` provides all the packages needed to build LLVM.
+For ease-of-use, a Nix development shell and a `docker-compose.yml` script are
+provided.
 
 ### Building
 
