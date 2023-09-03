@@ -1,10 +1,10 @@
 # LLVM for LC-3.2
 
 This repository houses a version of LLVM that has a backend for the LC-3.2
-architecture. It was modified from LLVM 16.0.0, and much of the documentation
-follows from there. In particular, it would be good to read the original
-[Getting Started Guide](https://llvm.org/docs/GettingStarted.html) and the
-original [Compilation Guide](https://llvm.org/docs/CMake.html).
+architecture. Much of the documentation follows from LLVM. In particular, it
+would be good to read the original [Getting Started
+Guide](https://llvm.org/docs/GettingStarted.html) and the original [Compilation
+Guide](https://llvm.org/docs/CMake.html).
 
 ## Usage
 
