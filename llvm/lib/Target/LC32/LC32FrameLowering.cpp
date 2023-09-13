@@ -61,7 +61,7 @@ void LC32FrameLowering::emitPrologue(MachineFunction &MF,
   // Build the stack pointer
   // Remember, we always have one word for local variables
   TRI.genAddLargeImm(
-      MBBI, dl, LC32::SP, LC32::FP,
+      MBB, MBBI, dl, LC32::SP, LC32::FP,
       std::min(-static_cast<int64_t>(MFI.getStackSize()) + INT64_C(4),
                INT64_C(0)));
 }
@@ -126,10 +126,10 @@ MachineBasicBlock::iterator LC32FrameLowering::eliminateCallFramePseudoInstr(
   if (amt != 0) {
     // Handle setup and teardown
     if (MI->getOpcode() == TII.getCallFrameSetupOpcode()) {
-      TRI.genAddLargeImm(MI, dl, LC32::SP, LC32::SP, -amt, true,
+      TRI.genAddLargeImm(MBB, MI, dl, LC32::SP, LC32::SP, -amt, true,
                          RegState::Define, RegState::Kill);
     } else if (MI->getOpcode() == TII.getCallFrameDestroyOpcode()) {
-      TRI.genAddLargeImm(MI, dl, LC32::SP, LC32::SP, amt, true,
+      TRI.genAddLargeImm(MBB, MI, dl, LC32::SP, LC32::SP, amt, true,
                          RegState::Define, RegState::Kill);
     } else {
       llvm_unreachable("Tried to eliminate bad instruction");
