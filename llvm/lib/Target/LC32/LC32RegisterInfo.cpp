@@ -191,7 +191,7 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     }
 
     // Construct the address and load from it
-    this->genAddLargeImm(MI, dl, tr, LC32::FP, Offset - FoldedOffset);
+    this->genAddLargeImm(MBB, MI, dl, tr, LC32::FP, Offset - FoldedOffset);
     MI->getOperand(1).ChangeToRegister(tr, false, false, true);
     MI->getOperand(2).ChangeToImmediate(FoldedOffset);
     return false;
@@ -202,8 +202,8 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   if (MI->getOpcode() == LC32::C_LEA_FRAMEINDEX) {
     assert(FIOperandNum == 1 && "Bad frame index operand index");
 
-    this->genAddLargeImm(MI, dl, MI->getOperand(0).getReg(), LC32::FP, Offset,
-                         false, getRegState(MI->getOperand(0)));
+    this->genAddLargeImm(MBB, MI, dl, MI->getOperand(0).getReg(), LC32::FP,
+                         Offset, false, getRegState(MI->getOperand(0)));
     MBB.erase(MI);
     return false;
   }
@@ -211,14 +211,14 @@ bool LC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   llvm_unreachable("Bad instruction with frame index");
 }
 
-void LC32RegisterInfo::genAddLargeImm(MachineBasicBlock::iterator MBBI,
+void LC32RegisterInfo::genAddLargeImm(MachineBasicBlock &MBB,
+                                      MachineBasicBlock::iterator MBBI,
                                       DebugLoc &dl, Register dr, Register sr,
                                       int64_t imm, bool alias,
                                       unsigned dr_flags,
                                       unsigned sr_flags) const {
 
   // Populate variables
-  MachineBasicBlock &MBB = *MBBI->getParent();
   MachineFunction &MF = *MBB.getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const LC32InstrInfo &TII =

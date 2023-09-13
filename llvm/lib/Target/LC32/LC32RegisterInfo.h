@@ -69,9 +69,9 @@ public:
    * @param [in] sr_flags The liveliness state of the source register
    * @see MaxRepeatedOps
    */
-  void genAddLargeImm(MachineBasicBlock::iterator MBBI, DebugLoc &dl,
-                      Register dr, Register sr, int64_t imm, bool alias = false,
-                      unsigned dr_flags = RegState::Define,
+  void genAddLargeImm(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                      DebugLoc &dl, Register dr, Register sr, int64_t imm,
+                      bool alias = false, unsigned dr_flags = RegState::Define,
                       unsigned sr_flags = 0u) const;
 };
 
