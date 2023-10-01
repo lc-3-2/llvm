@@ -114,7 +114,7 @@ bool LC32AsmParser::parseRegister(MCRegister &Reg, SMLoc &StartLoc,
   llvm_unreachable("Invalid OperandMatchResultTy");
 }
 
-bool LC32AsmParser::ParseDirective(AsmToken DirectiveID) {
+ParseStatus LC32AsmParser::parseDirective(AsmToken DirectiveID) {
   // Normalize with lowercase
   std::string directive_name = DirectiveID.getIdentifier().lower();
 
@@ -133,21 +133,36 @@ bool LC32AsmParser::ParseDirective(AsmToken DirectiveID) {
                        .Default(0);
     assert(scale != 0 && "Not all cases handled");
 
+    // Check that we have an expression to parse - it must be supplied
+    if (this->getLexer().is(AsmToken::EndOfStatement)) {
+      Error(this->getLexer().getLoc(), "need argument for directive");
+      return ParseStatus::Failure;
+    }
+
     // Parse the expression
     // Remember the location
     SMLoc count_loc = this->getLexer().getLoc();
     const MCExpr *count;
     if (this->getParser().checkForValidSection() ||
         this->getParser().parseExpression(count)) {
-      return true;
+      return ParseStatus::Failure;
     }
+
+    // Check that we are in fact at the end of the statement. If we aren't,
+    // that's an error.
+    if (this->getLexer().isNot(AsmToken::EndOfStatement)) {
+      Error(this->getLexer().getLoc(), "too many arguments to directive");
+      return ParseStatus::Failure;
+    }
+    // Otherwise, parse the end of statement, as the documentation says to do
+    this->getLexer().Lex();
 
     // Write out
     this->getStreamer().emitFill(*count, scale, 0x00, count_loc);
-    return false;
+    return ParseStatus::Success;
   }
 
-  return true;
+  return ParseStatus::NoMatch;
 }
 
 bool LC32AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
