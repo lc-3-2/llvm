@@ -154,11 +154,6 @@ bool LC32TargetLowering::preferZeroCompareBranch() const {
   return true;
 }
 
-bool LC32TargetLowering::hasBitPreservingFPLogic(EVT VT) const {
-  // The standard library uses IEEE-754, so we can convert to bitwise
-  return true;
-}
-
 bool LC32TargetLowering::convertSetCCLogicToBitwiseLogic(EVT VT) const {
   // SetCC is as expensive as a branch, so avoid it
   return true;

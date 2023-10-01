@@ -79,7 +79,7 @@ TargetInfo::BuiltinVaListKind LC32TargetInfo::getBuiltinVaListKind() const {
   return TargetInfo::VoidPtrBuiltinVaList;
 }
 
-const char *LC32TargetInfo::getClobbers() const { return ""; }
+std::string_view LC32TargetInfo::getClobbers() const { return ""; }
 
 bool LC32TargetInfo::validateAsmConstraint(
     const char *&Name, TargetInfo::ConstraintInfo &info) const {

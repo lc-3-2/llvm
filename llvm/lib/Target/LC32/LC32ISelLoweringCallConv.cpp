@@ -49,7 +49,7 @@ SDValue LC32TargetLowering::LowerFormalArguments(
     // Note the offset from the frame pointer. Remember that frame index offsets
     // are from the stack pointer on function entry.
     MFnI->VarArgsFI =
-        MFI.CreateFixedObject(1, CCInfo.getNextStackOffset(), true);
+        MFI.CreateFixedObject(1, CCInfo.getStackSize(), true);
 
   // Create frame indicies for each of the arguments
   // See: MSP430ISelLowering.cpp, LanaiISelLowering.cpp
@@ -212,7 +212,7 @@ SDValue LC32TargetLowering::LowerCall(CallLoweringInfo &CLI,
   CCInfo.AnalyzeArguments(CLI.Outs, LC32CallingConv);
 
   // Find out how many bytes to push onto the stack
-  unsigned NumBytes = CCInfo.getNextStackOffset();
+  unsigned NumBytes = CCInfo.getStackSize();
   assert(this->getFrameIndexTy(CLI.DAG.getDataLayout()) == MVT::i32 &&
          "LC-3.2 pointers should be i32");
 

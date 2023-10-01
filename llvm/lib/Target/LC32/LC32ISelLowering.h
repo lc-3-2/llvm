@@ -154,7 +154,6 @@ private:
   bool isSelectSupported(SelectSupportKind kind) const override;
   bool reduceSelectOfFPConstantLoads(EVT CmpOpVT) const override;
   bool preferZeroCompareBranch() const override;
-  bool hasBitPreservingFPLogic(EVT VT) const override;
   bool convertSetCCLogicToBitwiseLogic(EVT VT) const override;
   bool hasAndNotCompare(SDValue Y) const override;
   bool hasAndNot(SDValue X) const override;
