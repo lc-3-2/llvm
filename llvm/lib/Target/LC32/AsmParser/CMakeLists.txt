@@ -8,6 +8,7 @@ add_llvm_component_library(LLVMLC32AsmParser
   operand/LC32OperandNZP.cpp
 
   LINK_COMPONENTS
+  CodeGenTypes
   MCParser
   MC
   Support

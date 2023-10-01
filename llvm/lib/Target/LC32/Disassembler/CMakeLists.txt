@@ -3,6 +3,7 @@ add_llvm_component_library(LLVMLC32Disassembler
   LC32DisassemblerImpl.cpp
 
   LINK_COMPONENTS
+  CodeGenTypes
   MCDisassembler
   MC
   Support
