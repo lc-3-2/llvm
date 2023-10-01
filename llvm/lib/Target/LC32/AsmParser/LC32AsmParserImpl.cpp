@@ -61,7 +61,7 @@ LC32AsmParser::LC32AsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
   this->getParser().addAliasForDirective(".fillb", ".byte");
   this->getParser().addAliasForDirective(".fillh", ".short");
   this->getParser().addAliasForDirective(".fillw", ".int");
-  this->getParser().addAliasForDirective(".fillq", ".quad");
+  this->getParser().addAliasForDirective(".filld", ".quad");
   this->getParser().addAliasForDirective(".blk", ".fill");
   this->getParser().addAliasForDirective(".string", ".ascii");
   this->getParser().addAliasForDirective(".stringz", ".asciz");
@@ -122,14 +122,14 @@ ParseStatus LC32AsmParser::parseDirective(AsmToken DirectiveID) {
   // Most of the code is taken from the original parser
   // See: MC/MCParser/AsmParser.cpp
   if (directive_name == ".blkb" || directive_name == ".blkh" ||
-      directive_name == ".blkw" || directive_name == ".blkq") {
+      directive_name == ".blkw" || directive_name == ".blkd") {
 
     // Compute the multiplier
     size_t scale = StringSwitch<size_t>(directive_name)
                        .CaseLower(".blkb", 1)
                        .CaseLower(".blkh", 2)
                        .CaseLower(".blkw", 4)
-                       .CaseLower(".blkq", 8)
+                       .CaseLower(".blkd", 8)
                        .Default(0);
     assert(scale != 0 && "Not all cases handled");
 
