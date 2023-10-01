@@ -8,6 +8,7 @@ add_llvm_component_library(LLVMLC32Desc
   LC32MCObjectFileInfo.cpp
 
   LINK_COMPONENTS
+  CodeGenTypes
   MC
   Support
   LC32Info

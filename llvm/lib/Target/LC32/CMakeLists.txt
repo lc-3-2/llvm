@@ -37,6 +37,7 @@ add_llvm_target(LC32CodeGen
   Core
   AsmPrinter
   CodeGen
+  CodeGenTypes
   SelectionDAG
   MC
   Target
