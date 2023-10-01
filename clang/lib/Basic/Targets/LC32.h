@@ -33,7 +33,7 @@ public:
   ArrayRef<Builtin::Info> getTargetBuiltins() const override;
   BuiltinVaListKind getBuiltinVaListKind() const override;
 
-  const char *getClobbers() const override;
+  std::string_view getClobbers() const override;
   bool validateAsmConstraint(const char *&Name,
                              TargetInfo::ConstraintInfo &info) const override;
 };
