@@ -12,6 +12,8 @@
 #include "MCTargetDesc/LC32MCTargetDesc.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/Support/ErrorHandling.h"
+#include <cstdint>
 using namespace llvm;
 using namespace llvm::lc32::clopts;
 #define DEBUG_TYPE "LC32ISelDAGToDag"
@@ -63,63 +65,100 @@ bool LC32DAGToDAGISel::SelectRepeatedXorShift(SDNode *N) {
     return true;
   }
 
-  // Compute what values we will need to XOR with
-  // In REVERSE order
-  SmallVector<int64_t> xor_values;
+  // We'll figure out what instructions we need to execute to materialize the
+  // constant into a zeroed register. This way, we can compute how many
+  // instructions it'll take before constructing the nodes.
+
+  // The two different instructions ("commands") we can have
+  typedef enum command_id_t {
+    XOR,
+    LSHF,
+  } command_id_t;
+  // Structure describing commands
+  typedef struct command_t {
+    command_id_t id;
+    int64_t arg;
+  } command_t;
+
+  // Compute the commands we'll need to execute
+  // List is in REVERSE order
+  SmallVector<command_t, 14> commands;
   {
     int64_t togo = imm;
     size_t loopcnt = 0;
     while (togo != 0) {
-      // We should never have to loop more than seven times
-      assert(loopcnt < 7 && "Looped too many times");
+      // We should never have to loop more than fourteen times to materialize
+      // any immediate. If we do, something went wrong.
+      assert(loopcnt < 14 && "Looped too many times");
       loopcnt++;
 
-      // Extract the least significant five bits
-      int64_t lsb5 = SignExtend64<5>(togo & 0x1f);
-      togo >>= 5;
-      xor_values.push_back(lsb5);
+      // Run a greedy algorithm to compute the commands. If we can XOR, do that.
+      // Otherwise, shift down.
 
-      // If we are going to XOR with a negative value, account for sign
-      // extension
-      if (lsb5 < 0)
-        togo = ~togo;
+      // Check if there is some value in the LSB 5 bits
+      int64_t lsb5 = SignExtend64<5>(togo & 0x1f);
+      if (lsb5 != 0) {
+        // XOR with it
+        commands.push_back(command_t{XOR, lsb5});
+        // Propagate
+        togo ^= lsb5;
+        // Check we won't go into this branch on the next loop
+        assert(SignExtend64<5>(togo & 0x1f) == 0 && "Didn't clear LSB 5 bits");
+
+      } else {
+
+        // The LSB 5 bits are clear, but we can shift by up to 8. Therefore,
+        // compute how many of the bottom bits are actually clear. We do this
+        // indirectly, by looking for the lowest index with a one.
+        size_t min_one_index;
+        for (min_one_index = 0; min_one_index < 32; min_one_index++) {
+          // If what we're claiming is the minimum index of a one is actually a
+          // zero, continue on. The actual index is higher.
+          if ((togo & (1 << min_one_index)) == 0)
+            continue;
+          // Otherwise, we fould the minimum index
+          break;
+        }
+        assert(min_one_index >= 5 && "LSB 5 bits should've been clear");
+        assert(min_one_index < 32 && "Should have at least one bit set");
+
+        // Compute the actual shift amount
+        int64_t shamt = min_one_index >= 8 ? 8 : min_one_index;
+        // Shift out everything that's zero
+        commands.push_back(command_t{LSHF, shamt});
+        // Propagate
+        togo >>= shamt;
+      }
     }
   }
-  // We shouldn't have gotten zero
-  assert(xor_values.size() != 0 && "Input to loop should not have been zero");
+  // We should have some commands after this
+  assert(commands.size() != 0 && "Input to loop should not have been zero");
 
-  // Check whether we're allowed to do that many shifts and xors
-  // Usually, each would take two instructions. If we're XORing with zero, it
-  // only counts one for the shift
-  {
-    size_t instcnt = 0;
-    for (int64_t &v : xor_values)
-      instcnt += v == 0 ? 1 : 2;
-    if (instcnt > MaxRepeatedOps)
-      return false;
-  }
+  // Check whether we're allowed to do that many shifts and xors. Also remember
+  // to count the initial clearing.
+  if (commands.size() + 1 > MaxRepeatedOps)
+    return false;
 
-  // Do the XORs
-  SDNode *out = nullptr;
-  while (!xor_values.empty()) {
-    int64_t toxor = xor_values.pop_back_val();
-    // Compute what value to use as the base for this iteration
-    // It's either shifting the last iteration, or zeroing out if this is the
-    // first iteration
-    SDNode *base =
-        out == nullptr
-            ? this->CurDAG->getMachineNode(LC32::C_LOADZERO, dl, MVT::i32)
-            : this->CurDAG->getMachineNode(
-                  LC32::LSHFi, dl, MVT::i32, SDValue(out, 0),
-                  this->CurDAG->getTargetConstant(5, dl, MVT::i32));
-    // XOR
-    // Skip this if toxor == 0
-    if (toxor != 0)
+  // Execute the commands
+  SDNode *out = this->CurDAG->getMachineNode(LC32::C_LOADZERO, dl, MVT::i32);
+  while (!commands.empty()) {
+    // Pull the command
+    command_t cmd = commands.pop_back_val();
+    // Execute
+    switch (cmd.id) {
+    case XOR:
       out = this->CurDAG->getMachineNode(
-          LC32::XORi, dl, MVT::i32, SDValue(base, 0),
-          this->CurDAG->getTargetConstant(toxor, dl, MVT::i32));
-    else
-      out = base;
+          LC32::XORi, dl, MVT::i32, SDValue(out, 0),
+          this->CurDAG->getTargetConstant(cmd.arg, dl, MVT::i32));
+      break;
+    case LSHF:
+      out = this->CurDAG->getMachineNode(
+          LC32::LSHFi, dl, MVT::i32, SDValue(out, 0),
+          this->CurDAG->getTargetConstant(cmd.arg, dl, MVT::i32));
+      break;
+    default:
+      llvm_unreachable("Unhandled case");
+    }
   }
 
   // Done
